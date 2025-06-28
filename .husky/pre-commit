@@ -1,1 +1,4 @@
-pnpm check:staged
+if ! pnpm check:staged; then
+  echo "To apply the suggested fixes, run the command: pnpm check:write"
+  exit 1
+fi

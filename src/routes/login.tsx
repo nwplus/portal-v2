@@ -1,0 +1,32 @@
+import { useAuthStore } from "@/lib/stores/auth";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
+
+export const Route = createFileRoute("/login")({
+  component: RouteComponent,
+  validateSearch: (search) => ({
+    redirect: search.redirect as string | undefined,
+  }),
+});
+
+function RouteComponent() {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const signInWithGoogle = useAuthStore((state) => state.signInWithGoogle);
+  const router = useRouter();
+  const search = Route.useSearch();
+
+  const handleSignIn = async () => {
+    const redirectTo = search.redirect || "/";
+    if (!isAuthenticated) {
+      await signInWithGoogle();
+    }
+    router.history.push(redirectTo);
+  };
+
+  return (
+    <div>
+      <button type="button" onClick={handleSignIn}>
+        Login
+      </button>
+    </div>
+  );
+}
