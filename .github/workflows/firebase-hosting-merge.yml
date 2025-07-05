@@ -19,6 +19,9 @@ jobs:
         with: 
           node-version: '22'
           cache: 'pnpm'
+      
+      - name: Set up firebase
+        run: pnpm add -g firebase-tools
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -55,3 +58,5 @@ jobs:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ env.IS_PRODUCTION == 'true' && secrets.FIREBASE_SERVICE_ACCOUNT_NWPLUS_UBC || secrets.FIREBASE_SERVICE_ACCOUNT_NWPLUS_UBC_DEV }}
           projectId: ${{ env.IS_PRODUCTION == 'true' && 'nwplus-ubc' || 'nwplus-ubc-dev' }}
+          channelId: live
+          target: ${{ env.IS_PRODUCTION == 'true' && 'nwplus-ubc' || 'nwplus-ubc-dev' }}
