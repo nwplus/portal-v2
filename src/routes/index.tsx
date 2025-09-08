@@ -1,4 +1,4 @@
-import { useAuthStore } from "@/lib/stores/auth";
+import { useAuthStore } from "@/lib/stores/auth-store";
 import { Link, createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({

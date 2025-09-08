@@ -1,13 +1,7 @@
-import {
-  GoogleAuthProvider,
-  type User,
-  getAuth,
-  onAuthStateChanged,
-  signInWithPopup,
-  signOut,
-} from "firebase/auth";
+import { type User, onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
 import { create } from "zustand";
-import { app } from "../firebase";
+import { checkAdminClaim, googleProvider } from "../firebase/auth";
+import { auth } from "../firebase/client";
 
 type AuthStore = {
   user: User | null;
@@ -19,17 +13,6 @@ type AuthStore = {
   signInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
-};
-
-const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
-googleProvider.setCustomParameters({
-  prompt: "select_account",
-});
-
-const checkAdminClaim = async (user: User): Promise<boolean> => {
-  const token = await user.getIdTokenResult();
-  return Object.prototype.hasOwnProperty.call(token.claims, "admin");
 };
 
 export const useAuthStore = create<AuthStore>((set) => ({

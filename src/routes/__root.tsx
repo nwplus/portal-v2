@@ -1,4 +1,4 @@
-import { useAuthStore } from "@/lib/stores/auth"; // No longer need initAuthListener here
+import { useAuthStore } from "@/lib/stores/auth-store"; // No longer need initAuthListener here
 import { Outlet, createRootRoute } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
