@@ -1,7 +1,11 @@
-import { useAuthStore } from "@/lib/stores/auth";
+import { useAuthStore } from "@/lib/stores/auth-store";
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 
-const awaitAuth = () => {
+/**
+ * Utility that waits for auth state to finish loading before proceeding.
+ * @returns a promise that resolves when auth is finished loading
+ */
+const loadAuth = () => {
   const { loading } = useAuthStore.getState();
   if (!loading) {
     return;
@@ -25,7 +29,7 @@ const awaitAuth = () => {
 
 export const Route = createFileRoute("/_auth")({
   beforeLoad: async ({ location }) => {
-    await awaitAuth();
+    await loadAuth();
 
     const { isAuthenticated } = useAuthStore.getState();
 
