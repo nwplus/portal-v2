@@ -7,5 +7,5 @@ googleProvider.setCustomParameters({
 
 export const checkAdminClaim = async (user: User): Promise<boolean> => {
   const token = await user.getIdTokenResult();
-  return Object.prototype.hasOwnProperty.call(token.claims, "admin");
+  return token.claims.admin === true;
 };
