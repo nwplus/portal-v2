@@ -14,7 +14,6 @@ function RouteComponent() {
     <div className="flex min-h-screen items-center justify-center">
       {isAuthenticated ? (
         <div className="flex flex-col">
-          <Link to="/profile">Profile</Link>
           <button
             type="button"
             onClick={logout}
