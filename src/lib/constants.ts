@@ -11,12 +11,12 @@ export const HACKATHON_CONFIG = {
     displayNameShort: "cmd-f",
   },
   hackcamp: {
-    dbCollectionName: "hackcamp2025",
+    dbCollectionName: "HackCamp2025",
     displayNameFull: "HackCamp 2025",
     displayNameShort: "HackCamp",
   },
   nwhacks: {
-    dbCollectionName: "nwhacks2026",
+    dbCollectionName: "nwHacks2026",
     displayNameFull: "nwHacks 2026",
     displayNameShort: "nwHacks",
   },
