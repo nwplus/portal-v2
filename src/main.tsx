@@ -7,7 +7,7 @@ import { routeTree } from "./routeTree.gen";
 
 import { useAuthStore } from "./lib/stores/auth-store.ts";
 import "./styles.css";
-import NotFound from "./components/ui/not-found";
+import NotFound from "./components/errors/not-found.tsx";
 
 useAuthStore.getState().initAuthListener();
 
