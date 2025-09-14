@@ -1,7 +1,7 @@
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/login")({
+export const Route = createFileRoute("/$hackathon/login")({
   component: RouteComponent,
   validateSearch: (search) => ({
     redirect: search.redirect as string | undefined,

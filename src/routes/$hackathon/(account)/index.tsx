@@ -1,7 +1,7 @@
 import { useHackathon, useHackathonConfig } from "@/hooks/use-hackathon";
 import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/$hackathon/")({
+export const Route = createFileRoute("/$hackathon/(account)/")({
   component: RouteComponent,
 });
 

@@ -23,7 +23,7 @@ function RouteComponent() {
           </button>
         </div>
       ) : (
-        <Link to="/login" search={{ redirect: "/profile" }}>
+        <Link to="/$hackathon/login" params={{ hackathon: "hackcamp" }} search={{ redirect: "/" }}>
           Login
         </Link>
       )}

@@ -11,20 +11,26 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
-import { Route as LoginImport } from './routes/login'
 import { Route as HackathonImport } from './routes/$hackathon'
 import { Route as IndexImport } from './routes/index'
-import { Route as HackathonIndexImport } from './routes/$hackathon/index'
+import { Route as HackathonLoginImport } from './routes/$hackathon/login'
 import { Route as HackathonAuthImport } from './routes/$hackathon/_auth'
-import { Route as HackathonAuthProfileImport } from './routes/$hackathon/_auth/profile'
+import { Route as HackathonaccountIndexImport } from './routes/$hackathon/(account)/index'
+import { Route as HackathoninformationVenueMapImport } from './routes/$hackathon/(information)/venue-map'
+import { Route as HackathoninformationScheduleImport } from './routes/$hackathon/(information)/schedule'
+import { Route as HackathoninformationHackerPackageImport } from './routes/$hackathon/(information)/hacker-package'
+import { Route as HackathoninformationFaqsImport } from './routes/$hackathon/(information)/faqs'
+import { Route as HackathonaccountSocialProfileImport } from './routes/$hackathon/(account)/social-profile'
+import { Route as HackathonaccountRewardsImport } from './routes/$hackathon/(account)/rewards'
+import { Route as HackathonAuthApplicationIndexImport } from './routes/$hackathon/_auth/application/index'
+import { Route as HackathonAuthApplicationWelcomeImport } from './routes/$hackathon/_auth/application/welcome'
+import { Route as HackathonAuthApplicationSkillsImport } from './routes/$hackathon/_auth/application/skills'
+import { Route as HackathonAuthApplicationRsvpImport } from './routes/$hackathon/_auth/application/rsvp'
+import { Route as HackathonAuthApplicationReviewImport } from './routes/$hackathon/_auth/application/review'
+import { Route as HackathonAuthApplicationQuestionnaireImport } from './routes/$hackathon/_auth/application/questionnaire'
+import { Route as HackathonAuthApplicationBasicInfoImport } from './routes/$hackathon/_auth/application/basic-info'
 
 // Create/Update Routes
-
-const LoginRoute = LoginImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRoute,
-} as any)
 
 const HackathonRoute = HackathonImport.update({
   id: '/$hackathon',
@@ -38,9 +44,9 @@ const IndexRoute = IndexImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const HackathonIndexRoute = HackathonIndexImport.update({
-  id: '/',
-  path: '/',
+const HackathonLoginRoute = HackathonLoginImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => HackathonRoute,
 } as any)
 
@@ -49,11 +55,100 @@ const HackathonAuthRoute = HackathonAuthImport.update({
   getParentRoute: () => HackathonRoute,
 } as any)
 
-const HackathonAuthProfileRoute = HackathonAuthProfileImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => HackathonAuthRoute,
+const HackathonaccountIndexRoute = HackathonaccountIndexImport.update({
+  id: '/(account)/',
+  path: '/',
+  getParentRoute: () => HackathonRoute,
 } as any)
+
+const HackathoninformationVenueMapRoute =
+  HackathoninformationVenueMapImport.update({
+    id: '/(information)/venue-map',
+    path: '/venue-map',
+    getParentRoute: () => HackathonRoute,
+  } as any)
+
+const HackathoninformationScheduleRoute =
+  HackathoninformationScheduleImport.update({
+    id: '/(information)/schedule',
+    path: '/schedule',
+    getParentRoute: () => HackathonRoute,
+  } as any)
+
+const HackathoninformationHackerPackageRoute =
+  HackathoninformationHackerPackageImport.update({
+    id: '/(information)/hacker-package',
+    path: '/hacker-package',
+    getParentRoute: () => HackathonRoute,
+  } as any)
+
+const HackathoninformationFaqsRoute = HackathoninformationFaqsImport.update({
+  id: '/(information)/faqs',
+  path: '/faqs',
+  getParentRoute: () => HackathonRoute,
+} as any)
+
+const HackathonaccountSocialProfileRoute =
+  HackathonaccountSocialProfileImport.update({
+    id: '/(account)/social-profile',
+    path: '/social-profile',
+    getParentRoute: () => HackathonRoute,
+  } as any)
+
+const HackathonaccountRewardsRoute = HackathonaccountRewardsImport.update({
+  id: '/(account)/rewards',
+  path: '/rewards',
+  getParentRoute: () => HackathonRoute,
+} as any)
+
+const HackathonAuthApplicationIndexRoute =
+  HackathonAuthApplicationIndexImport.update({
+    id: '/application/',
+    path: '/application/',
+    getParentRoute: () => HackathonAuthRoute,
+  } as any)
+
+const HackathonAuthApplicationWelcomeRoute =
+  HackathonAuthApplicationWelcomeImport.update({
+    id: '/application/welcome',
+    path: '/application/welcome',
+    getParentRoute: () => HackathonAuthRoute,
+  } as any)
+
+const HackathonAuthApplicationSkillsRoute =
+  HackathonAuthApplicationSkillsImport.update({
+    id: '/application/skills',
+    path: '/application/skills',
+    getParentRoute: () => HackathonAuthRoute,
+  } as any)
+
+const HackathonAuthApplicationRsvpRoute =
+  HackathonAuthApplicationRsvpImport.update({
+    id: '/application/rsvp',
+    path: '/application/rsvp',
+    getParentRoute: () => HackathonAuthRoute,
+  } as any)
+
+const HackathonAuthApplicationReviewRoute =
+  HackathonAuthApplicationReviewImport.update({
+    id: '/application/review',
+    path: '/application/review',
+    getParentRoute: () => HackathonAuthRoute,
+  } as any)
+
+const HackathonAuthApplicationQuestionnaireRoute =
+  HackathonAuthApplicationQuestionnaireImport.update({
+    id: '/application/questionnaire',
+    path: '/application/questionnaire',
+    getParentRoute: () => HackathonAuthRoute,
+  } as any)
+
+const HackathonAuthApplicationBasicInfoRoute =
+  HackathonAuthApplicationBasicInfoImport.update({
+    id: '/application/basic-info',
+    path: '/application/basic-info',
+    getParentRoute: () => HackathonAuthRoute,
+  } as any)
 
 // Populate the FileRoutesByPath interface
 
@@ -73,13 +168,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HackathonImport
       parentRoute: typeof rootRoute
     }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginImport
-      parentRoute: typeof rootRoute
-    }
     '/$hackathon/_auth': {
       id: '/$hackathon/_auth'
       path: ''
@@ -87,18 +175,109 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HackathonAuthImport
       parentRoute: typeof HackathonImport
     }
-    '/$hackathon/': {
-      id: '/$hackathon/'
-      path: '/'
-      fullPath: '/$hackathon/'
-      preLoaderRoute: typeof HackathonIndexImport
+    '/$hackathon/login': {
+      id: '/$hackathon/login'
+      path: '/login'
+      fullPath: '/$hackathon/login'
+      preLoaderRoute: typeof HackathonLoginImport
       parentRoute: typeof HackathonImport
     }
-    '/$hackathon/_auth/profile': {
-      id: '/$hackathon/_auth/profile'
-      path: '/profile'
-      fullPath: '/$hackathon/profile'
-      preLoaderRoute: typeof HackathonAuthProfileImport
+    '/$hackathon/(account)/rewards': {
+      id: '/$hackathon/(account)/rewards'
+      path: '/rewards'
+      fullPath: '/$hackathon/rewards'
+      preLoaderRoute: typeof HackathonaccountRewardsImport
+      parentRoute: typeof HackathonImport
+    }
+    '/$hackathon/(account)/social-profile': {
+      id: '/$hackathon/(account)/social-profile'
+      path: '/social-profile'
+      fullPath: '/$hackathon/social-profile'
+      preLoaderRoute: typeof HackathonaccountSocialProfileImport
+      parentRoute: typeof HackathonImport
+    }
+    '/$hackathon/(information)/faqs': {
+      id: '/$hackathon/(information)/faqs'
+      path: '/faqs'
+      fullPath: '/$hackathon/faqs'
+      preLoaderRoute: typeof HackathoninformationFaqsImport
+      parentRoute: typeof HackathonImport
+    }
+    '/$hackathon/(information)/hacker-package': {
+      id: '/$hackathon/(information)/hacker-package'
+      path: '/hacker-package'
+      fullPath: '/$hackathon/hacker-package'
+      preLoaderRoute: typeof HackathoninformationHackerPackageImport
+      parentRoute: typeof HackathonImport
+    }
+    '/$hackathon/(information)/schedule': {
+      id: '/$hackathon/(information)/schedule'
+      path: '/schedule'
+      fullPath: '/$hackathon/schedule'
+      preLoaderRoute: typeof HackathoninformationScheduleImport
+      parentRoute: typeof HackathonImport
+    }
+    '/$hackathon/(information)/venue-map': {
+      id: '/$hackathon/(information)/venue-map'
+      path: '/venue-map'
+      fullPath: '/$hackathon/venue-map'
+      preLoaderRoute: typeof HackathoninformationVenueMapImport
+      parentRoute: typeof HackathonImport
+    }
+    '/$hackathon/(account)/': {
+      id: '/$hackathon/(account)/'
+      path: '/'
+      fullPath: '/$hackathon/'
+      preLoaderRoute: typeof HackathonaccountIndexImport
+      parentRoute: typeof HackathonImport
+    }
+    '/$hackathon/_auth/application/basic-info': {
+      id: '/$hackathon/_auth/application/basic-info'
+      path: '/application/basic-info'
+      fullPath: '/$hackathon/application/basic-info'
+      preLoaderRoute: typeof HackathonAuthApplicationBasicInfoImport
+      parentRoute: typeof HackathonAuthImport
+    }
+    '/$hackathon/_auth/application/questionnaire': {
+      id: '/$hackathon/_auth/application/questionnaire'
+      path: '/application/questionnaire'
+      fullPath: '/$hackathon/application/questionnaire'
+      preLoaderRoute: typeof HackathonAuthApplicationQuestionnaireImport
+      parentRoute: typeof HackathonAuthImport
+    }
+    '/$hackathon/_auth/application/review': {
+      id: '/$hackathon/_auth/application/review'
+      path: '/application/review'
+      fullPath: '/$hackathon/application/review'
+      preLoaderRoute: typeof HackathonAuthApplicationReviewImport
+      parentRoute: typeof HackathonAuthImport
+    }
+    '/$hackathon/_auth/application/rsvp': {
+      id: '/$hackathon/_auth/application/rsvp'
+      path: '/application/rsvp'
+      fullPath: '/$hackathon/application/rsvp'
+      preLoaderRoute: typeof HackathonAuthApplicationRsvpImport
+      parentRoute: typeof HackathonAuthImport
+    }
+    '/$hackathon/_auth/application/skills': {
+      id: '/$hackathon/_auth/application/skills'
+      path: '/application/skills'
+      fullPath: '/$hackathon/application/skills'
+      preLoaderRoute: typeof HackathonAuthApplicationSkillsImport
+      parentRoute: typeof HackathonAuthImport
+    }
+    '/$hackathon/_auth/application/welcome': {
+      id: '/$hackathon/_auth/application/welcome'
+      path: '/application/welcome'
+      fullPath: '/$hackathon/application/welcome'
+      preLoaderRoute: typeof HackathonAuthApplicationWelcomeImport
+      parentRoute: typeof HackathonAuthImport
+    }
+    '/$hackathon/_auth/application/': {
+      id: '/$hackathon/_auth/application/'
+      path: '/application'
+      fullPath: '/$hackathon/application'
+      preLoaderRoute: typeof HackathonAuthApplicationIndexImport
       parentRoute: typeof HackathonAuthImport
     }
   }
@@ -107,11 +286,25 @@ declare module '@tanstack/react-router' {
 // Create and export the route tree
 
 interface HackathonAuthRouteChildren {
-  HackathonAuthProfileRoute: typeof HackathonAuthProfileRoute
+  HackathonAuthApplicationBasicInfoRoute: typeof HackathonAuthApplicationBasicInfoRoute
+  HackathonAuthApplicationQuestionnaireRoute: typeof HackathonAuthApplicationQuestionnaireRoute
+  HackathonAuthApplicationReviewRoute: typeof HackathonAuthApplicationReviewRoute
+  HackathonAuthApplicationRsvpRoute: typeof HackathonAuthApplicationRsvpRoute
+  HackathonAuthApplicationSkillsRoute: typeof HackathonAuthApplicationSkillsRoute
+  HackathonAuthApplicationWelcomeRoute: typeof HackathonAuthApplicationWelcomeRoute
+  HackathonAuthApplicationIndexRoute: typeof HackathonAuthApplicationIndexRoute
 }
 
 const HackathonAuthRouteChildren: HackathonAuthRouteChildren = {
-  HackathonAuthProfileRoute: HackathonAuthProfileRoute,
+  HackathonAuthApplicationBasicInfoRoute:
+    HackathonAuthApplicationBasicInfoRoute,
+  HackathonAuthApplicationQuestionnaireRoute:
+    HackathonAuthApplicationQuestionnaireRoute,
+  HackathonAuthApplicationReviewRoute: HackathonAuthApplicationReviewRoute,
+  HackathonAuthApplicationRsvpRoute: HackathonAuthApplicationRsvpRoute,
+  HackathonAuthApplicationSkillsRoute: HackathonAuthApplicationSkillsRoute,
+  HackathonAuthApplicationWelcomeRoute: HackathonAuthApplicationWelcomeRoute,
+  HackathonAuthApplicationIndexRoute: HackathonAuthApplicationIndexRoute,
 }
 
 const HackathonAuthRouteWithChildren = HackathonAuthRoute._addFileChildren(
@@ -120,12 +313,27 @@ const HackathonAuthRouteWithChildren = HackathonAuthRoute._addFileChildren(
 
 interface HackathonRouteChildren {
   HackathonAuthRoute: typeof HackathonAuthRouteWithChildren
-  HackathonIndexRoute: typeof HackathonIndexRoute
+  HackathonLoginRoute: typeof HackathonLoginRoute
+  HackathonaccountRewardsRoute: typeof HackathonaccountRewardsRoute
+  HackathonaccountSocialProfileRoute: typeof HackathonaccountSocialProfileRoute
+  HackathoninformationFaqsRoute: typeof HackathoninformationFaqsRoute
+  HackathoninformationHackerPackageRoute: typeof HackathoninformationHackerPackageRoute
+  HackathoninformationScheduleRoute: typeof HackathoninformationScheduleRoute
+  HackathoninformationVenueMapRoute: typeof HackathoninformationVenueMapRoute
+  HackathonaccountIndexRoute: typeof HackathonaccountIndexRoute
 }
 
 const HackathonRouteChildren: HackathonRouteChildren = {
   HackathonAuthRoute: HackathonAuthRouteWithChildren,
-  HackathonIndexRoute: HackathonIndexRoute,
+  HackathonLoginRoute: HackathonLoginRoute,
+  HackathonaccountRewardsRoute: HackathonaccountRewardsRoute,
+  HackathonaccountSocialProfileRoute: HackathonaccountSocialProfileRoute,
+  HackathoninformationFaqsRoute: HackathoninformationFaqsRoute,
+  HackathoninformationHackerPackageRoute:
+    HackathoninformationHackerPackageRoute,
+  HackathoninformationScheduleRoute: HackathoninformationScheduleRoute,
+  HackathoninformationVenueMapRoute: HackathoninformationVenueMapRoute,
+  HackathonaccountIndexRoute: HackathonaccountIndexRoute,
 }
 
 const HackathonRouteWithChildren = HackathonRoute._addFileChildren(
@@ -135,26 +343,62 @@ const HackathonRouteWithChildren = HackathonRoute._addFileChildren(
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$hackathon': typeof HackathonAuthRouteWithChildren
-  '/login': typeof LoginRoute
-  '/$hackathon/': typeof HackathonIndexRoute
-  '/$hackathon/profile': typeof HackathonAuthProfileRoute
+  '/$hackathon/login': typeof HackathonLoginRoute
+  '/$hackathon/rewards': typeof HackathonaccountRewardsRoute
+  '/$hackathon/social-profile': typeof HackathonaccountSocialProfileRoute
+  '/$hackathon/faqs': typeof HackathoninformationFaqsRoute
+  '/$hackathon/hacker-package': typeof HackathoninformationHackerPackageRoute
+  '/$hackathon/schedule': typeof HackathoninformationScheduleRoute
+  '/$hackathon/venue-map': typeof HackathoninformationVenueMapRoute
+  '/$hackathon/': typeof HackathonaccountIndexRoute
+  '/$hackathon/application/basic-info': typeof HackathonAuthApplicationBasicInfoRoute
+  '/$hackathon/application/questionnaire': typeof HackathonAuthApplicationQuestionnaireRoute
+  '/$hackathon/application/review': typeof HackathonAuthApplicationReviewRoute
+  '/$hackathon/application/rsvp': typeof HackathonAuthApplicationRsvpRoute
+  '/$hackathon/application/skills': typeof HackathonAuthApplicationSkillsRoute
+  '/$hackathon/application/welcome': typeof HackathonAuthApplicationWelcomeRoute
+  '/$hackathon/application': typeof HackathonAuthApplicationIndexRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/login': typeof LoginRoute
-  '/$hackathon': typeof HackathonIndexRoute
-  '/$hackathon/profile': typeof HackathonAuthProfileRoute
+  '/$hackathon': typeof HackathonaccountIndexRoute
+  '/$hackathon/login': typeof HackathonLoginRoute
+  '/$hackathon/rewards': typeof HackathonaccountRewardsRoute
+  '/$hackathon/social-profile': typeof HackathonaccountSocialProfileRoute
+  '/$hackathon/faqs': typeof HackathoninformationFaqsRoute
+  '/$hackathon/hacker-package': typeof HackathoninformationHackerPackageRoute
+  '/$hackathon/schedule': typeof HackathoninformationScheduleRoute
+  '/$hackathon/venue-map': typeof HackathoninformationVenueMapRoute
+  '/$hackathon/application/basic-info': typeof HackathonAuthApplicationBasicInfoRoute
+  '/$hackathon/application/questionnaire': typeof HackathonAuthApplicationQuestionnaireRoute
+  '/$hackathon/application/review': typeof HackathonAuthApplicationReviewRoute
+  '/$hackathon/application/rsvp': typeof HackathonAuthApplicationRsvpRoute
+  '/$hackathon/application/skills': typeof HackathonAuthApplicationSkillsRoute
+  '/$hackathon/application/welcome': typeof HackathonAuthApplicationWelcomeRoute
+  '/$hackathon/application': typeof HackathonAuthApplicationIndexRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
   '/$hackathon': typeof HackathonRouteWithChildren
-  '/login': typeof LoginRoute
   '/$hackathon/_auth': typeof HackathonAuthRouteWithChildren
-  '/$hackathon/': typeof HackathonIndexRoute
-  '/$hackathon/_auth/profile': typeof HackathonAuthProfileRoute
+  '/$hackathon/login': typeof HackathonLoginRoute
+  '/$hackathon/(account)/rewards': typeof HackathonaccountRewardsRoute
+  '/$hackathon/(account)/social-profile': typeof HackathonaccountSocialProfileRoute
+  '/$hackathon/(information)/faqs': typeof HackathoninformationFaqsRoute
+  '/$hackathon/(information)/hacker-package': typeof HackathoninformationHackerPackageRoute
+  '/$hackathon/(information)/schedule': typeof HackathoninformationScheduleRoute
+  '/$hackathon/(information)/venue-map': typeof HackathoninformationVenueMapRoute
+  '/$hackathon/(account)/': typeof HackathonaccountIndexRoute
+  '/$hackathon/_auth/application/basic-info': typeof HackathonAuthApplicationBasicInfoRoute
+  '/$hackathon/_auth/application/questionnaire': typeof HackathonAuthApplicationQuestionnaireRoute
+  '/$hackathon/_auth/application/review': typeof HackathonAuthApplicationReviewRoute
+  '/$hackathon/_auth/application/rsvp': typeof HackathonAuthApplicationRsvpRoute
+  '/$hackathon/_auth/application/skills': typeof HackathonAuthApplicationSkillsRoute
+  '/$hackathon/_auth/application/welcome': typeof HackathonAuthApplicationWelcomeRoute
+  '/$hackathon/_auth/application/': typeof HackathonAuthApplicationIndexRoute
 }
 
 export interface FileRouteTypes {
@@ -162,32 +406,70 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/$hackathon'
-    | '/login'
+    | '/$hackathon/login'
+    | '/$hackathon/rewards'
+    | '/$hackathon/social-profile'
+    | '/$hackathon/faqs'
+    | '/$hackathon/hacker-package'
+    | '/$hackathon/schedule'
+    | '/$hackathon/venue-map'
     | '/$hackathon/'
-    | '/$hackathon/profile'
+    | '/$hackathon/application/basic-info'
+    | '/$hackathon/application/questionnaire'
+    | '/$hackathon/application/review'
+    | '/$hackathon/application/rsvp'
+    | '/$hackathon/application/skills'
+    | '/$hackathon/application/welcome'
+    | '/$hackathon/application'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/$hackathon' | '/$hackathon/profile'
+  to:
+    | '/'
+    | '/$hackathon'
+    | '/$hackathon/login'
+    | '/$hackathon/rewards'
+    | '/$hackathon/social-profile'
+    | '/$hackathon/faqs'
+    | '/$hackathon/hacker-package'
+    | '/$hackathon/schedule'
+    | '/$hackathon/venue-map'
+    | '/$hackathon/application/basic-info'
+    | '/$hackathon/application/questionnaire'
+    | '/$hackathon/application/review'
+    | '/$hackathon/application/rsvp'
+    | '/$hackathon/application/skills'
+    | '/$hackathon/application/welcome'
+    | '/$hackathon/application'
   id:
     | '__root__'
     | '/'
     | '/$hackathon'
-    | '/login'
     | '/$hackathon/_auth'
-    | '/$hackathon/'
-    | '/$hackathon/_auth/profile'
+    | '/$hackathon/login'
+    | '/$hackathon/(account)/rewards'
+    | '/$hackathon/(account)/social-profile'
+    | '/$hackathon/(information)/faqs'
+    | '/$hackathon/(information)/hacker-package'
+    | '/$hackathon/(information)/schedule'
+    | '/$hackathon/(information)/venue-map'
+    | '/$hackathon/(account)/'
+    | '/$hackathon/_auth/application/basic-info'
+    | '/$hackathon/_auth/application/questionnaire'
+    | '/$hackathon/_auth/application/review'
+    | '/$hackathon/_auth/application/rsvp'
+    | '/$hackathon/_auth/application/skills'
+    | '/$hackathon/_auth/application/welcome'
+    | '/$hackathon/_auth/application/'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   HackathonRoute: typeof HackathonRouteWithChildren
-  LoginRoute: typeof LoginRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   HackathonRoute: HackathonRouteWithChildren,
-  LoginRoute: LoginRoute,
 }
 
 export const routeTree = rootRoute
@@ -201,8 +483,7 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
-        "/$hackathon",
-        "/login"
+        "/$hackathon"
       ]
     },
     "/": {
@@ -212,25 +493,87 @@ export const routeTree = rootRoute
       "filePath": "$hackathon.tsx",
       "children": [
         "/$hackathon/_auth",
-        "/$hackathon/"
+        "/$hackathon/login",
+        "/$hackathon/(account)/rewards",
+        "/$hackathon/(account)/social-profile",
+        "/$hackathon/(information)/faqs",
+        "/$hackathon/(information)/hacker-package",
+        "/$hackathon/(information)/schedule",
+        "/$hackathon/(information)/venue-map",
+        "/$hackathon/(account)/"
       ]
-    },
-    "/login": {
-      "filePath": "login.tsx"
     },
     "/$hackathon/_auth": {
       "filePath": "$hackathon/_auth.tsx",
       "parent": "/$hackathon",
       "children": [
-        "/$hackathon/_auth/profile"
+        "/$hackathon/_auth/application/basic-info",
+        "/$hackathon/_auth/application/questionnaire",
+        "/$hackathon/_auth/application/review",
+        "/$hackathon/_auth/application/rsvp",
+        "/$hackathon/_auth/application/skills",
+        "/$hackathon/_auth/application/welcome",
+        "/$hackathon/_auth/application/"
       ]
     },
-    "/$hackathon/": {
-      "filePath": "$hackathon/index.tsx",
+    "/$hackathon/login": {
+      "filePath": "$hackathon/login.tsx",
       "parent": "/$hackathon"
     },
-    "/$hackathon/_auth/profile": {
-      "filePath": "$hackathon/_auth/profile.tsx",
+    "/$hackathon/(account)/rewards": {
+      "filePath": "$hackathon/(account)/rewards.tsx",
+      "parent": "/$hackathon"
+    },
+    "/$hackathon/(account)/social-profile": {
+      "filePath": "$hackathon/(account)/social-profile.tsx",
+      "parent": "/$hackathon"
+    },
+    "/$hackathon/(information)/faqs": {
+      "filePath": "$hackathon/(information)/faqs.tsx",
+      "parent": "/$hackathon"
+    },
+    "/$hackathon/(information)/hacker-package": {
+      "filePath": "$hackathon/(information)/hacker-package.tsx",
+      "parent": "/$hackathon"
+    },
+    "/$hackathon/(information)/schedule": {
+      "filePath": "$hackathon/(information)/schedule.tsx",
+      "parent": "/$hackathon"
+    },
+    "/$hackathon/(information)/venue-map": {
+      "filePath": "$hackathon/(information)/venue-map.tsx",
+      "parent": "/$hackathon"
+    },
+    "/$hackathon/(account)/": {
+      "filePath": "$hackathon/(account)/index.tsx",
+      "parent": "/$hackathon"
+    },
+    "/$hackathon/_auth/application/basic-info": {
+      "filePath": "$hackathon/_auth/application/basic-info.tsx",
+      "parent": "/$hackathon/_auth"
+    },
+    "/$hackathon/_auth/application/questionnaire": {
+      "filePath": "$hackathon/_auth/application/questionnaire.tsx",
+      "parent": "/$hackathon/_auth"
+    },
+    "/$hackathon/_auth/application/review": {
+      "filePath": "$hackathon/_auth/application/review.tsx",
+      "parent": "/$hackathon/_auth"
+    },
+    "/$hackathon/_auth/application/rsvp": {
+      "filePath": "$hackathon/_auth/application/rsvp.tsx",
+      "parent": "/$hackathon/_auth"
+    },
+    "/$hackathon/_auth/application/skills": {
+      "filePath": "$hackathon/_auth/application/skills.tsx",
+      "parent": "/$hackathon/_auth"
+    },
+    "/$hackathon/_auth/application/welcome": {
+      "filePath": "$hackathon/_auth/application/welcome.tsx",
+      "parent": "/$hackathon/_auth"
+    },
+    "/$hackathon/_auth/application/": {
+      "filePath": "$hackathon/_auth/application/index.tsx",
       "parent": "/$hackathon/_auth"
     }
   }

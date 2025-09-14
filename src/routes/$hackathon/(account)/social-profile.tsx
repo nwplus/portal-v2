@@ -1,7 +1,7 @@
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/$hackathon/_auth/profile")({
+export const Route = createFileRoute("/$hackathon/(account)/social-profile")({
   component: RouteComponent,
 });
 
