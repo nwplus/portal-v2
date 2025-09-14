@@ -45,6 +45,12 @@
         "useArrayLiterals": "off"
       },
       "style": {
+        "useFilenamingConvention": {
+          "level": "error",
+          "options": {
+            "filenameCases": ["kebab-case"]
+          }
+        },
         "noInferrableTypes": "error",
         "noNamespace": "off",
         "useAsConstAssertion": "error",
@@ -106,6 +112,16 @@
             "noRedeclare": "off",
             "noUnsafeNegation": "off",
             "useGetterReturn": "off"
+          }
+        }
+      }
+    },
+    {
+      "include": ["src/routes/**/*"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useFilenamingConvention": "off"
           }
         }
       }
