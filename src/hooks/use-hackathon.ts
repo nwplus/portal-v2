@@ -1,10 +1,11 @@
 import { HACKATHON_CONFIG } from "@/lib/constants";
 import type { HackathonConfigItem } from "@/lib/types";
-import { Route as HackathonRoute } from "@/routes/$hackathon";
-import { useLoaderData } from "@tanstack/react-router";
+import { Route as ActiveHackathonRoute } from "@/routes/$activeHackathon";
 
 export function useHackathon() {
-  return useLoaderData({ from: HackathonRoute.id });
+  return {
+    activeHackathon: ActiveHackathonRoute.useParams().activeHackathon,
+  };
 }
 
 export function useHackathonConfig(): HackathonConfigItem {
