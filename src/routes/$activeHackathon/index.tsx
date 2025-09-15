@@ -1,4 +1,5 @@
-import { useHackathon, useHackathonConfig } from "@/hooks/use-hackathon";
+import { useHackathon } from "@/hooks/use-hackathon";
+import { useHackathonConfig } from "@/hooks/use-hackathon-config";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/$activeHackathon/")({
