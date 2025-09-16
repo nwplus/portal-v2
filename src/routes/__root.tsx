@@ -8,8 +8,8 @@ export const Route = createRootRoute({
 
     if (loading) {
       return (
-        <div className="flex h-screen w-screen items-center justify-center">
-          <div>Loading application...</div>
+        <div className="fixed inset-0 grid place-items-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-500 border-t-transparent" />
         </div>
       );
     }
@@ -17,7 +17,7 @@ export const Route = createRootRoute({
     return (
       <>
         <Outlet />
-        <TanStackRouterDevtools />
+        {import.meta.env.DEV && <TanStackRouterDevtools />}
       </>
     );
   },

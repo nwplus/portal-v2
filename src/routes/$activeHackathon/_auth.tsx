@@ -27,7 +27,7 @@ const loadAuth = () => {
   });
 };
 
-export const Route = createFileRoute("/_auth")({
+export const Route = createFileRoute("/$activeHackathon/_auth")({
   beforeLoad: async ({ location }) => {
     await loadAuth();
 

@@ -7,6 +7,7 @@ import { routeTree } from "./routeTree.gen";
 
 import { useAuthStore } from "./lib/stores/auth-store.ts";
 import "./styles.css";
+import NotFound from "./components/errors/not-found.tsx";
 
 useAuthStore.getState().initAuthListener();
 
@@ -18,6 +19,7 @@ const router = createRouter({
   scrollRestoration: true,
   defaultStructuralSharing: true,
   defaultPreloadStaleTime: 0,
+  defaultNotFoundComponent: NotFound,
 });
 
 // Register the router instance for type safety

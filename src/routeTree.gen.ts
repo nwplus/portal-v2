@@ -12,9 +12,11 @@
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as LoginImport } from './routes/login'
-import { Route as AuthImport } from './routes/_auth'
+import { Route as ActiveHackathonImport } from './routes/$activeHackathon'
 import { Route as IndexImport } from './routes/index'
-import { Route as AuthProfileImport } from './routes/_auth/profile'
+import { Route as ActiveHackathonIndexImport } from './routes/$activeHackathon/index'
+import { Route as ActiveHackathonAuthImport } from './routes/$activeHackathon/_auth'
+import { Route as ActiveHackathonAuthProfileImport } from './routes/$activeHackathon/_auth/profile'
 
 // Create/Update Routes
 
@@ -24,8 +26,9 @@ const LoginRoute = LoginImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const AuthRoute = AuthImport.update({
-  id: '/_auth',
+const ActiveHackathonRoute = ActiveHackathonImport.update({
+  id: '/$activeHackathon',
+  path: '/$activeHackathon',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -35,11 +38,24 @@ const IndexRoute = IndexImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const AuthProfileRoute = AuthProfileImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => AuthRoute,
+const ActiveHackathonIndexRoute = ActiveHackathonIndexImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ActiveHackathonRoute,
 } as any)
+
+const ActiveHackathonAuthRoute = ActiveHackathonAuthImport.update({
+  id: '/_auth',
+  getParentRoute: () => ActiveHackathonRoute,
+} as any)
+
+const ActiveHackathonAuthProfileRoute = ActiveHackathonAuthProfileImport.update(
+  {
+    id: '/profile',
+    path: '/profile',
+    getParentRoute: () => ActiveHackathonAuthRoute,
+  } as any,
+)
 
 // Populate the FileRoutesByPath interface
 
@@ -52,11 +68,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexImport
       parentRoute: typeof rootRoute
     }
-    '/_auth': {
-      id: '/_auth'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof AuthImport
+    '/$activeHackathon': {
+      id: '/$activeHackathon'
+      path: '/$activeHackathon'
+      fullPath: '/$activeHackathon'
+      preLoaderRoute: typeof ActiveHackathonImport
       parentRoute: typeof rootRoute
     }
     '/login': {
@@ -66,68 +82,112 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginImport
       parentRoute: typeof rootRoute
     }
-    '/_auth/profile': {
-      id: '/_auth/profile'
+    '/$activeHackathon/_auth': {
+      id: '/$activeHackathon/_auth'
+      path: ''
+      fullPath: '/$activeHackathon'
+      preLoaderRoute: typeof ActiveHackathonAuthImport
+      parentRoute: typeof ActiveHackathonImport
+    }
+    '/$activeHackathon/': {
+      id: '/$activeHackathon/'
+      path: '/'
+      fullPath: '/$activeHackathon/'
+      preLoaderRoute: typeof ActiveHackathonIndexImport
+      parentRoute: typeof ActiveHackathonImport
+    }
+    '/$activeHackathon/_auth/profile': {
+      id: '/$activeHackathon/_auth/profile'
       path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof AuthProfileImport
-      parentRoute: typeof AuthImport
+      fullPath: '/$activeHackathon/profile'
+      preLoaderRoute: typeof ActiveHackathonAuthProfileImport
+      parentRoute: typeof ActiveHackathonAuthImport
     }
   }
 }
 
 // Create and export the route tree
 
-interface AuthRouteChildren {
-  AuthProfileRoute: typeof AuthProfileRoute
+interface ActiveHackathonAuthRouteChildren {
+  ActiveHackathonAuthProfileRoute: typeof ActiveHackathonAuthProfileRoute
 }
 
-const AuthRouteChildren: AuthRouteChildren = {
-  AuthProfileRoute: AuthProfileRoute,
+const ActiveHackathonAuthRouteChildren: ActiveHackathonAuthRouteChildren = {
+  ActiveHackathonAuthProfileRoute: ActiveHackathonAuthProfileRoute,
 }
 
-const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+const ActiveHackathonAuthRouteWithChildren =
+  ActiveHackathonAuthRoute._addFileChildren(ActiveHackathonAuthRouteChildren)
+
+interface ActiveHackathonRouteChildren {
+  ActiveHackathonAuthRoute: typeof ActiveHackathonAuthRouteWithChildren
+  ActiveHackathonIndexRoute: typeof ActiveHackathonIndexRoute
+}
+
+const ActiveHackathonRouteChildren: ActiveHackathonRouteChildren = {
+  ActiveHackathonAuthRoute: ActiveHackathonAuthRouteWithChildren,
+  ActiveHackathonIndexRoute: ActiveHackathonIndexRoute,
+}
+
+const ActiveHackathonRouteWithChildren = ActiveHackathonRoute._addFileChildren(
+  ActiveHackathonRouteChildren,
+)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '': typeof AuthRouteWithChildren
+  '/$activeHackathon': typeof ActiveHackathonAuthRouteWithChildren
   '/login': typeof LoginRoute
-  '/profile': typeof AuthProfileRoute
+  '/$activeHackathon/': typeof ActiveHackathonIndexRoute
+  '/$activeHackathon/profile': typeof ActiveHackathonAuthProfileRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '': typeof AuthRouteWithChildren
   '/login': typeof LoginRoute
-  '/profile': typeof AuthProfileRoute
+  '/$activeHackathon': typeof ActiveHackathonIndexRoute
+  '/$activeHackathon/profile': typeof ActiveHackathonAuthProfileRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
-  '/_auth': typeof AuthRouteWithChildren
+  '/$activeHackathon': typeof ActiveHackathonRouteWithChildren
   '/login': typeof LoginRoute
-  '/_auth/profile': typeof AuthProfileRoute
+  '/$activeHackathon/_auth': typeof ActiveHackathonAuthRouteWithChildren
+  '/$activeHackathon/': typeof ActiveHackathonIndexRoute
+  '/$activeHackathon/_auth/profile': typeof ActiveHackathonAuthProfileRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '' | '/login' | '/profile'
+  fullPaths:
+    | '/'
+    | '/$activeHackathon'
+    | '/login'
+    | '/$activeHackathon/'
+    | '/$activeHackathon/profile'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '' | '/login' | '/profile'
-  id: '__root__' | '/' | '/_auth' | '/login' | '/_auth/profile'
+  to: '/' | '/login' | '/$activeHackathon' | '/$activeHackathon/profile'
+  id:
+    | '__root__'
+    | '/'
+    | '/$activeHackathon'
+    | '/login'
+    | '/$activeHackathon/_auth'
+    | '/$activeHackathon/'
+    | '/$activeHackathon/_auth/profile'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AuthRoute: typeof AuthRouteWithChildren
+  ActiveHackathonRoute: typeof ActiveHackathonRouteWithChildren
   LoginRoute: typeof LoginRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AuthRoute: AuthRouteWithChildren,
+  ActiveHackathonRoute: ActiveHackathonRouteWithChildren,
   LoginRoute: LoginRoute,
 }
 
@@ -142,25 +202,37 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
-        "/_auth",
+        "/$activeHackathon",
         "/login"
       ]
     },
     "/": {
       "filePath": "index.tsx"
     },
-    "/_auth": {
-      "filePath": "_auth.tsx",
+    "/$activeHackathon": {
+      "filePath": "$activeHackathon.tsx",
       "children": [
-        "/_auth/profile"
+        "/$activeHackathon/_auth",
+        "/$activeHackathon/"
       ]
     },
     "/login": {
       "filePath": "login.tsx"
     },
-    "/_auth/profile": {
-      "filePath": "_auth/profile.tsx",
-      "parent": "/_auth"
+    "/$activeHackathon/_auth": {
+      "filePath": "$activeHackathon/_auth.tsx",
+      "parent": "/$activeHackathon",
+      "children": [
+        "/$activeHackathon/_auth/profile"
+      ]
+    },
+    "/$activeHackathon/": {
+      "filePath": "$activeHackathon/index.tsx",
+      "parent": "/$activeHackathon"
+    },
+    "/$activeHackathon/_auth/profile": {
+      "filePath": "$activeHackathon/_auth/profile.tsx",
+      "parent": "/$activeHackathon/_auth"
     }
   }
 }
