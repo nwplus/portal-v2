@@ -1,5 +1,8 @@
+import { AppSidebarLayout } from "@/components/layout/app-sidebar";
 import { VALID_HACKATHONS } from "@/lib/constants";
-import { Outlet, createFileRoute, notFound } from "@tanstack/react-router";
+import type { HackathonInfoItem } from "@/lib/types";
+import { fetchLatestHackathons } from "@/services/latest-hackathons";
+import { Outlet, createFileRoute, notFound, useRouterState } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/$activeHackathon")({
   /**
@@ -23,5 +26,36 @@ export const Route = createFileRoute("/$activeHackathon")({
   onError: (error) => {
     if (error?.routerCode === "PARSE_PARAMS") throw notFound();
   },
-  component: () => <Outlet />,
+  /**
+   * Preloads the active hackathon config from Firestore before rendering children
+   */
+  loader: async ({ params }) => {
+    const { activeHackathon } = params;
+    const data = await fetchLatestHackathons(activeHackathon);
+    console.log("fetching hackathon config");
+    if (!data) throw new Error("Hackathon config not found");
+
+    return data satisfies HackathonInfoItem;
+  },
+  /**
+   * To prevent fetching the hackathon config too often
+   */
+  staleTime: 1000 * 60 * 60,
+  component: RouteComponent,
 });
+
+function RouteComponent() {
+  const hideSidebar = useRouterState({
+    select: (state) => state.matches.some((match) => match.staticData?.hideSidebar === true),
+  });
+
+  if (hideSidebar) {
+    return <Outlet />;
+  }
+
+  return (
+    <AppSidebarLayout>
+      <Outlet />
+    </AppSidebarLayout>
+  );
+}
