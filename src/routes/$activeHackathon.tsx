@@ -32,7 +32,6 @@ export const Route = createFileRoute("/$activeHackathon")({
   loader: async ({ params }) => {
     const { activeHackathon } = params;
     const data = await fetchLatestHackathons(activeHackathon);
-    console.log("fetching hackathon config");
     if (!data) throw new Error("Hackathon config not found");
 
     return data satisfies HackathonInfoItem;
