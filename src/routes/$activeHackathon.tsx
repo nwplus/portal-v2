@@ -1,7 +1,7 @@
 import { AppSidebarLayout } from "@/components/layout/app-sidebar";
 import { VALID_HACKATHONS } from "@/lib/constants";
 import type { HackathonInfoItem } from "@/lib/types";
-import { fetchLatestHackathons } from "@/services/latest-hackathons";
+import { fetchHackathonInfo } from "@/services/latest-hackathons";
 import { Outlet, createFileRoute, notFound, useRouterState } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/$activeHackathon")({
@@ -27,17 +27,17 @@ export const Route = createFileRoute("/$activeHackathon")({
     if (error?.routerCode === "PARSE_PARAMS") throw notFound();
   },
   /**
-   * Preloads the active hackathon config from Firestore before rendering children
+   * Preloads the active hackathon info from Firestore before rendering children
    */
   loader: async ({ params }) => {
     const { activeHackathon } = params;
-    const data = await fetchLatestHackathons(activeHackathon);
-    if (!data) throw new Error("Hackathon config not found");
+    const data = await fetchHackathonInfo(activeHackathon);
+    if (!data) throw new Error("Hackathon info not found");
 
     return data satisfies HackathonInfoItem;
   },
   /**
-   * To prevent fetching the hackathon config too often
+   * To prevent fetching hackathon info too often
    */
   staleTime: 1000 * 60 * 60,
   component: RouteComponent,
