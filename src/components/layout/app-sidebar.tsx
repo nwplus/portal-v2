@@ -1,0 +1,204 @@
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuAction,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+  useSidebar,
+} from "@/components/ui/sidebar";
+import { useHackathon } from "@/hooks/use-hackathon";
+import { useHackathonInfo } from "@/hooks/use-hackathon-info";
+import { useAuthStore } from "@/lib/stores/auth-store";
+import { Link } from "@tanstack/react-router";
+import {
+  Calendar,
+  Info,
+  LogOut,
+  Map as MapIcon,
+  PackageOpen,
+  Share2,
+  Ticket,
+  Trophy,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import type { PropsWithChildren } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+
+type MenuItem = {
+  label: string;
+  to: string;
+  icon: LucideIcon;
+};
+
+const ACCOUNT_MENU_ITEMS: MenuItem[] = [
+  {
+    label: "My ticket",
+    to: "/$activeHackathon/my-ticket",
+    icon: Ticket,
+  },
+  {
+    label: "Social profile",
+    to: "/$activeHackathon/social-profile",
+    icon: Share2,
+  },
+  {
+    label: "Rewards",
+    to: "/$activeHackathon/rewards",
+    icon: Trophy,
+  },
+];
+
+const INFORMATION_MENU_ITEMS: MenuItem[] = [
+  {
+    label: "Hacker package",
+    to: "/$activeHackathon/hacker-package",
+    icon: PackageOpen,
+  },
+  {
+    label: "Schedule",
+    to: "/$activeHackathon/schedule",
+    icon: Calendar,
+  },
+  {
+    label: "Venue map",
+    to: "/$activeHackathon/venue-map",
+    icon: MapIcon,
+  },
+  {
+    label: "FAQs",
+    to: "/$activeHackathon/faqs",
+    icon: Info,
+  },
+];
+
+export function AppSidebar() {
+  const { activeHackathon } = useHackathon();
+  const { displayNameShort, hackathonYear } = useHackathonInfo();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const logout = useAuthStore((state) => state.logout);
+  const user = useAuthStore((state) => state.user);
+  const { isMobile } = useSidebar();
+
+  return (
+    <Sidebar collapsible="icon" variant="inset">
+      <SidebarHeader className="flex h-16 flex-row items-center justify-between group-data-[collapsible=icon]:justify-center">
+        <div className="flex flex-row items-center gap-4 group-data-[collapsible=icon]:hidden">
+          <img
+            src={`/assets/sidebar/${activeHackathon}-icon.png`}
+            alt={displayNameShort}
+            className="h-full w-auto"
+          />
+          <div className="flex flex-col">
+            <div className="font-medium text-sm">{displayNameShort}</div>
+            <div className="font-medium text-sm">{hackathonYear}</div>
+          </div>
+        </div>
+        <SidebarTrigger className="size-8" />
+      </SidebarHeader>
+
+      <SidebarContent>
+        {isAuthenticated && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Account</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {ACCOUNT_MENU_ITEMS.map(({ label, to, icon: Icon }) => (
+                  <SidebarMenuItem key={to}>
+                    <SidebarMenuButton asChild tooltip={label}>
+                      <Link
+                        to={to}
+                        params={{ activeHackathon }}
+                        activeProps={{ "data-active": true }}
+                      >
+                        <Icon />
+                        <span>{label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Information</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {INFORMATION_MENU_ITEMS.map(({ label, to, icon: Icon }) => (
+                <SidebarMenuItem key={to}>
+                  <SidebarMenuButton asChild tooltip={label}>
+                    <Link
+                      to={to}
+                      params={{ activeHackathon }}
+                      activeProps={{ "data-active": true }}
+                    >
+                      <Icon />
+                      <span>{label}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+
+      {isAuthenticated && user && (
+        <SidebarFooter>
+          <SidebarMenu>
+            <SidebarMenuItem className="flex flex-row items-center justify-between">
+              <div className="flex items-center gap-2 group-data-[collapsible=icon]:hidden">
+                <Avatar className="h-8 w-8 rounded-lg">
+                  <AvatarImage src={user.photoURL ?? undefined} />
+                  <AvatarFallback className="rounded-lg">
+                    {user.displayName?.charAt(0) ?? "?"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col">
+                  <span className="truncate font-semibold text-sm">{user.displayName}</span>
+                  <span className="truncate text-xs">{user.email}</span>
+                </div>
+              </div>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <SidebarMenuAction
+                    className="static size-8 group-data-[collapsible=icon]:flex"
+                    onClick={() => logout()}
+                  >
+                    <LogOut />
+                  </SidebarMenuAction>
+                </TooltipTrigger>
+                <TooltipContent side="right" align="center" hidden={isMobile}>
+                  Log out
+                </TooltipContent>
+              </Tooltip>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
+      )}
+    </Sidebar>
+  );
+}
+
+export function AppSidebarLayout({ children }: PropsWithChildren) {
+  return (
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <main className="p-4">{children}</main>
+      </SidebarInset>
+    </SidebarProvider>
+  );
+}
