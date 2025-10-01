@@ -58,7 +58,7 @@ export const Route = createFileRoute("/$activeHackathon")({
     const activeHackathon = params.activeHackathon;
 
     const selfMatch = matches.find((m) => m.routeId === "/$activeHackathon");
-    const prev = selfMatch?.__beforeLoadContext as HackathonInfoItem | undefined;
+    const prev = selfMatch?.context as HackathonInfoItem | undefined;
 
     if (prev?.dbCollectionName?.toLowerCase().startsWith(activeHackathon)) {
       return prev satisfies Omit<HackathonRouteContext, "activeHackathon">;
