@@ -1,3 +1,4 @@
+import { PortalsScreen } from "@/components/layout/portals-screen";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { Link, createFileRoute } from "@tanstack/react-router";
 
@@ -7,21 +8,11 @@ export const Route = createFileRoute("/")({
 
 function RouteComponent() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const logout = useAuthStore((state) => state.logout);
-  const user = useAuthStore((state) => state.user);
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
+    <div className="flex min-h-screen">
       {isAuthenticated ? (
-        <div className="flex flex-col">
-          <button
-            type="button"
-            onClick={logout}
-            className="rounded bg-red-500 px-4 py-2 text-white hover:bg-red-600"
-          >
-            Logout {user?.email}
-          </button>
-        </div>
+        <PortalsScreen />
       ) : (
         <Link
           to="/$activeHackathon/login"
