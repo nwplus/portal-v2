@@ -9,6 +9,7 @@ type AuthStore = {
   isAdmin: boolean;
   loading: boolean;
   error: string | null;
+
   initAuthListener: () => void;
   signInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
@@ -24,13 +25,22 @@ export const useAuthStore = create<AuthStore>((set) => ({
 
   initAuthListener: () => {
     onAuthStateChanged(auth, async (user) => {
-      const isAdmin = user ? await checkAdminClaim(user) : false;
-      set({
-        user,
-        isAuthenticated: !!user,
-        isAdmin,
-        loading: false,
-      });
+      try {
+        const isAdmin = user ? await checkAdminClaim(user) : false;
+        set({
+          user,
+          isAuthenticated: !!user,
+          isAdmin,
+        });
+      } catch (_) {
+        set({
+          user,
+          isAuthenticated: !!user,
+          isAdmin: false,
+        });
+      } finally {
+        set({ loading: false });
+      }
     });
   },
 

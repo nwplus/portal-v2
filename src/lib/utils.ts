@@ -7,27 +7,33 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
- * Utility that waits for auth state to finish loading before proceeding.
- * @returns a promise that resolves when auth is finished loading
+ * Wait for auth to finish loading so route guards see a definite auth state on first load/refresh
+ * This intentionally blocks navigation while sign-in/out flows are in progress
+ *
+ * If `loading` is already false, resolve immediately.
+ * Otherwise:
+ *   - Subscribe to `loading` changes
+ *   - Immediately re-check after subscribing to avoid missed-event races
+ * Any completion path calls `cleanup` to clear the timeout, unsubscribe, and resolve
  */
-export const loadAuth = () => {
-  const { loading } = useAuthStore.getState();
-  if (!loading) {
-    return;
-  }
+export const loadAuth = (): Promise<void> => {
+  if (!useAuthStore.getState().loading) return Promise.resolve();
 
-  return new Promise((resolve) => {
-    const timeout = setTimeout(() => {
-      unsubscribe();
-      resolve(undefined);
-    }, 15000);
+  return new Promise<void>((resolve) => {
+    let unsub: () => void = () => {};
+    const cleanup = () => {
+      clearTimeout(timer);
+      unsub();
+      resolve();
+    };
 
-    const unsubscribe = useAuthStore.subscribe((state) => {
-      if (!state.loading) {
-        clearTimeout(timeout);
-        unsubscribe();
-        resolve(undefined);
-      }
+    // safety net of 60 seconds to avoid hanging forever
+    const timer = setTimeout(cleanup, 60_000);
+
+    unsub = useAuthStore.subscribe((state) => {
+      if (!state.loading) cleanup();
     });
+
+    if (!useAuthStore.getState().loading) cleanup();
   });
 };
