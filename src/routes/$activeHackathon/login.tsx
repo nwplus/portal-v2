@@ -20,7 +20,7 @@ function RouteComponent() {
     if (!isAuthenticated) {
       await signInWithGoogle();
     }
-    router.history.push(redirectTo);
+    router.history.replace(redirectTo);
   };
 
   return (
