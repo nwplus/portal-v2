@@ -2,6 +2,7 @@ import { db } from "@/lib/firebase/client";
 import type {
   HackerApplicationQuestion,
   HackerApplicationQuestionMap,
+  HackerApplicationSections,
 } from "@/lib/firebase/types/hacker-app-questions";
 import { type Unsubscribe, collection, onSnapshot, query } from "firebase/firestore";
 
@@ -16,16 +17,13 @@ export function subscribeToHackerAppQuestions(
   displayNameShort: string,
   callback: (data: HackerApplicationQuestionMap) => void,
 ): Unsubscribe {
-  const sections = ["BasicInfo", "Questionnaire", "Skills", "Welcome"] as const;
-  type Section = (typeof sections)[number];
-
+  const sections: HackerApplicationSections[] = ["BasicInfo", "Questionnaire", "Skills", "Welcome"];
   const buckets: HackerApplicationQuestionMap = {
     BasicInfo: [],
     Questionnaire: [],
     Skills: [],
     Welcome: [],
   };
-  const loadedSections = new Set<Section>();
   const unsubscribers: Unsubscribe[] = [];
 
   for (const section of sections) {
@@ -36,10 +34,7 @@ export function subscribeToHackerAppQuestions(
       buckets[section] = snap.docs
         .map((d) => ({ _id: d.id, ...(d.data() as HackerApplicationQuestion) }))
         .sort((a, b) => (a._id < b._id ? -1 : a._id > b._id ? 1 : 0));
-      loadedSections.add(section);
-      if (loadedSections.size === sections.length) {
-        callback({ ...buckets });
-      }
+      callback({ ...buckets });
     });
     unsubscribers.push(unsubscribe);
   }
