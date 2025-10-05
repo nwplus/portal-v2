@@ -154,7 +154,7 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      {isAuthenticated && user && (
+      {isAuthenticated && user ? (
         <SidebarFooter>
           <SidebarMenu>
             <SidebarMenuItem className="flex flex-row items-center justify-between">
@@ -184,6 +184,23 @@ export function AppSidebar() {
                   Log out
                 </TooltipContent>
               </Tooltip>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
+      ) : (
+        <SidebarFooter>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                {/* TODO: update styles */}
+                <Link
+                  to="/$activeHackathon/login"
+                  params={{ activeHackathon }}
+                  search={{ redirect: location.pathname }}
+                >
+                  Login
+                </Link>
+              </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarFooter>

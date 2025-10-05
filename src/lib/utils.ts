@@ -15,6 +15,8 @@ export function cn(...inputs: ClassValue[]) {
  *   - Subscribe to `loading` changes
  *   - Immediately re-check after subscribing to avoid missed-event races
  * Any completion path calls `cleanup` to clear the timeout, unsubscribe, and resolve
+ *
+ * @returns a promise that resolves when auth is ready or the timeout elapses
  */
 export const loadAuth = (): Promise<void> => {
   if (!useAuthStore.getState().loading) return Promise.resolve();

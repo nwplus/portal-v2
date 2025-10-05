@@ -77,23 +77,6 @@ export interface Applicant {
   };
 }
 
-/**
- * Draft shape used while the user is editing their application.
- *
- * - Guarantees container objects exist so UI can bind safely.
- * - Leaves (actual answers) are optional until user provides them.
- */
-export type ApplicantDraft = {
-  _id: string;
-  basicInfo: Partial<Applicant["basicInfo"]>;
-  skills: Partial<Applicant["skills"]>;
-  questionnaire: Partial<Applicant["questionnaire"]>;
-  // Keep these concrete to drive app flow and autosave metadata
-  status: Applicant["status"];
-  submission: NonNullable<Applicant["submission"]>;
-  termsAndConditions: Partial<Applicant["termsAndConditions"]>;
-};
-
 export type ApplicantEducationLevel =
   | "Less than Secondary / High School"
   | "Secondary / High School"

@@ -6,7 +6,7 @@ import { useEffect } from "react";
  * Subscribes to live hacker application questions for a given hackathon and
  * hydrates the application question store
  *
- * @param displayNameShort - hackathon name used in Firestore paths (e.g. `nwHacks`).
+ * @param displayNameShort - hackathon name used in firebase (e.g. `nwHacks`)
  */
 export function useApplicationQuestions(displayNameShort: string) {
   useEffect(() => {
