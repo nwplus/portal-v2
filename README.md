@@ -74,15 +74,15 @@ src/
 │   ├── firebase/
 │   │   ├── client.ts
 │   │   ├── auth.ts
-│   │   └── types.ts          # Types that match data on Firebase (e.g., Applicant, ApplicationStatus)
+│   │   └── types/            # Types that match data shape on Firebase (e.g., Applicants, HackerAppQuestions)
 │   ├── stores/               # Zustand stores
 │   └── utils.ts
 ├── routes/
 │   ├── __root.tsx
 │   ├── index.tsx
 │   ├── login.tsx
-│   ├── $hackathon.tsx
-│   └── $hackathon/           # Dynamic hackathon route directory (e.g., /cmd-f/...)
+│   ├── $activeHackathon.tsx
+│   └── $activeHackathon/     # Dynamic hackathon route directory (e.g., /cmd-f/...)
 │       ├── index.tsx
 │       ├── _auth.tsx
 │       └── _auth/            # Protected route directory
