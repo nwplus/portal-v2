@@ -1,4 +1,5 @@
 import { useHackathon } from "@/hooks/use-hackathon";
+import { useApplicantStore } from "@/lib/stores/applicant-store";
 import { useApplicationQuestionStore } from "@/lib/stores/application-question-store";
 import { Link, createFileRoute } from "@tanstack/react-router";
 
@@ -9,6 +10,7 @@ export const Route = createFileRoute("/$activeHackathon/_auth/application/skills
 function RouteComponent() {
   const { activeHackathon } = useHackathon();
   const questions = useApplicationQuestionStore((s) => s.skillsQuestions);
+  const applicantDraft = useApplicantStore((s) => s.applicantDraft);
 
   if (!questions.length) {
     return <div>No skills questions yet.</div>;
@@ -27,6 +29,23 @@ function RouteComponent() {
           </li>
         ))}
       </ul>
+
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <p>Github: {applicantDraft?.skills?.github}</p>
+          <p>Linkedin: {applicantDraft?.skills?.linkedin}</p>
+          <p>Portfolio: {applicantDraft?.skills?.portfolio}</p>
+          <p>Resume: {applicantDraft?.skills?.resume}</p>
+          <p>Num Hackathons Attended: {applicantDraft?.skills?.numHackathonsAttended}</p>
+          <p>Contribution Role: {JSON.stringify(applicantDraft?.skills?.contributionRole)}</p>
+          <p>Long Answers 1: {applicantDraft?.skills?.longAnswers1}</p>
+          <p>Long Answers 2: {applicantDraft?.skills?.longAnswers2}</p>
+          <p>Long Answers 3: {applicantDraft?.skills?.longAnswers3}</p>
+          <p>Long Answers 4: {applicantDraft?.skills?.longAnswers4}</p>
+          <p>Long Answers 5: {applicantDraft?.skills?.longAnswers5}</p>
+        </div>
+      </div>
+
       <div className="flex gap-2 pt-2">
         <Link to="/$activeHackathon/application/basic-info" params={{ activeHackathon }}>
           ← Back
