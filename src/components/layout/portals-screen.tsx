@@ -17,6 +17,21 @@ import { PageHeader, SubHeader } from "../typography";
 import { buttonVariants } from "../ui/button";
 import Lumination from "../ui/lumination";
 
+const NWPLUS_SOCIALS = [
+  {
+    icon: FacebookIcon,
+    href: "https://www.facebook.com/nwplusubc",
+  },
+  {
+    icon: InstagramIcon,
+    href: "https://www.instagram.com/nwplusubc/",
+  },
+  {
+    icon: LinkedInIcon,
+    href: "https://www.linkedin.com/company/nwplus",
+  },
+];
+
 export const generatePortals = (hackathons: Hackathon[]) => {
   const hackathonTypes = VALID_HACKATHONS.options;
   const hackathonNext = usePortalStore((state) => state.upNextHackathon);
@@ -101,20 +116,7 @@ export function PortalsScreen() {
           <NwPlusIcon />
         </div>
         <div className="flex items-center gap-2">
-          {[
-            {
-              icon: FacebookIcon,
-              href: "https:nwplus.io,",
-            },
-            {
-              icon: InstagramIcon,
-              href: "https:/nwplus.io,",
-            },
-            {
-              icon: LinkedInIcon,
-              href: "https://nwplus.io",
-            },
-          ].map((s) => {
+          {NWPLUS_SOCIALS.map((s) => {
             const LogoComponent = s.icon;
             return (
               <a
