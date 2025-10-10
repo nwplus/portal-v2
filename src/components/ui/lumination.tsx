@@ -160,5 +160,3 @@ export function Lumination({
     </div>
   );
 }
-
-export default Lumination;

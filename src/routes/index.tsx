@@ -1,4 +1,4 @@
-import { PortalsScreen } from "@/components/layout/portals-screen";
+import { SelectPortal } from "@/components/layout/select-portal";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { Link, createFileRoute } from "@tanstack/react-router";
 
@@ -12,7 +12,7 @@ function RouteComponent() {
   return (
     <div className="flex min-h-screen">
       {isAuthenticated ? (
-        <PortalsScreen />
+        <SelectPortal />
       ) : (
         <Link
           to="/$activeHackathon/login"
