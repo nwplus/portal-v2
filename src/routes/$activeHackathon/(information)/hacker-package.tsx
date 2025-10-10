@@ -1,3 +1,4 @@
+import { NoisyBackground } from "@/components/visual/noisy-background";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/$activeHackathon/(information)/hacker-package")({
@@ -5,5 +6,10 @@ export const Route = createFileRoute("/$activeHackathon/(information)/hacker-pac
 });
 
 function RouteComponent() {
-  return <div>Hello "/$activeHackathon/(information)/hacker-package"!</div>;
+  return (
+    <div className="relative h-full">
+      <NoisyBackground />
+      <div className="relative">hi</div>
+    </div>
+  );
 }

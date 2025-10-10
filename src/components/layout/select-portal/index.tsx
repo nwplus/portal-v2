@@ -1,18 +1,13 @@
+import { NoisyBackground } from "@/components/visual/noisy-background";
+import { usePortalTheme } from "@/hooks/use-portal-theme";
 import { VALID_HACKATHONS } from "@/lib/constants";
 import type { Hackathon } from "@/lib/firebase/types";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { usePortalStore } from "@/lib/stores/portal-store";
+import { getHackathonIcon } from "@/lib/utils";
 import { parseDbCollectionName, subscribeToHackathons } from "@/services/latest-hackathons";
 import { useEffect, useState } from "react";
-import {
-  CmdFIcon,
-  FacebookIcon,
-  HackCampIcon,
-  InstagramIcon,
-  LinkedInIcon,
-  NwHacksIcon,
-  NwPlusIcon,
-} from "../../icons";
+import { FacebookIcon, InstagramIcon, LinkedInIcon, NwPlusIcon } from "../../icons";
 import { PageHeader } from "../../typography";
 import { PortalEntrance } from "./portal-entrance";
 
@@ -47,25 +42,7 @@ export function SelectPortal() {
 
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden">
-      <div className="absolute top-0 left-0 z-0 h-full w-full select-none overflow-hidden object-cover opacity-10">
-        {/* biome-ignore lint/a11y/noSvgWithoutTitle: to hide browser tooltip */}
-        <svg
-          className="h-full w-full"
-          preserveAspectRatio="none"
-          viewBox="0 0 800 800"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <filter id="noiseFilter">
-            <feTurbulence
-              type="fractalNoise"
-              baseFrequency="55"
-              numOctaves="3"
-              stitchTiles="stitch"
-            />
-          </filter>
-          <rect width="100%" height="100%" filter="url(#noiseFilter)" />
-        </svg>
-      </div>
+      <NoisyBackground opacity={1} />
       <div className="absolute top-0 left-0 z-10 flex w-full justify-between p-6">
         <div className="opacity-50">
           <NwPlusIcon />
@@ -124,22 +101,7 @@ const useGeneratedPortals = (hackathons: Hackathon[]) => {
   const hackathonWebsites = usePortalStore((state) => state.hackathonWebsite);
   const hackathonDates = usePortalStore((state) => state.hackathonWeekend);
   const upNextHackathon = usePortalStore((state) => state.upNextHackathon);
-  // TODO: we can add these gradients to the portal doc; waiting for later
-  //    features to see what would make the most sense for how these colors
-  //    will exist in the doc.
-  const hackathonGradients = {
-    hackcamp: ["#AF6D30", "#AF7A30", "#494E1C"],
-    nwhacks: ["#592463", "#AF4B50", "#551860"],
-    "cmd-f": ["#0B6596", "#44855D", "#56BEBE"],
-  };
-
-  const getHackathonIcon = (hackathonId: string): React.ComponentType => {
-    const lowerName = hackathonId.toLowerCase();
-    if (lowerName.includes("nwhacks")) return NwHacksIcon;
-    if (lowerName.includes("cmd-f")) return CmdFIcon;
-    if (lowerName.includes("hackcamp")) return HackCampIcon;
-    return NwHacksIcon;
-  };
+  const portalTheme = usePortalTheme();
 
   const portals = hackathonTypes
     .map(
@@ -163,7 +125,7 @@ const useGeneratedPortals = (hackathons: Hackathon[]) => {
         logo: getHackathonIcon(hackathon._id),
         dates: hackathonDates ? hackathonDates[validHackathonName] : "",
         website: hackathonWebsites ? hackathonWebsites[validHackathonName] : "",
-        gradients: hackathonGradients ? hackathonGradients[validHackathonName] : [],
+        gradients: portalTheme ? portalTheme[validHackathonName].portalGradient : [],
         isUpNext: upNextHackathon ? upNextHackathon[validHackathonName] : false,
       };
     });

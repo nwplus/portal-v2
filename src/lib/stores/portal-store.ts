@@ -16,6 +16,7 @@ type PortalStore = {
   hackathonEnd?: HackathonsInfoMap;
   hackathonStart?: HackathonsInfoMap;
   hackathonWeekend?: HackathonsInfoMap;
+  hackathonTheme?: HackathonsDataMap;
   hackingEnd?: HackathonsInfoMap;
   hackingStart?: HackathonsInfoMap;
   judgingOpen?: HackathonsFlagMap;

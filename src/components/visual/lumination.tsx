@@ -1,3 +1,5 @@
+import { cn } from "@/lib/utils";
+
 interface LuminationProps {
   name: string;
   count?: number;
@@ -52,7 +54,7 @@ export function Lumination({
   const ellipses = generateEllipseData();
 
   return (
-    <div className={`duration-500 ${className}`} style={{ width, height }}>
+    <div className={cn("duration-500", className)} style={{ width, height }}>
       {/* biome-ignore lint/a11y/noSvgWithoutTitle: to hide from browser tooltip */}
       <svg
         width={width}
@@ -119,7 +121,7 @@ export function Lumination({
           );
         })}
 
-        <g className="opacity-0 transition-opacity duration-700 ease-out group-hover:opacity-100">
+        <g className="fixed top-0 left-0 z-0 h-full w-full opacity-0 transition-opacity duration-700 ease-out group-hover:opacity-100">
           {Array.from({ length: 8 }).map((_, i) => {
             const x = rng() * width;
             const y = rng() * height;

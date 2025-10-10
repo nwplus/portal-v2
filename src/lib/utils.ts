@@ -1,3 +1,4 @@
+import { CmdFIcon, HackCampIcon, NwHacksIcon } from "@/components/icons";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { useAuthStore } from "./stores/auth-store";
@@ -38,4 +39,12 @@ export const loadAuth = (): Promise<void> => {
 
     if (!useAuthStore.getState().loading) cleanup();
   });
+};
+
+export const getHackathonIcon = (hackathonId: string): React.ComponentType => {
+  const lowerName = hackathonId.toLowerCase();
+  if (lowerName.includes("nwhacks")) return NwHacksIcon;
+  if (lowerName.includes("cmd-f")) return CmdFIcon;
+  if (lowerName.includes("hackcamp")) return HackCampIcon;
+  return NwHacksIcon;
 };

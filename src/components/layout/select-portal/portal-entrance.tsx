@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { SubHeader } from "../../typography";
 import { buttonVariants } from "../../ui/button";
-import { Lumination } from "../../ui/lumination";
+import { Lumination } from "../../visual/lumination";
 
 type PortalEntranceProps = {
   logo: React.ComponentType;
