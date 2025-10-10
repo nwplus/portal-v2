@@ -1,12 +1,29 @@
 export const NwHacksIcon = () => (
-  <svg width="70" height="87" viewBox="0 0 70 87" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <title>nwHacks logo</title>
-    <path d="M57.9917 11.8881L69.9132 0V85.5941L57.9917 73.7063V11.8881Z" fill="black" />
-    <path d="M0.766602 0.59436L12.6881 11.8881V73.7063L0.766602 85.5941V0.59436Z" fill="black" />
+  <svg width="39" height="45" viewBox="0 0 39 45" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <title>nwHacks</title>
     <path
-      d="M0.767578 85.5934L29.9751 57.0623L21.6301 48.7406L0.768085 68.3561L0.767578 85.5934Z"
-      fill="black"
+      fill-rule="evenodd"
+      clip-rule="evenodd"
+      d="M32.1738 6.80446L38.7327 0.792969L38.7327 44.0757L32.1738 38.0642L32.1738 6.80446Z"
+      fill="white"
     />
-    <path d="M0.766602 16.6433V0L69.9113 68.9505V85.5941L0.766602 16.6433Z" fill="black" />
+    <path
+      fill-rule="evenodd"
+      clip-rule="evenodd"
+      d="M0.689453 1.09375L7.24833 6.80466L7.24833 38.0644L0.689453 44.0759L0.689453 1.09375Z"
+      fill="white"
+    />
+    <path
+      fill-rule="evenodd"
+      clip-rule="evenodd"
+      d="M0.691142 44.0745L16.7604 29.6469L12.1692 25.4389L0.691423 35.3579L0.691142 44.0745Z"
+      fill="white"
+    />
+    <path
+      fill-rule="evenodd"
+      clip-rule="evenodd"
+      d="M0.689453 9.20905V0.792969L38.7309 35.6596V44.0757L0.689453 9.20905Z"
+      fill="white"
+    />
   </svg>
 );
