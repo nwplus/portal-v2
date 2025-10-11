@@ -9,8 +9,10 @@ type PortalEntranceProps = {
   href: string;
   dates: string;
   isUpNext: boolean;
+  isPassed: boolean;
   website: string;
   gradients?: string[];
+  index?: number;
 };
 
 export function PortalEntrance({
@@ -19,8 +21,10 @@ export function PortalEntrance({
   href,
   dates,
   isUpNext,
+  isPassed,
   website,
   gradients,
+  index,
 }: PortalEntranceProps) {
   const LogoComponent = logo;
 
@@ -39,8 +43,10 @@ export function PortalEntrance({
         width={500}
         height={500}
         className={cn(
-          "-translate-x-1/2 -translate-y-1/2 absolute inset-0 top-1/2 left-1/2 z-0 overflow-visible opacity-70 md:scale-100",
-          !isUpNext ? "opacity-0 md:opacity-70" : "scale-80",
+          "md:-translate-x-1/2 md:-translate-y-1/2 absolute inset-0 top-1/2 left-1/2 z-0 overflow-visible opacity-70 md:scale-100",
+          !!isUpNext && "-translate-x-1/2 -translate-y-1/2 scale-80",
+          !isUpNext && index === 2 && "-translate-x-[80%] -translate-y-[30%] scale-60",
+          !isUpNext && index !== 2 && "-translate-x-[10%] -translate-y-[50%] scale-50",
         )}
       />
       <div
@@ -62,24 +68,26 @@ export function PortalEntrance({
           <div className="font-medium text-lg">{dates}</div>
         </div>
 
-        <div className="flex w-full flex-col items-center gap-2">
-          <div>{isUpNext ? "Applications open!" : "Portal closed"}</div>
-          {website && (
-            <a
-              href={website}
-              target="_blank"
-              rel="noreferrer noopener"
-              className={buttonVariants({ variant: "ethereal" })}
-            >
-              Visit website
-            </a>
-          )}
+        <div className="flex w-full select-none flex-col items-center">
+          <div className="pb-0 md:pb-2">
+            {isUpNext ? "Applications open!" : isPassed ? "Portal closed" : "Opening soon"}
+          </div>
           {isUpNext ? (
             <a href={href} className={buttonVariants({ variant: "ethereal" })}>
               Enter portal
             </a>
           ) : (
             <></>
+          )}
+          {website && (
+            <a
+              href={website}
+              target="_blank"
+              rel="noreferrer noopener"
+              className={cn(buttonVariants({ variant: "link" }), "pb-0 opacity-70")}
+            >
+              Visit website
+            </a>
           )}
         </div>
       </div>

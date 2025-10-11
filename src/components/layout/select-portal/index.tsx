@@ -39,6 +39,7 @@ export function SelectPortal() {
   }, []);
 
   const portals = useGeneratedPortals(hackathons);
+  const titleGradientStyle = usePortalTextGradientStyle();
 
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden">
@@ -64,9 +65,9 @@ export function SelectPortal() {
           })}
         </div>
       </div>
-      <div className="absolute top-0 w-full pt-20 md:pt-30">
-        <PageHeader className="text-center font-mono font-semibold tracking-tight">
-          select a portal
+      <div className="absolute top-0 w-full pt-24 md:pt-30">
+        <PageHeader className="select-none text-center font-mono font-semibold tracking-tight">
+          select a <span style={titleGradientStyle}>portal</span>
         </PageHeader>
       </div>
       <div className="flex h-full w-full flex-col justify-center overflow-hidden px-0 md:px-6">
@@ -76,15 +77,17 @@ export function SelectPortal() {
           ))}
         </div>
       </div>
-      <div className="absolute bottom-10 flex w-full flex-col items-center opacity-50">
-        <div>Signed in as {user?.email}</div>
-        <div className="flex gap-1">
-          <div>Not you?</div>
-          <button type="button" onClick={logout} className="underline">
-            Log out
-          </button>
+      {!!user && (
+        <div className="absolute bottom-10 z-100 flex w-full select-none flex-col items-center opacity-50">
+          <div>Signed in as {user?.email}</div>
+          <div className="flex gap-1">
+            <div>Not you?</div>
+            <button type="button" onClick={logout} className="cursor-pointer hover:underline">
+              Log out
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -99,7 +102,8 @@ export function SelectPortal() {
 const useGeneratedPortals = (hackathons: Hackathon[]) => {
   const hackathonTypes = VALID_HACKATHONS.options;
   const hackathonWebsites = usePortalStore((state) => state.hackathonWebsite);
-  const hackathonDates = usePortalStore((state) => state.hackathonWeekend);
+  const hackathonWeekend = usePortalStore((state) => state.hackathonWeekend);
+  const hackathonStart = usePortalStore((state) => state.hackathonStart);
   const upNextHackathon = usePortalStore((state) => state.upNextHackathon);
   const portalTheme = usePortalTheme();
 
@@ -115,20 +119,57 @@ const useGeneratedPortals = (hackathons: Hackathon[]) => {
           })[0],
     )
     .filter(Boolean)
-    .map((hackathon) => {
+    .map((hackathon, index) => {
       const hackathonName = parseDbCollectionName(hackathon._id).displayNameShort;
-      const validHackathonName = hackathonName.toLowerCase() as keyof typeof upNextHackathon;
+      const hackathonId = hackathonName.toLowerCase() as keyof typeof upNextHackathon;
+
+      const hackathonStartDate = hackathonStart ? new Date(hackathonStart[hackathonId]) : null;
+      const dates =
+        hackathonWeekend && hackathonStartDate
+          ? `${hackathonWeekend ? hackathonWeekend[hackathonId] : ""}, ${hackathonStartDate.getFullYear()}`
+          : "";
+      const isPassed = hackathonStartDate ? hackathonStartDate.getTime() > Date.now() : false;
+
       return {
         hackathon: hackathonName,
         href: `/${hackathonName}`,
         id: hackathon._id,
         logo: getHackathonIcon(hackathon._id),
-        dates: hackathonDates ? hackathonDates[validHackathonName] : "",
-        website: hackathonWebsites ? hackathonWebsites[validHackathonName] : "",
-        gradients: portalTheme ? portalTheme[validHackathonName].portalGradient : [],
-        isUpNext: upNextHackathon ? upNextHackathon[validHackathonName] : false,
+        dates,
+        website: hackathonWebsites ? hackathonWebsites[hackathonId] : "",
+        gradients: portalTheme ? portalTheme[hackathonId].portalGradient : [],
+        isUpNext: upNextHackathon ? upNextHackathon[hackathonId] : false,
+        isPassed,
+        index,
       };
     });
 
   return portals;
+};
+
+/**
+ * Used to turn a text glowy and gradient using first color of
+ *  each hackathon gradients. For glow to work properly, the
+ *  gradient color must be in hex format.
+ *
+ * @returns an inline style object to turn a text gradient
+ */
+const usePortalTextGradientStyle = () => {
+  const portalTheme = usePortalTheme();
+  if (!portalTheme) return undefined;
+  const hackathons = VALID_HACKATHONS.options;
+  const gradients = [];
+  for (let i = 0; i < 3; i++) {
+    const hackathon = hackathons[i];
+    gradients.push((portalTheme[hackathon].portalGradient ?? ["#FFFFFF"])[0]);
+  }
+  return {
+    background: `linear-gradient(135deg, ${gradients[0]} 0%, ${gradients[1]} 50%, ${gradients[2]} 100%)`,
+    WebkitBackgroundClip: "text",
+    backgroundClip: "text",
+    WebkitTextFillColor: "transparent",
+    color: "transparent",
+    filter: "brightness(1.5)",
+    textShadow: `0 0 10px ${gradients[1]}50, 0 0 20px ${gradients[1]}50, 0 0 30px ${gradients[1]}50`,
+  };
 };

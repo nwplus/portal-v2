@@ -20,7 +20,7 @@ export function NoisyBackground({
     >
       {/* biome-ignore lint/a11y/noSvgWithoutTitle: to hide browser tooltip */}
       <svg
-        className="h-full w-full mix-blend-color-burn contrast-150"
+        className="h-full w-full mix-blend-color-burn contrast-200"
         preserveAspectRatio="none"
         viewBox="0 0 1000 1000"
         xmlns="http://www.w3.org/2000/svg"
