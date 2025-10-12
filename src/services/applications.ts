@@ -25,6 +25,7 @@ export function subscribeToHackerAppQuestions(
     Welcome: [],
   };
   const unsubscribers: Unsubscribe[] = [];
+  const loadedSections = new Set<string>();
 
   for (const section of sections) {
     const sectionCollection = collection(db, "HackerAppQuestions", displayNameShort, section);
@@ -34,7 +35,11 @@ export function subscribeToHackerAppQuestions(
       buckets[section] = snap.docs
         .map((d) => ({ _id: d.id, ...(d.data() as HackerApplicationQuestion) }))
         .sort((a, b) => (a._id < b._id ? -1 : a._id > b._id ? 1 : 0));
-      callback({ ...buckets });
+
+      loadedSections.add(section);
+      if (loadedSections.size === sections.length) {
+        callback({ ...buckets });
+      }
     });
     unsubscribers.push(unsubscribe);
   }
