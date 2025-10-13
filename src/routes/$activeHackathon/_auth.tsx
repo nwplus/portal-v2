@@ -14,10 +14,14 @@ export const Route = createFileRoute("/$activeHackathon/_auth")({
           activeHackathon: params.activeHackathon,
         },
         search: {
-          redirect: location.href,
+          redirect: location.pathname,
         },
       });
     }
   },
-  component: () => <Outlet />,
+  component: () => <RouteComponent />,
 });
+
+function RouteComponent() {
+  return <Outlet />;
+}
