@@ -2,55 +2,69 @@ import { useApplicantStore } from "@/lib/stores/applicant-store";
 import { createOrMergeApplicant } from "@/services/applicants";
 import { useEffect, useState } from "react";
 
+const AUTOSAVE_INTERVAL = 15_000;
+
 /**
- * Starts an autosave loop for the local applicant draft, saves when draft is dirty + not submitted
+ * Self-scheduling autosave for the local applicant draft
+ * - runs immediately on mount, then schedules the next run after each completes
+ * - saves only when the draft is dirty and not submitted
  *
  * @param dbCollectionName - firestore collection name for the active hackathon
- * @param uid - user id; autosave is disabled if undefined
- * @param intervalMs - autosave interval in milliseconds (default: 15s)
+ * @param uid - user id
  * @returns true while a save is in-flight, otherwise false
  */
-export function useApplicantAutosave(
-  dbCollectionName: string,
-  uid: string | undefined,
-  intervalMs = 15_000,
-) {
+export function useApplicantAutosave(dbCollectionName: string, uid: string | undefined) {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!uid) return;
 
     let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
 
-    const interval = setInterval(async () => {
-      const state = useApplicantStore.getState();
-      const draft = state.applicantDraft;
+    const schedule = () => {
+      if (cancelled) return;
+      timer = setTimeout(() => void tick(), AUTOSAVE_INTERVAL);
+    };
 
-      if (!draft || !state.dirty || !!draft.submission?.submitted) return;
+    const tick = async () => {
+      if (cancelled) return;
+      const { applicantDraft, dirty, setDirty, setLastLocalSaveAt } = useApplicantStore.getState();
+
+      // skip when no changes to save or already submitted, check again later
+      if (!dirty || !applicantDraft || !!applicantDraft.submission?.submitted) {
+        schedule();
+        return;
+      }
 
       try {
-        if (!cancelled) {
-          setSaving(true); // prevent multiple saves from being triggered in quick succession
-        }
-
-        await createOrMergeApplicant(dbCollectionName, uid, draft);
+        setSaving(true);
+        await createOrMergeApplicant(dbCollectionName, uid, applicantDraft);
 
         // only clear dirty if no new edits occurred during the save
         const { applicantDraft: currentDraft } = useApplicantStore.getState();
-        useApplicantStore.setState({ dirty: currentDraft !== draft, lastLocalSaveAt: Date.now() });
-      } catch {
-        console.error("[applicant][autosave] save failed", { _id: draft._id });
+        setDirty(currentDraft !== applicantDraft);
+        setLastLocalSaveAt(Date.now());
+      } catch (error) {
+        console.error("[applicant][autosave] save failed", {
+          _id: applicantDraft?._id,
+          error: error,
+        });
       } finally {
-        if (!cancelled) {
-          setSaving(false);
-        }
+        if (!cancelled) setSaving(false);
+        schedule();
       }
-    }, intervalMs);
+    };
+
+    void tick();
+
     return () => {
       cancelled = true;
-      clearInterval(interval);
+      if (timer) {
+        clearTimeout(timer);
+      }
     };
-  }, [dbCollectionName, uid, intervalMs]);
+  }, [dbCollectionName, uid]);
 
   return saving;
 }

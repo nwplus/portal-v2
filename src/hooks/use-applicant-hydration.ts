@@ -9,7 +9,7 @@ import { useEffect, useRef } from "react";
  * - if user does not have an existing application: creates a minimal draft from HACKER_APPLICATION_TEMPLATE
  *
  * @param dbCollectionName - firestore collection name for the active hackathon
- * @param uid - user id; hydration is skipped if undefined
+ * @param uid - user id
  */
 export function useApplicantHydration(dbCollectionName: string, uid: string | undefined) {
   const setApplicant = useApplicantStore((s) => s.setApplicant);
@@ -41,6 +41,7 @@ export function useApplicantHydration(dbCollectionName: string, uid: string | un
         } else {
           const draft = { ...HACKER_APPLICATION_TEMPLATE, _id: uid };
           await createOrMergeApplicant(dbCollectionName, uid, draft);
+
           if (!cancelled) {
             setApplicant(draft);
             initializedRef.current = true;

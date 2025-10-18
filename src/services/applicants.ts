@@ -17,10 +17,7 @@ import {
  * @param uid - firebase auth user id (also used as the document id)
  * @returns firestore document reference to the applicant's doc
  */
-export function getApplicantRef(
-  dbCollectionName: string,
-  uid: string,
-): DocumentReference<DocumentData> {
+function getApplicantRef(dbCollectionName: string, uid: string): DocumentReference<DocumentData> {
   return doc(db, "Hackathons", dbCollectionName, "Applicants", uid);
 }
 
@@ -61,7 +58,7 @@ export async function createOrMergeApplicant(
 ): Promise<void> {
   const ref = getApplicantRef(dbCollectionName, uid);
 
-  // prepare a normalized `submission` patch
+  // prepare a normalized submission patch
   type Submission = NonNullable<Applicant["submission"]>;
   const fromDraft = (draft.submission ?? {}) as Partial<Submission>;
   const { submitted: _omitSubmitted, ...submissionRest } = fromDraft;

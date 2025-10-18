@@ -20,7 +20,7 @@ function RouteComponent() {
 
   useApplicationQuestions(displayNameShort);
   useApplicantHydration(dbCollectionName, user?.uid);
-  const saving = useApplicantAutosave(dbCollectionName, user?.uid, 30_000);
+  const saving = useApplicantAutosave(dbCollectionName, user?.uid);
 
   // TODO: style
   const saveIndicator = useMemo(() => {
