@@ -1,4 +1,5 @@
 import { AppSidebarLayout } from "@/components/layout/app-sidebar";
+import { HackathonStylesheet } from "@/components/layout/hackathon-stylesheet";
 import { VALID_HACKATHONS } from "@/lib/constants";
 import type { HackathonInfoItem, HackathonName } from "@/lib/types";
 import { fetchHackathonInfo } from "@/services/latest-hackathons";
@@ -76,13 +77,16 @@ function RouteComponent() {
     select: (state) => state.matches.some((match) => match.staticData?.hideSidebar === true),
   });
 
+  const routeContent = (
+    <>
+      <HackathonStylesheet />
+      <Outlet />
+    </>
+  );
+
   if (hideSidebar) {
-    return <Outlet />;
+    return routeContent;
   }
 
-  return (
-    <AppSidebarLayout>
-      <Outlet />
-    </AppSidebarLayout>
-  );
+  return <AppSidebarLayout>{routeContent}</AppSidebarLayout>;
 }

@@ -18,6 +18,7 @@ import {
 import { useHackathon } from "@/hooks/use-hackathon";
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
 import { useAuthStore } from "@/lib/stores/auth-store";
+import { getHackathonIcon } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import {
   Calendar,
@@ -33,6 +34,7 @@ import type { LucideIcon } from "lucide-react";
 import type { PropsWithChildren } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { NoisyBackground } from "../visual/noisy-background";
 
 type MenuItem = {
   label: string;
@@ -88,18 +90,17 @@ export function AppSidebar() {
   const logout = useAuthStore((state) => state.logout);
   const user = useAuthStore((state) => state.user);
   const { isMobile } = useSidebar();
+  const LogoComponent = getHackathonIcon(activeHackathon);
 
   return (
     <Sidebar collapsible="icon" variant="inset">
-      <SidebarHeader className="flex h-16 flex-row items-center justify-between group-data-[collapsible=icon]:justify-center">
+      <SidebarHeader className="relative flex h-16 flex-row items-center justify-between group-data-[collapsible=icon]:justify-center">
         <div className="flex flex-row items-center gap-4 group-data-[collapsible=icon]:hidden">
-          <img
-            src={`/assets/sidebar/${activeHackathon}-icon.png`}
-            alt={displayNameShort}
-            className="h-full w-auto"
-          />
+          <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-foreground/10 p-[9px]">
+            <LogoComponent />
+          </div>
           <div className="flex flex-col">
-            <div className="font-medium text-sm">{displayNameShort}</div>
+            <div className="font-bold text-sm">{displayNameShort}</div>
             <div className="font-medium text-sm">{hackathonYear}</div>
           </div>
         </div>
@@ -213,9 +214,8 @@ export function AppSidebarLayout({ children }: PropsWithChildren) {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset>
-        <main className="p-4">{children}</main>
-      </SidebarInset>
+      <NoisyBackground className="bg-[#1E1E1E]" />
+      <SidebarInset>{children}</SidebarInset>
     </SidebarProvider>
   );
 }

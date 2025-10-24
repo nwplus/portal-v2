@@ -1,6 +1,7 @@
 import { db } from "@/lib/firebase/client";
+import type { Hackathon } from "@/lib/firebase/types";
 import type { HackathonInfoItem } from "@/lib/types";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, onSnapshot, query } from "firebase/firestore";
 
 /**
  * Parses info from the firestore collection name
@@ -52,3 +53,21 @@ export async function fetchHackathonInfo(
     hackathonYear,
   };
 }
+
+/**
+ * Subscribes to the Hackathons collection, which contains all hackathons
+ *
+ * @param callback - The callback used on collection change
+ * @returns a listener function to be called on dismount
+ */
+export const subscribeToHackathons = (callback: (docs: Hackathon[]) => void) =>
+  onSnapshot(query(collection(db, "Hackathons")), (querySnapshot) => {
+    const hackathons = [];
+    for (const doc of querySnapshot.docs) {
+      hackathons.push({
+        ...(doc.data() as unknown as Hackathon),
+        _id: doc.id,
+      });
+    }
+    callback(hackathons);
+  });
