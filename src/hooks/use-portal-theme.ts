@@ -5,6 +5,7 @@ type HackathonPortalTheme = Record<
   string,
   {
     portalGradient?: string[];
+    portalSvg?: string;
     primary?: string;
     primaryForeground?: string;
     secondary?: string;

@@ -128,7 +128,7 @@ const useGeneratedPortals = (hackathons: Hackathon[]) => {
         hackathonWeekend && hackathonStartDate
           ? `${hackathonWeekend ? hackathonWeekend[hackathonId] : ""}, ${hackathonStartDate.getFullYear()}`
           : "";
-      const isPassed = hackathonStartDate ? hackathonStartDate.getTime() > Date.now() : false;
+      const isPassed = hackathonStartDate ? hackathonStartDate.getTime() < Date.now() : false;
 
       return {
         hackathon: hackathonName,
@@ -138,6 +138,7 @@ const useGeneratedPortals = (hackathons: Hackathon[]) => {
         dates,
         website: hackathonWebsites ? hackathonWebsites[hackathonId] : "",
         gradients: portalTheme ? portalTheme[hackathonId].portalGradient : [],
+        portalSvg: portalTheme ? portalTheme[hackathonId].portalSvg : "",
         isUpNext: upNextHackathon ? upNextHackathon[hackathonId] : false,
         isPassed,
         index,

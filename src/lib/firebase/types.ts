@@ -48,5 +48,4 @@ export interface Hackathon {
     registrationOpen?: boolean;
     test?: boolean;
   };
-  sponsorPrizes?: string[];
 }
