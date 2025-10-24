@@ -96,7 +96,7 @@ export function Lumination({
           ))}
         </defs>
 
-        {ellipses.map((ellipse, index) => (
+        {ellipses.map((_, index) => (
           <rect
             key={`${index}_${name}`}
             x="0"
