@@ -8,8 +8,10 @@ import { routeTree } from "./routeTree.gen";
 import { useAuthStore } from "./lib/stores/auth-store.ts";
 import "./styles.css";
 import NotFound from "./components/errors/not-found.tsx";
+import { usePortalStore } from "./lib/stores/portal-store.ts";
 
 useAuthStore.getState().initAuthListener();
+usePortalStore.getState().subscribeToPortal();
 
 // Create a new router instance
 const router = createRouter({
