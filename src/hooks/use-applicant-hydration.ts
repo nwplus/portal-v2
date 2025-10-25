@@ -1,5 +1,6 @@
 import { HACKER_APPLICATION_TEMPLATE } from "@/lib/constants";
 import { useApplicantStore } from "@/lib/stores/applicant-store";
+import { useAuthStore } from "@/lib/stores/auth-store";
 import { createOrMergeApplicant, fetchApplicant } from "@/services/applicants";
 import { useEffect, useRef } from "react";
 
@@ -13,6 +14,7 @@ import { useEffect, useRef } from "react";
  */
 export function useApplicantHydration(dbCollectionName: string, uid: string | undefined) {
   const setApplicant = useApplicantStore((s) => s.setApplicant);
+  const user = useAuthStore((s) => s.user);
   const reset = useApplicantStore((s) => s.reset);
   const initializedRef = useRef(false); // guard to avoid duplicate fetch/create on re-render
 
@@ -39,7 +41,16 @@ export function useApplicantHydration(dbCollectionName: string, uid: string | un
           setApplicant(normalizedApplicant);
           initializedRef.current = true;
         } else {
-          const draft = { ...HACKER_APPLICATION_TEMPLATE, _id: uid };
+          const nameParts = (user?.displayName ?? "").trim().split(/\s+/).filter(Boolean);
+          const draft = {
+            ...HACKER_APPLICATION_TEMPLATE,
+            _id: uid,
+            basicInfo: {
+              legalFirstName: nameParts[0] ?? "",
+              legalLastName: nameParts.slice(1).join(" ") ?? "",
+              email: user?.email ?? "",
+            },
+          };
           await createOrMergeApplicant(dbCollectionName, uid, draft);
 
           if (!cancelled) {
@@ -60,5 +71,5 @@ export function useApplicantHydration(dbCollectionName: string, uid: string | un
     return () => {
       cancelled = true;
     };
-  }, [dbCollectionName, setApplicant, uid, reset]);
+  }, [dbCollectionName, setApplicant, uid, reset, user]);
 }
