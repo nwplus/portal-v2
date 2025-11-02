@@ -4,11 +4,23 @@ import { useApplicationQuestions } from "@/hooks/use-application-questions";
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
 import { useApplicantStore } from "@/lib/stores/applicant-store";
 import { useAuthStore } from "@/lib/stores/auth-store";
+import { fetchApplicant } from "@/services/applicants";
 import { Outlet, createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
 
 export const Route = createFileRoute("/$activeHackathon/_auth/application")({
   staticData: { hideSidebar: true },
+  loader: async ({ context }) => {
+    const { dbCollectionName } = context;
+    const { user } = useAuthStore.getState();
+
+    if (!user?.uid || !dbCollectionName) {
+      return { applicant: null };
+    }
+
+    const applicant = await fetchApplicant(dbCollectionName, user.uid);
+    return { applicant };
+  },
   component: () => <RouteComponent />,
 });
 
@@ -17,9 +29,15 @@ function RouteComponent() {
   const dirty = useApplicantStore((s) => s.dirty);
   const applicantDraft = useApplicantStore((s) => s.applicantDraft);
   const user = useAuthStore((s) => s.user);
+  const { applicant } = Route.useLoaderData();
 
   useApplicationQuestions(displayNameShort);
-  useApplicantHydration(dbCollectionName, user?.uid);
+  useApplicantHydration({
+    dbCollectionName,
+    applicant,
+    user,
+  });
+
   const saving = useApplicantAutosave(dbCollectionName, user?.uid);
 
   // TODO: style

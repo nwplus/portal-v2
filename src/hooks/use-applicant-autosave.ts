@@ -32,7 +32,12 @@ export function useApplicantAutosave(dbCollectionName: string, uid: string | und
       const { applicantDraft, dirty, setDirty, setLastLocalSaveAt } = useApplicantStore.getState();
 
       // skip when no changes to save or already submitted, check again later
-      if (!dirty || !applicantDraft || !!applicantDraft.submission?.submitted) {
+      if (
+        !dirty ||
+        !applicantDraft ||
+        applicantDraft._id !== uid ||
+        !!applicantDraft.submission?.submitted
+      ) {
         schedule();
         return;
       }
@@ -46,7 +51,7 @@ export function useApplicantAutosave(dbCollectionName: string, uid: string | und
         setDirty(currentDraft !== applicantDraft);
         setLastLocalSaveAt(Date.now());
       } catch (error) {
-        console.error("[applicant][autosave] save failed", {
+        console.error("applicant autosave failed", {
           _id: applicantDraft?._id,
           error: error,
         });

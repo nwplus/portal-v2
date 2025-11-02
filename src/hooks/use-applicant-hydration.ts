@@ -1,75 +1,74 @@
-import { HACKER_APPLICATION_TEMPLATE } from "@/lib/constants";
-import { useApplicantStore } from "@/lib/stores/applicant-store";
-import { useAuthStore } from "@/lib/stores/auth-store";
-import { createOrMergeApplicant, fetchApplicant } from "@/services/applicants";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 
-/**
- * Hydrates the local applicant draft for the given hackathon/user
- * - if user has an existing application: fetches the existing doc
- * - if user does not have an existing application: creates a minimal draft from HACKER_APPLICATION_TEMPLATE
- *
- * @param dbCollectionName - firestore collection name for the active hackathon
- * @param uid - user id
- */
-export function useApplicantHydration(dbCollectionName: string, uid: string | undefined) {
+import { HACKER_APPLICATION_TEMPLATE } from "@/lib/constants";
+import type { Applicant, ApplicantDraft } from "@/lib/firebase/types/applicants";
+import { useApplicantStore } from "@/lib/stores/applicant-store";
+import { createOrMergeApplicant } from "@/services/applicants";
+
+import type { User } from "firebase/auth";
+
+interface Params {
+  dbCollectionName: string | undefined;
+  applicant: Applicant | null;
+  user: User | null;
+}
+
+export function useApplicantHydration(params: Params) {
+  const { dbCollectionName, applicant, user } = params;
   const setApplicant = useApplicantStore((s) => s.setApplicant);
-  const user = useAuthStore((s) => s.user);
-  const reset = useApplicantStore((s) => s.reset);
-  const initializedRef = useRef(false); // guard to avoid duplicate fetch/create on re-render
+  const resetApplicant = useApplicantStore((s) => s.reset);
 
   useEffect(() => {
+    const uid = user?.uid;
+
+    if (!dbCollectionName || !uid) {
+      resetApplicant();
+      return;
+    }
+
+    resetApplicant();
+
+    if (applicant) {
+      const normalizedApplicant: ApplicantDraft = {
+        ...applicant,
+        submission: {
+          submitted: applicant.submission?.submitted ?? false,
+          ...(applicant.submission ?? {}),
+        },
+      };
+
+      setApplicant(normalizedApplicant);
+      return;
+    }
+
     let cancelled = false;
 
-    async function hydrate() {
-      if (!uid || initializedRef.current) return;
+    const nameParts = (user?.displayName ?? "").trim().split(/\s+/).filter(Boolean);
+    const draft: ApplicantDraft = {
+      ...HACKER_APPLICATION_TEMPLATE,
+      _id: uid,
+      basicInfo: {
+        legalFirstName: nameParts[0] ?? "",
+        legalLastName: nameParts.slice(1).join(" ") ?? "",
+        email: user?.email ?? "",
+      },
+    };
 
+    const hydrate = async () => {
       try {
-        const existingApplicant = await fetchApplicant(dbCollectionName, uid);
-
-        if (cancelled) return;
-
-        if (existingApplicant) {
-          const normalizedApplicant = {
-            ...existingApplicant,
-            submission: {
-              submitted: existingApplicant.submission?.submitted ?? false,
-              ...(existingApplicant.submission ?? {}),
-            },
-          } as const;
-
-          setApplicant(normalizedApplicant);
-          initializedRef.current = true;
-        } else {
-          const nameParts = (user?.displayName ?? "").trim().split(/\s+/).filter(Boolean);
-          const draft = {
-            ...HACKER_APPLICATION_TEMPLATE,
-            _id: uid,
-            basicInfo: {
-              legalFirstName: nameParts[0] ?? "",
-              legalLastName: nameParts.slice(1).join(" ") ?? "",
-              email: user?.email ?? "",
-            },
-          };
-          await createOrMergeApplicant(dbCollectionName, uid, draft);
-
-          if (!cancelled) {
-            setApplicant(draft);
-            initializedRef.current = true;
-          }
+        await createOrMergeApplicant(dbCollectionName, uid, draft);
+        if (!cancelled) {
+          setApplicant(draft);
         }
       } catch (error) {
         console.error("Applicant hydration failed", error);
-        initializedRef.current = false;
       }
-    }
+    };
 
-    reset();
-    initializedRef.current = false;
-    hydrate();
+    void hydrate();
 
     return () => {
       cancelled = true;
     };
-  }, [dbCollectionName, setApplicant, uid, reset, user]);
+  }, [dbCollectionName, applicant, resetApplicant, setApplicant, user]);
 }
