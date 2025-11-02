@@ -27,6 +27,7 @@ function RouteComponent() {
           </li>
         ))}
       </ul>
+
       <div className="flex gap-2 pt-2">
         <Link to="/$activeHackathon/application" params={{ activeHackathon }}>
           ← Back

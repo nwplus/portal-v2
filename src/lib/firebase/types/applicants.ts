@@ -1,3 +1,4 @@
+import type { DeepPartial } from "@/lib/types";
 import type { Timestamp } from "firebase/firestore";
 
 /**
@@ -120,3 +121,10 @@ export type ApplicationStatus =
   | "acceptedNoResponseYet"
   | "acceptedAndAttending"
   | "acceptedUnRSVP";
+
+// Local working copy during editing/autosave (not from firebase)
+export type ApplicantDraft = DeepPartial<Applicant> & {
+  _id: string;
+  status: { applicationStatus: ApplicationStatus } & DeepPartial<Applicant["status"]>;
+  submission: { submitted: boolean } & DeepPartial<NonNullable<Applicant["submission"]>>;
+};
