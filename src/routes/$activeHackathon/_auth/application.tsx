@@ -1,11 +1,13 @@
+import { GradientBackground } from "@/components/layout/gradient-background";
 import { useApplicantAutosave } from "@/hooks/use-applicant-autosave";
 import { useApplicantHydration } from "@/hooks/use-applicant-hydration";
 import { useApplicationQuestions } from "@/hooks/use-application-questions";
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
+import type { BackgroundGradientPosition } from "@/lib/firebase/types";
 import { useApplicantStore } from "@/lib/stores/applicant-store";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { fetchApplicant } from "@/services/applicants";
-import { Outlet, createFileRoute } from "@tanstack/react-router";
+import { Outlet, createFileRoute, useMatches } from "@tanstack/react-router";
 import { useMemo } from "react";
 
 export const Route = createFileRoute("/$activeHackathon/_auth/application")({
@@ -30,6 +32,11 @@ function RouteComponent() {
   const applicantDraft = useApplicantStore((s) => s.applicantDraft);
   const user = useAuthStore((s) => s.user);
   const { applicant } = Route.useLoaderData();
+  const matches = useMatches();
+
+  // the gradient position is different for the rsvp page
+  const isRsvpPage = matches.some((match) => match.routeId.endsWith("/rsvp"));
+  const gradientPosition: BackgroundGradientPosition = isRsvpPage ? "topMiddle" : "bottomRight";
 
   useApplicationQuestions(displayNameShort);
   useApplicantHydration({
@@ -59,14 +66,16 @@ function RouteComponent() {
 
   return (
     <div className="h-svh w-full bg-sidebar p-4">
-      <main className="h-full w-full overflow-y-auto overflow-x-hidden rounded-xl bg-background p-4 shadow-sm">
+      <GradientBackground
+        gradientPosition={gradientPosition}
+        className="h-full w-full overflow-y-auto overflow-x-hidden rounded-xl p-4 shadow-sm"
+      >
         <div className="mb-3 flex items-center justify-between">
           <div className="font-medium text-sm">Application</div>
           {saveIndicator}
         </div>
-
         <Outlet />
-      </main>
+      </GradientBackground>
     </div>
   );
 }

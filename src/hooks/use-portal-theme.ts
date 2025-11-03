@@ -1,19 +1,7 @@
+import type { HackathonPortalThemeEntry } from "@/lib/firebase/types";
 import { usePortalStore } from "@/lib/stores/portal-store";
 
-// TODO: move to the types file (currently being modified by another active PR)
-type HackathonPortalTheme = Record<
-  string,
-  {
-    portalGradient?: string[];
-    portalSvg?: string;
-    primary?: string;
-    primaryForeground?: string;
-    secondary?: string;
-    secondaryForeground?: string;
-    tertiary?: string;
-    tertiaryForeground?: string;
-  }
->;
+type HackathonPortalTheme = Record<string, HackathonPortalThemeEntry>;
 
 export const usePortalTheme = () => {
   const portalTheme = usePortalStore(

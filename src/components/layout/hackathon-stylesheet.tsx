@@ -6,6 +6,11 @@ export const HackathonStylesheet = () => {
   const portalTheme = usePortalTheme();
   const s = portalTheme[activeHackathon];
 
+  const bottomMiddleGradient = s?.backgroundGradients?.bottomMiddle;
+  const bottomRightGradient = s?.backgroundGradients?.bottomRight;
+  const topMiddleGradient = s?.backgroundGradients?.topMiddle;
+  const topLeftGradient = s?.backgroundGradients?.topLeft;
+
   return (
     <style>{`
       :root {
@@ -15,7 +20,11 @@ export const HackathonStylesheet = () => {
         ${s?.primary && `--theme-primary: ${s.primary};`}
         ${s?.secondary && `--theme-secondary: ${s.secondary};`}
         ${s?.tertiary && `--theme-tertiary: ${s.tertiary};`}
-      }
+        }
+        ${bottomMiddleGradient ? `.bg-radial-gradient-bottom-middle { ${bottomMiddleGradient} }` : ""}
+        ${bottomRightGradient ? `.bg-radial-gradient-bottom-right { ${bottomRightGradient} }` : ""}
+        ${topMiddleGradient ? `.bg-radial-gradient-top-middle { ${topMiddleGradient} }` : ""}
+        ${topLeftGradient ? `.bg-radial-gradient-top-left { ${topLeftGradient} }` : ""}
     `}</style>
   );
 };

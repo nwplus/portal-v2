@@ -214,7 +214,7 @@ export function AppSidebarLayout({ children }: PropsWithChildren) {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <NoisyBackground className="bg-[#1E1E1E]" />
+      <NoisyBackground className="bg-[#111118]" />
       <SidebarInset>{children}</SidebarInset>
     </SidebarProvider>
   );
