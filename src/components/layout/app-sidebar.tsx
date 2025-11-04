@@ -161,7 +161,7 @@ export function AppSidebar() {
             <SidebarMenuItem className="flex flex-row items-center justify-between">
               <div className="flex items-center gap-2 group-data-[collapsible=icon]:hidden">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.photoURL ?? undefined} />
+                  <AvatarImage src={user.photoURL ?? undefined} referrerPolicy="no-referrer" />
                   <AvatarFallback className="rounded-lg">
                     {user.displayName?.charAt(0) ?? "?"}
                   </AvatarFallback>
@@ -214,7 +214,7 @@ export function AppSidebarLayout({ children }: PropsWithChildren) {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <NoisyBackground className="bg-[#111118]" />
+      {/* <NoisyBackground className="bg-[#111118]" /> */}
       <SidebarInset>{children}</SidebarInset>
     </SidebarProvider>
   );
