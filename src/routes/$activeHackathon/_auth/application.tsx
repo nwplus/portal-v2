@@ -65,7 +65,7 @@ function RouteComponent() {
   }, [applicantDraft, dirty, saving]);
 
   return (
-    <div className="h-svh w-full bg-sidebar p-4">
+    <div className="h-svh w-full bg-pane-container p-4">
       <GradientBackground
         gradientPosition={gradientPosition}
         className="h-full w-full overflow-y-auto overflow-x-hidden rounded-xl p-4 shadow-sm"

@@ -14,12 +14,12 @@ export const HackathonStylesheet = () => {
   return (
     <style>{`
       :root {
-        ${s?.primary && `--sidebar-accent: ${s.primary};`}
-        ${s?.primaryForeground && `--sidebar-accent-foreground: ${s.primaryForeground};`}
+        // ${s?.primary && `--sidebar-accent: ${s.primary};`}
+        // ${s?.primaryForeground && `--accent-foreground: ${s.primaryForeground};`}
 
-        ${s?.primary && `--theme-primary: ${s.primary};`}
-        ${s?.secondary && `--theme-secondary: ${s.secondary};`}
-        ${s?.tertiary && `--theme-tertiary: ${s.tertiary};`}
+        // ${s?.primary && `--theme-primary: ${s.primary};`}
+        // ${s?.secondary && `--theme-secondary: ${s.secondary};`}
+        // ${s?.tertiary && `--theme-tertiary: ${s.tertiary};`}
         }
         ${bottomMiddleGradient ? `.bg-radial-gradient-bottom-middle { ${bottomMiddleGradient} }` : ""}
         ${bottomRightGradient ? `.bg-radial-gradient-bottom-right { ${bottomRightGradient} }` : ""}

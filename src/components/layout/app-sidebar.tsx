@@ -22,6 +22,7 @@ import { getHackathonIcon } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import {
   Calendar,
+  ForkKnife,
   Info,
   LogOut,
   Map as MapIcon,
@@ -83,10 +84,19 @@ const INFORMATION_MENU_ITEMS: MenuItem[] = [
   },
 ];
 
+const INTERNAL_MENU_ITEMS: MenuItem[] = [
+  {
+    label: "Charcuterie",
+    to: "/$activeHackathon/charcuterie",
+    icon: ForkKnife,
+  },
+];
+
 export function AppSidebar() {
   const { activeHackathon } = useHackathon();
   const { displayNameShort, hackathonYear } = useHackathonInfo();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isAdmin = useAuthStore((state) => state.isAdmin);
   const logout = useAuthStore((state) => state.logout);
   const user = useAuthStore((state) => state.user);
   const { isMobile } = useSidebar();
@@ -153,6 +163,30 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {import.meta.env.DEV && isAuthenticated && isAdmin && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Internal</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {INTERNAL_MENU_ITEMS.map(({ label, to, icon: Icon }) => (
+                  <SidebarMenuItem key={to}>
+                    <SidebarMenuButton asChild tooltip={label}>
+                      <Link
+                        to={to}
+                        params={{ activeHackathon }}
+                        activeProps={{ "data-active": true }}
+                      >
+                        <Icon />
+                        <span>{label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       {isAuthenticated && user ? (

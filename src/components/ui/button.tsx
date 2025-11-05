@@ -5,17 +5,22 @@ import type * as React from "react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium text-sm outline-none transition-all focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  "inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium text-sm outline-none transition-all focus-visible:border-subtle focus-visible:ring-[3px] focus-visible:ring-subtle/50 disabled:pointer-events-none aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        destructive:
-          "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40",
-        outline:
-          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+        primary:
+          "bg-button-primary text-primary-foreground hover:bg-button-primary/90 hover:ring-[1.5px] hover:ring-subtle hover:ring-inset disabled:bg-button-disabled disabled:text-secondary-foreground",
+        secondary:
+          "border border-[1px] border-subtle bg-button-secondary text-primary-foreground hover:bg-button-secondary/80 hover:ring-[1.5px] hover:ring-subtle hover:ring-inset disabled:text-secondary-foreground",
+        tertiary:
+          "border border-button-tertiary text-tertiary-button-foreground shadow-xs hover:border-button-tertiary/80 hover:text-tertiary-button-foreground/80 disabled:border-button-disabled disabled:text-secondary-foreground",
+        error:
+          "border border-danger text-error-foreground hover:bg-danger/90 hover:text-primary-foreground focus-visible:ring-danger/60",
+        ghost:
+          "text-primary-foreground hover:text-primary-foreground/80 disabled:text-secondary-foreground",
+        "ghost-error":
+          "text-error-foreground hover:text-error-foreground/80 disabled:text-secondary-foreground",
         link: "text-primary underline-offset-4 hover:underline",
         ethereal:
           "border-2 border-foreground/30 bg-transparent shadow-xs hover:bg-foreground/20 hover:shadow-[0_0px_20px_rgba(255,255,255,0.5)] dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
@@ -28,7 +33,7 @@ const buttonVariants = cva(
       },
     },
     defaultVariants: {
-      variant: "default",
+      variant: "primary",
       size: "default",
     },
   },
