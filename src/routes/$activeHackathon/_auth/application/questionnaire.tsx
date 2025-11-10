@@ -22,7 +22,7 @@ function RouteComponent() {
           <li key={q._id} className="rounded-md border p-3">
             <div className="font-medium">{q.title ?? "Untitled"}</div>
             {q.description ? (
-              <div className="text-muted-foreground text-sm">{q.description}</div>
+              <div className="text-sm text-text-secondary">{q.description}</div>
             ) : null}
           </li>
         ))}

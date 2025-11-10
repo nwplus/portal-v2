@@ -61,7 +61,7 @@ function RouteComponent() {
       statusText = "Unsaved changes";
     }
 
-    return <span className="text-muted-foreground text-xs">{statusText}</span>;
+    return <span className="text-text-secondary text-xs">{statusText}</span>;
   }, [applicantDraft, dirty, saving]);
 
   return (

@@ -32,7 +32,7 @@
           }
         }
       },
-      "a11y": { "useAltText": "off" },
+      "a11y": { "useAltText": "off", "noSvgWithoutTitle": "off" },
       "complexity": {
         "noBannedTypes": "error",
         "noUselessTypeConstraint": "error",

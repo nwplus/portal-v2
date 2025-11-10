@@ -1,6 +1,5 @@
 export function cmdfPortal() {
   return (
-    // biome-ignore lint/a11y/noSvgWithoutTitle: <explanation>
     <svg
       width="859"
       height="926"

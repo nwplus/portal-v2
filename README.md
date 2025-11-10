@@ -25,8 +25,35 @@ pnpm dev
 ```
 
 ## Styling, formatting, and linting
-This project uses [Tailwind CSS](https://tailwindcss.com/) v4 for styling.
 
+### Design System 📸 (important)
+**(Almost) all UI colours should use our Figma-derived colur tokens.** We run [Tailwind CSS](https://tailwindcss.com/) v4 with custom colour utilities that mirror design system variables declared in `src/styles.css`. **Do not use default Tailwind/shadcn palettes.**
+
+Our color tokens follow this naming convention:
+- **Text colors:** `text-text-{variant}` → `text-text-primary`, `text-text-secondary`
+- **Background colors:** `bg-bg-{variant}` → `bg-bg-main`, `bg-bg-pane-container`
+- **Border colors:** `border-border-{variant}` → `border-border-subtle`, `border-border-active`
+
+The double prefix (e.g., `text-text-*`) is intentional - it's how Tailwind generates utilities from our `--color-text-*` theme tokens. There are a couple of exceptions for one-off components, but in general, please try to follow this convention and use the predefined variables to maintain parity with Figma.
+
+When adding a new component from shadcn or another component library, replace all of the colour styles in the component with our own.
+
+**Examples:**
+```tsx
+// Text
+<h1 className="text-text-primary">Primary Heading</h1>
+<p className="text-text-secondary">Secondary text</p>
+<span className="text-text-error">Error message</span>
+
+// Backgrounds
+<div className="bg-bg-pane-container border border-border-subtle">
+  ...
+</div>
+```
+
+💡 See `src/styles.css` (`@theme inline` section) for the complete list of available color tokens.
+
+### Formatting and Linting
 This project uses [Biome](https://biomejs.dev/) for linting and formatting. The following scripts are available:
 
 ```bash

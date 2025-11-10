@@ -1,4 +1,5 @@
-import { useAuthStore } from "@/lib/stores/auth-store"; // No longer need initAuthListener here
+import { NoisyBackground } from "@/components/visual/noisy-background";
+import { useAuthStore } from "@/lib/stores/auth-store";
 import { usePortalStore } from "@/lib/stores/portal-store";
 import { Outlet, createRootRoute } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
@@ -17,10 +18,11 @@ export const Route = createRootRoute({
     }
 
     return (
-      <>
+      <div className="relative min-h-screen bg-background">
         <Outlet />
         {import.meta.env.DEV && <TanStackRouterDevtools position="bottom-right" />}
-      </>
+        <NoisyBackground className="pointer-events-none z-50" opacity={0.15} />
+      </div>
     );
   },
 });

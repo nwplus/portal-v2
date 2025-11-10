@@ -1,6 +1,5 @@
 export function HackCampPortal() {
   return (
-    // biome-ignore lint/a11y/noSvgWithoutTitle: <explanation>
     <svg
       width="841"
       height="1025"

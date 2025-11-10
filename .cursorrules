@@ -1,0 +1,28 @@
+# nwPlus Portal v2 - Cursor Rules
+
+## Design System & Styling
+
+### Color Tokens
+**ALWAYS use Figma-derived color tokens from our custom design system.**
+
+Our color tokens use a double-prefix naming convention:
+- Text colors: `text-text-primary`, `text-text-secondary`, `text-text-error`, `text-text-accent`
+- Background colors: `bg-bg-main`, `bg-bg-pane-container`, `bg-bg-button-primary`, `bg-bg-button-secondary`
+- Border colors: `border-border-subtle`, `border-border-active`, `border-border-danger`, `border-border-accent`
+
+The double prefix (e.g., `text-text-*`) is INTENTIONAL - it's how Tailwind v4 generates utilities from our `--color-text-*` theme tokens.
+
+### Examples of CORRECT usage:
+```tsx
+<h1 className="text-text-primary">Heading</h1>
+<p className="text-text-secondary">Description</p>
+<div className="bg-bg-pane-container border border-border-subtle">...</div>
+<button className="bg-bg-button-primary text-text-primary">Submit</button>
+```
+
+### NEVER use:
+❌ Default Tailwind colors: `bg-gray-900`, `text-white`, `border-slate-200`
+❌ shadcn defaults: `bg-background`, `text-foreground`, `bg-primary`
+
+
+Reference: See `src/styles.css` (`@theme inline` section) for complete token list.

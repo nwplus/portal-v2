@@ -18,7 +18,7 @@ import {
 import { useHackathon } from "@/hooks/use-hackathon";
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
 import { useAuthStore } from "@/lib/stores/auth-store";
-import { getHackathonIcon } from "@/lib/utils";
+import { getSidebarHackathonIcon } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import {
   Calendar,
@@ -35,7 +35,6 @@ import type { LucideIcon } from "lucide-react";
 import type { PropsWithChildren } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import { NoisyBackground } from "../visual/noisy-background";
 
 type MenuItem = {
   label: string;
@@ -100,13 +99,13 @@ export function AppSidebar() {
   const logout = useAuthStore((state) => state.logout);
   const user = useAuthStore((state) => state.user);
   const { isMobile } = useSidebar();
-  const LogoComponent = getHackathonIcon(activeHackathon);
+  const LogoComponent = getSidebarHackathonIcon(activeHackathon);
 
   return (
     <Sidebar collapsible="icon" variant="inset">
       <SidebarHeader className="relative flex h-16 flex-row items-center justify-between group-data-[collapsible=icon]:justify-center">
         <div className="flex flex-row items-center gap-4 group-data-[collapsible=icon]:hidden">
-          <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-foreground/10 p-[9px]">
+          <div className="flex aspect-square size-8 items-center justify-center rounded-lg">
             <LogoComponent />
           </div>
           <div className="flex flex-col">
@@ -248,7 +247,6 @@ export function AppSidebarLayout({ children }: PropsWithChildren) {
   return (
     <SidebarProvider>
       <AppSidebar />
-      {/* <NoisyBackground className="bg-[#111118]" /> */}
       <SidebarInset>{children}</SidebarInset>
     </SidebarProvider>
   );

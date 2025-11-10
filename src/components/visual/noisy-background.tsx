@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
  */
 export function NoisyBackground({
   className,
-  opacity = 0.5,
+  opacity = 0.2,
 }: {
   className?: string;
   opacity?: number;
@@ -14,19 +14,23 @@ export function NoisyBackground({
   return (
     <div
       className={cn(
-        "absolute top-0 left-0 z-0 h-full w-full select-none overflow-hidden bg-background object-cover",
+        "pointer-events-none absolute top-0 left-0 z-0 h-full w-full select-none overflow-hidden object-cover",
         className,
       )}
     >
-      {/* biome-ignore lint/a11y/noSvgWithoutTitle: to hide browser tooltip */}
       <svg
-        className="h-full w-full mix-blend-color-burn contrast-200"
+        className="h-full w-full mix-blend-normal brightness-50 contrast-200"
         preserveAspectRatio="none"
         viewBox="0 0 1000 1000"
         xmlns="http://www.w3.org/2000/svg"
       >
         <filter id="noooise">
-          <feTurbulence type="fractalNoise" baseFrequency="5" numOctaves="3" stitchTiles="stitch" />
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.75"
+            numOctaves="2"
+            stitchTiles="stitch"
+          />
         </filter>
         <rect width="100%" height="100%" filter="url(#noooise)" opacity={opacity} />
       </svg>
