@@ -1,4 +1,3 @@
-import { NoisyBackground } from "@/components/visual/noisy-background";
 import { usePortalTheme } from "@/hooks/use-portal-theme";
 import { VALID_HACKATHONS } from "@/lib/constants";
 import type { Hackathon } from "@/lib/firebase/types";
@@ -43,7 +42,6 @@ export function SelectPortal() {
 
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden">
-      <NoisyBackground opacity={1} />
       <div className="absolute top-0 left-0 z-10 flex w-full justify-between p-6">
         <div className="opacity-50">
           <NwPlusIcon />

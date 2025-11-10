@@ -1,7 +1,5 @@
 import { Link, useCanGoBack, useRouter } from "@tanstack/react-router";
-
-const LINK_STYLES =
-  "text-sm text-primary underline hover:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+import { Button } from "../ui/button";
 
 export default function NotFound() {
   const router = useRouter();
@@ -12,13 +10,16 @@ export default function NotFound() {
       <div className="flex flex-col gap-2 text-center">
         <h1 className="font-semibold text-2xl">Page not found</h1>
         {canGoBack ? (
-          <button onClick={() => router.history.back()} type="button" className={LINK_STYLES}>
+          // theoretically won't ever be hit because of type safety LOL
+          <Button variant="link" onClick={() => router.history.back()}>
             Go back
-          </button>
+          </Button>
         ) : (
-          <Link to="/" className={LINK_STYLES} preload="intent">
-            Return to home
-          </Link>
+          <Button asChild variant="link">
+            <Link to="/" preload="intent">
+              Return to home
+            </Link>
+          </Button>
         )}
       </div>
     </div>

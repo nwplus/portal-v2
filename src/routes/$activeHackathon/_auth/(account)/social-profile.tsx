@@ -1,3 +1,4 @@
+import { GradientBackground } from "@/components/layout/gradient-background";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/$activeHackathon/_auth/(account)/social-profile")({
@@ -5,5 +6,9 @@ export const Route = createFileRoute("/$activeHackathon/_auth/(account)/social-p
 });
 
 function RouteComponent() {
-  return <div>Hello "/$activeHackathon/_auth/(account)/social-profile"!</div>;
+  return (
+    <GradientBackground gradientPosition="bottomMiddle">
+      Hello "/$activeHackathon/_auth/(account)/social-profile"!
+    </GradientBackground>
+  );
 }

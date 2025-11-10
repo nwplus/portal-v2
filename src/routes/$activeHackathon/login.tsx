@@ -1,3 +1,4 @@
+import { GradientBackground } from "@/components/layout/gradient-background";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 
@@ -24,10 +25,10 @@ function RouteComponent() {
   };
 
   return (
-    <div>
+    <GradientBackground gradientPosition="bottomMiddle">
       <button type="button" onClick={handleSignIn}>
         Login
       </button>
-    </div>
+    </GradientBackground>
   );
 }

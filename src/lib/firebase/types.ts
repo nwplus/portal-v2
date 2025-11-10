@@ -49,3 +49,18 @@ export interface Hackathon {
     test?: boolean;
   };
 }
+
+export type BackgroundGradientPosition = "bottomMiddle" | "bottomRight" | "topMiddle" | "topLeft";
+
+export type HackathonPortalThemeEntry = {
+  portalGradient?: string[];
+  portalSvg?: string;
+  primary?: string;
+  primaryForeground?: string;
+  secondary?: string;
+  secondaryForeground?: string;
+  tertiary?: string;
+  tertiaryForeground?: string;
+  backgroundGradients?: Partial<Record<BackgroundGradientPosition, string>>;
+};
+export type HackathonPortalTheme = Record<string, HackathonPortalThemeEntry>;

@@ -67,7 +67,6 @@ export function Lumination({
       )}
       style={{ width, height }}
     >
-      {/* biome-ignore lint/a11y/noSvgWithoutTitle: to disable browser tooltip */}
       <svg
         width={width}
         height={height}

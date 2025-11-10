@@ -1,4 +1,4 @@
-import { NoisyBackground } from "@/components/visual/noisy-background";
+import { GradientBackground } from "@/components/layout/gradient-background";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/$activeHackathon/(information)/hacker-package")({
@@ -7,9 +7,8 @@ export const Route = createFileRoute("/$activeHackathon/(information)/hacker-pac
 
 function RouteComponent() {
   return (
-    <div className="relative h-full">
-      <NoisyBackground />
+    <GradientBackground gradientPosition="bottomMiddle">
       <div className="relative">hi</div>
-    </div>
+    </GradientBackground>
   );
 }

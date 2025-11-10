@@ -1,3 +1,4 @@
+import { GradientBackground } from "@/components/layout/gradient-background";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/$activeHackathon/(information)/faqs")({
@@ -5,5 +6,9 @@ export const Route = createFileRoute("/$activeHackathon/(information)/faqs")({
 });
 
 function RouteComponent() {
-  return <div>Hello "/$activeHackathon/(information)/faqs"!</div>;
+  return (
+    <GradientBackground gradientPosition="bottomMiddle">
+      Hello "/$activeHackathon/(information)/faqs"!
+    </GradientBackground>
+  );
 }

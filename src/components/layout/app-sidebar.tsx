@@ -18,10 +18,11 @@ import {
 import { useHackathon } from "@/hooks/use-hackathon";
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
 import { useAuthStore } from "@/lib/stores/auth-store";
-import { getHackathonIcon } from "@/lib/utils";
+import { getSidebarHackathonIcon } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import {
   Calendar,
+  ForkKnife,
   Info,
   LogOut,
   Map as MapIcon,
@@ -34,7 +35,6 @@ import type { LucideIcon } from "lucide-react";
 import type { PropsWithChildren } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import { NoisyBackground } from "../visual/noisy-background";
 
 type MenuItem = {
   label: string;
@@ -83,20 +83,29 @@ const INFORMATION_MENU_ITEMS: MenuItem[] = [
   },
 ];
 
+const INTERNAL_MENU_ITEMS: MenuItem[] = [
+  {
+    label: "Charcuterie",
+    to: "/$activeHackathon/charcuterie",
+    icon: ForkKnife,
+  },
+];
+
 export function AppSidebar() {
   const { activeHackathon } = useHackathon();
   const { displayNameShort, hackathonYear } = useHackathonInfo();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isAdmin = useAuthStore((state) => state.isAdmin);
   const logout = useAuthStore((state) => state.logout);
   const user = useAuthStore((state) => state.user);
   const { isMobile } = useSidebar();
-  const LogoComponent = getHackathonIcon(activeHackathon);
+  const LogoComponent = getSidebarHackathonIcon(activeHackathon);
 
   return (
     <Sidebar collapsible="icon" variant="inset">
       <SidebarHeader className="relative flex h-16 flex-row items-center justify-between group-data-[collapsible=icon]:justify-center">
         <div className="flex flex-row items-center gap-4 group-data-[collapsible=icon]:hidden">
-          <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-foreground/10 p-[9px]">
+          <div className="flex aspect-square size-8 items-center justify-center rounded-lg">
             <LogoComponent />
           </div>
           <div className="flex flex-col">
@@ -153,6 +162,30 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {import.meta.env.DEV && isAuthenticated && isAdmin && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Internal</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {INTERNAL_MENU_ITEMS.map(({ label, to, icon: Icon }) => (
+                  <SidebarMenuItem key={to}>
+                    <SidebarMenuButton asChild tooltip={label}>
+                      <Link
+                        to={to}
+                        params={{ activeHackathon }}
+                        activeProps={{ "data-active": true }}
+                      >
+                        <Icon />
+                        <span>{label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       {isAuthenticated && user ? (
@@ -161,7 +194,7 @@ export function AppSidebar() {
             <SidebarMenuItem className="flex flex-row items-center justify-between">
               <div className="flex items-center gap-2 group-data-[collapsible=icon]:hidden">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.photoURL ?? undefined} />
+                  <AvatarImage src={user.photoURL ?? undefined} referrerPolicy="no-referrer" />
                   <AvatarFallback className="rounded-lg">
                     {user.displayName?.charAt(0) ?? "?"}
                   </AvatarFallback>
@@ -214,7 +247,6 @@ export function AppSidebarLayout({ children }: PropsWithChildren) {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <NoisyBackground className="bg-[#1E1E1E]" />
       <SidebarInset>{children}</SidebarInset>
     </SidebarProvider>
   );

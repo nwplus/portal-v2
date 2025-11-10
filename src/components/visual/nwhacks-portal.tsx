@@ -1,6 +1,5 @@
 export function nwHacksPortal() {
   return (
-    // biome-ignore lint/a11y/noSvgWithoutTitle: <explanation>
     <svg
       width="804"
       height="964"
