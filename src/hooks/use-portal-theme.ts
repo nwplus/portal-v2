@@ -1,7 +1,5 @@
-import type { HackathonPortalThemeEntry } from "@/lib/firebase/types";
+import type { HackathonPortalTheme } from "@/lib/firebase/types";
 import { usePortalStore } from "@/lib/stores/portal-store";
-
-type HackathonPortalTheme = Record<string, HackathonPortalThemeEntry>;
 
 export const usePortalTheme = () => {
   const portalTheme = usePortalStore(

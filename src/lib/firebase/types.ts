@@ -63,3 +63,4 @@ export type HackathonPortalThemeEntry = {
   tertiaryForeground?: string;
   backgroundGradients?: Partial<Record<BackgroundGradientPosition, string>>;
 };
+export type HackathonPortalTheme = Record<string, HackathonPortalThemeEntry>;
