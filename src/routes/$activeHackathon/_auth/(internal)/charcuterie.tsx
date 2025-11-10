@@ -18,16 +18,13 @@ function RouteComponent() {
         <div>
           <h1 className="mb-2 font-bold text-4xl">Charcuterie</h1>
           <p className="text-lg text-text-secondary">
-            A collection of all common UI components and their variants
+            A collection of common UI components and their variants
           </p>
         </div>
 
         {/* Buttons Section */}
         <section className="space-y-8">
-          <div>
-            <h2 className="mb-1 font-semibold text-2xl">Buttons</h2>
-            <p className="text-text-secondary">All button variants and sizes</p>
-          </div>
+          <h2 className="mb-1 font-semibold text-2xl">Buttons</h2>
 
           {/* Variants */}
           <div className="space-y-4">
@@ -88,10 +85,7 @@ function RouteComponent() {
 
         {/* Inputs Section */}
         <section className="space-y-8">
-          <div>
-            <h2 className="mb-1 font-semibold text-2xl">Inputs</h2>
-            <p className="text-text-secondary">Common states and configurations</p>
-          </div>
+          <h2 className="mb-1 font-semibold text-2xl">Inputs</h2>
 
           <div className="grid gap-6 md:grid-cols-2">
             <div className="space-y-2">
@@ -138,10 +132,7 @@ function RouteComponent() {
 
         {/* Tooltips Section */}
         <section className="space-y-8">
-          <div>
-            <h2 className="mb-1 font-semibold text-2xl">Tooltips</h2>
-            <p className="text-text-secondary">Tooltip styling and variants</p>
-          </div>
+          <h2 className="mb-1 font-semibold text-2xl">Tooltips</h2>
 
           <div className="flex flex-wrap items-center gap-4">
             <Tooltip>
@@ -155,10 +146,7 @@ function RouteComponent() {
 
         {/* Checkboxes Section */}
         <section className="space-y-8">
-          <div>
-            <h2 className="mb-1 font-semibold text-2xl">Checkboxes</h2>
-            <p className="text-text-secondary">Checkbox states and configurations</p>
-          </div>
+          <h2 className="mb-1 font-semibold text-2xl">Checkboxes</h2>
 
           <div className="grid gap-6 md:grid-cols-2">
             <div className="space-y-2">
@@ -207,12 +195,9 @@ function RouteComponent() {
           </div>
         </section>
 
-        {/* Combobox Section */}
+        {/* Dropdown Section */}
         <section className="space-y-8 pb-96">
-          <div>
-            <h2 className="mb-1 font-semibold text-2xl">Combobox</h2>
-            <p className="text-text-secondary">Searchable select dropdown</p>
-          </div>
+          <h2 className="mb-1 font-semibold text-2xl">Dropdown</h2>
 
           <div className="grid gap-6 md:grid-cols-2">
             <DropdownExample />
@@ -252,7 +237,7 @@ function DropdownExample() {
 }
 
 function DropdownErrorExample() {
-  const [selectedCountry, setSelectedCountry] = useState<(typeof COUNTRY_OPTIONS)[number] | null>(
+  const [selectedCountry, setSelectedCountry] = useState<{ id: string; fullName: string } | null>(
     null,
   );
   const [hasError, setHasError] = useState(true);
