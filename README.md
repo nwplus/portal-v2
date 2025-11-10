@@ -27,14 +27,14 @@ pnpm dev
 ## Styling, formatting, and linting
 
 ### Design System 📸 (important)
-**(Almost) all UI colours should use our Figma-derived colur tokens.** We run [Tailwind CSS](https://tailwindcss.com/) v4 with custom colour utilities that mirror design system variables declared in `src/styles.css`. **Do not use default Tailwind/shadcn palettes.**
+**(Almost) all UI colours should use our Figma-derived colour tokens.** We run [Tailwind CSS](https://tailwindcss.com/) v4 with custom colour utilities that mirror design system variables declared in `src/styles.css`. **Do not use default Tailwind/shadcn palettes.**
 
-Our color tokens follow this naming convention:
-- **Text colors:** `text-text-{variant}` → `text-text-primary`, `text-text-secondary`
-- **Background colors:** `bg-bg-{variant}` → `bg-bg-main`, `bg-bg-pane-container`
-- **Border colors:** `border-border-{variant}` → `border-border-subtle`, `border-border-active`
+Our colour tokens follow this naming convention:
+- **Text colours:** `text-text-{variant}` → `text-text-primary`, `text-text-secondary`
+- **Background colours:** `bg-bg-{variant}` → `bg-bg-main`, `bg-bg-pane-container`
+- **Border colours:** `border-border-{variant}` → `border-border-subtle`, `border-border-active`
 
-The double prefix (e.g., `text-text-*`) is intentional - it's how Tailwind generates utilities from our `--color-text-*` theme tokens. There are a couple of exceptions for one-off components, but in general, please try to follow this convention and use the predefined variables to maintain parity with Figma.
+The double prefix (e.g., `text-text-*`) is intentional - it's how Tailwind generates utilities from our `--colour-text-*` theme tokens. There are a couple of exceptions for one-off components, but in general, please try to follow this convention and use the predefined variables to maintain parity with Figma.
 
 When adding a new component from shadcn or another component library, replace all of the colour styles in the component with our own.
 
@@ -51,7 +51,7 @@ When adding a new component from shadcn or another component library, replace al
 </div>
 ```
 
-💡 See `src/styles.css` (`@theme inline` section) for the complete list of available color tokens.
+💡 See `src/styles.css` (`@theme inline` section) for the complete list of available colour tokens.
 
 ### Formatting and Linting
 This project uses [Biome](https://biomejs.dev/) for linting and formatting. The following scripts are available:

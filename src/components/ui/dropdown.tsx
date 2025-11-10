@@ -21,7 +21,12 @@ export function Dropdown<T = string>({
   const id = React.useId();
 
   return (
-    <Combobox.Root items={items} value={value} onValueChange={onValueChange}>
+    <Combobox.Root
+      items={items}
+      value={value}
+      onValueChange={onValueChange}
+      itemToStringLabel={itemToString}
+    >
       <div>
         <label htmlFor={id} className="mb-1 block text-sm text-text-primary">
           {label}

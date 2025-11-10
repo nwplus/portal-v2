@@ -252,7 +252,9 @@ function DropdownExample() {
 }
 
 function DropdownErrorExample() {
-  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [selectedCountry, setSelectedCountry] = useState<(typeof COUNTRY_OPTIONS)[number] | null>(
+    null,
+  );
   const [hasError, setHasError] = useState(true);
 
   useEffect(() => {
@@ -266,9 +268,18 @@ function DropdownErrorExample() {
       <div className={hasError ? "[&_input]:!border-border-danger" : ""}>
         <Dropdown
           label="Select your country"
-          items={["Canada", "United States", "Mexico", "United Kingdom", "France", "Germany"]}
+          items={[
+            { id: "canada", fullName: "Canada" },
+            { id: "united-states", fullName: "United States of America" },
+            { id: "mexico", fullName: "Mexico" },
+            { id: "united-kingdom", fullName: "United Kingdom" },
+            { id: "france", fullName: "France" },
+            { id: "germany", fullName: "Germany" },
+          ]}
           value={selectedCountry}
           onValueChange={setSelectedCountry}
+          itemToKey={(item) => item.id}
+          itemToString={(item) => item.fullName}
         />
       </div>
       {hasError && <p className="text-sm text-text-error">Please select a country.</p>}
