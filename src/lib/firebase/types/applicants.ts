@@ -4,12 +4,15 @@ import type { Timestamp } from "firebase/firestore";
 /**
  *  Sub-collection: /Hackathons/[Hackathon]/Applicants
  */
+
 export interface Applicant {
   _id: string;
   basicInfo: {
     email: string;
     legalFirstName: string;
     legalLastName: string;
+    academicYear?: string;
+    ageByHackathon?: string;
     preferredName?: string; // preferred first name
     phoneNumber: string; // "+1 XXX-XXX-XXXX"
     gender: string | Record<string, boolean>;
@@ -19,6 +22,7 @@ export interface Applicant {
     educationLevel: ApplicantEducationLevel;
     major: ApplicantMajor | Record<string, boolean>;
     school: string;
+    canadianStatus?: string;
     culturalBackground?: {
       asian: boolean;
       black: boolean;
@@ -39,10 +43,16 @@ export interface Applicant {
       vegan: boolean;
       vegetarian: boolean;
     };
+    disability?: Record<string, boolean>;
+    haveTransExperience?: boolean;
+    identifyAsUnderrepresented?: boolean;
+    indigenousIdentification?: boolean;
+    pronouns?: string;
+    race?: Record<string, boolean>;
   };
   questionnaire: {
     engagementSource?: string | Record<string, boolean>;
-    eventsAttended?: string[];
+    eventsAttended?: Record<string, boolean>;
     friendEmail?: string;
     otherEngagementSource?: string;
   };
@@ -58,6 +68,8 @@ export interface Applicant {
     longAnswers3?: string;
     longAnswers4?: string;
     longAnswers5?: string;
+    jobPosition?: string;
+    connectPlus?: boolean;
   };
   status: {
     applicationStatus: ApplicationStatus;

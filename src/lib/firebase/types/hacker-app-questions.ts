@@ -5,34 +5,31 @@ import type { Timestamp } from "firebase/firestore";
  *
  *  Hacker app
  */
-export type HackerApplicationQuestionMap = Record<
-  HackerApplicationSections,
-  HackerApplicationQuestion[]
->;
-
 export type HackerApplicationSections = "BasicInfo" | "Questionnaire" | "Skills" | "Welcome";
-
 export type HackerApplicationQuestionType =
-  | "Long Answer"
-  | "Portfolio"
-  | "Select All"
-  | "Multiple Choice" // single selection
-  | "Full Legal Name"
-  | "Short Answer"
-  | "Dropdown"
-  | "School"
-  | "Major"
-  | "Country";
-
+  | "Long Answer" // dynamic
+  | "Portfolio" // fixed
+  | "Select All" // dynamic
+  | "Multiple Choice" // dynamic, single selection
+  | "Full Legal Name" // fixed
+  | "Short Answer" // dynamic
+  | "Dropdown" // dynamic
+  | "School" // fixed
+  | "Major" // fixed
+  | "Country"; // fixed
 export type HackerApplicationQuestionFormInputField =
   | "academicYear"
   | "ageByHackathon"
   | "canadianStatus"
+  | "countryOfResidence"
   | "culturalBackground"
   | "dietaryRestriction"
   | "disability"
   | "educationLevel"
   | "email"
+  | "legalFirstName"
+  | "legalLastName"
+  | "isOfLegalAge"
   | "gender"
   | "graduation"
   | "haveTransExperience"
@@ -42,8 +39,25 @@ export type HackerApplicationQuestionFormInputField =
   | "preferredName"
   | "pronouns"
   | "race"
-  | "jobPosition";
-
+  | "jobPosition"
+  | "connectPlus"
+  | "school"
+  | "major"
+  | "github"
+  | "linkedin"
+  | "portfolio"
+  | "resume"
+  | "numHackathonsAttended"
+  | "contributionRole"
+  | "longAnswers1"
+  | "longAnswers2"
+  | "longAnswers3"
+  | "longAnswers4"
+  | "longAnswers5"
+  | "engagementSource"
+  | "eventsAttended"
+  | "friendEmail"
+  | "otherEngagementSource";
 export interface HackerApplicationQuestion {
   _id?: string; // internal
   title?: string;
@@ -54,7 +68,7 @@ export interface HackerApplicationQuestion {
   other?: boolean; // for 'other' responses
   required?: boolean;
   type?: HackerApplicationQuestionType;
-  maxWords?: string; // for answers
+  maxWords?: string; // for long answers
 }
 
 export type HackerApplicationMetadataInfo = {
@@ -66,3 +80,10 @@ export type HackerApplicationMetadata = Record<
   HackerApplicationSections,
   HackerApplicationMetadataInfo
 >;
+
+export type HackerApplicationQuestionMap = {
+  BasicInfo: HackerApplicationQuestion[];
+  Questionnaire: HackerApplicationQuestion[];
+  Skills: HackerApplicationQuestion[];
+  Welcome: HackerApplicationQuestion[];
+};

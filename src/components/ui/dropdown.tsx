@@ -49,7 +49,16 @@ export function Dropdown<T = string>({
       </div>
 
       <Combobox.Portal>
-        <Combobox.Positioner className="outline-none" side="bottom" sideOffset={4}>
+        <Combobox.Positioner
+          className="outline-none"
+          side="bottom"
+          sideOffset={4}
+          collisionAvoidance={{
+            side: "none", // never flip or shift vertically → always stay on "bottom"
+            align: "none", // or 'none' if you don't even want horizontal shifting
+            fallbackAxisSide: "none",
+          }}
+        >
           <Combobox.Popup className="max-h-[min(var(--available-height),15rem)] w-[var(--anchor-width)] max-w-[var(--available-width)] origin-[var(--transform-origin)] overflow-y-auto overscroll-contain rounded-md border border-border-subtle bg-bg-dropdown py-2 text-sm shadow-lg transition-[transform,scale,opacity] [scrollbar-color:theme(colors.text.secondary)_transparent] [scrollbar-width:thin] data-[ending-style]:scale-95 data-[starting-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar]:w-2">
             <Combobox.Empty className="px-4 py-2 text-sm text-text-secondary empty:m-0 empty:p-0">
               No results found.

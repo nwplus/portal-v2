@@ -1,4 +1,5 @@
 import { db } from "@/lib/firebase/client";
+import { storage } from "@/lib/firebase/client";
 import type { Applicant, ApplicantDraft } from "@/lib/firebase/types/applicants";
 import {
   type DocumentData,
@@ -8,6 +9,7 @@ import {
   serverTimestamp,
   setDoc,
 } from "firebase/firestore";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 
 /**
  * Utility to get a typed reference to the applicant document for a given hackathon and user
@@ -75,4 +77,45 @@ export async function createOrMergeApplicant(
   // TODO: validation
   // merge + write to firestore
   await setDoc(ref, payload, { merge: true });
+}
+
+/**
+ * Submits an applicant draft by marking it as submitted and persisting it.
+ * Returns the updated draft shape that callers can use to update local state.
+ */
+export async function submitApplicantDraft(
+  dbCollectionName: string,
+  uid: string,
+  draft: ApplicantDraft,
+): Promise<ApplicantDraft> {
+  const submittedDraft: ApplicantDraft = {
+    ...draft,
+    submission: {
+      ...(draft.submission ?? { submitted: false }),
+      submitted: true,
+    },
+  };
+
+  await createOrMergeApplicant(dbCollectionName, uid, submittedDraft);
+
+  return submittedDraft;
+}
+
+/**
+ * Uploads a resume file to Firebase Storage and returns the public download URL.
+ *
+ * Files are stored under `applicantResumes/{userId}` to match existing
+ * Storage rules and legacy behaviour from the previous portal.
+ */
+export async function uploadResumeToStorage(userId: string, file: File): Promise<string | null> {
+  try {
+    // Match the original v8-style path: storage.ref(`applicantResumes/${userId}`)
+    const objectRef = ref(storage, `applicantResumes/${userId}`);
+    const snapshot = await uploadBytes(objectRef, file);
+    const url = await getDownloadURL(snapshot.ref);
+    return url;
+  } catch (error) {
+    console.error("Failed to upload resume", error);
+    return null;
+  }
 }

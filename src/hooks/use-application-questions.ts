@@ -1,5 +1,5 @@
 import { useApplicationQuestionStore } from "@/lib/stores/application-question-store";
-import { subscribeToHackerAppQuestions } from "@/services/applications";
+import { subscribeToHackerAppQuestions } from "@/services/hacker-app-questions";
 import { useEffect } from "react";
 
 /**
@@ -10,18 +10,14 @@ import { useEffect } from "react";
  */
 export function useApplicationQuestions(displayNameShort: string) {
   useEffect(() => {
-    const {
-      setWelcome,
-      setBasicInfoQuestions,
-      setSkillsQuestions,
-      setQuestionnaireQuestions,
-      reset,
-    } = useApplicationQuestionStore.getState();
+    const { reset } = useApplicationQuestionStore.getState();
     const unsubscribe = subscribeToHackerAppQuestions(displayNameShort, (questions) => {
-      setWelcome(questions.Welcome?.[0] ?? null);
-      setBasicInfoQuestions(questions.BasicInfo ?? []);
-      setSkillsQuestions(questions.Skills ?? []);
-      setQuestionnaireQuestions(questions.Questionnaire ?? []);
+      useApplicationQuestionStore.setState({
+        welcome: questions.Welcome?.[0] ?? null,
+        basicInfoQuestions: questions.BasicInfo ?? [],
+        skillsQuestions: questions.Skills ?? [],
+        questionnaireQuestions: questions.Questionnaire ?? [],
+      });
     });
 
     return () => {

@@ -1,6 +1,11 @@
+import { QuestionField } from "@/components/features/application/question-field";
+import { Button } from "@/components/ui/button";
+import { FieldGroup, FieldLegend, FieldSet } from "@/components/ui/field";
 import { useHackathon } from "@/hooks/use-hackathon";
+import type { ApplicationFormValues } from "@/lib/application/types";
 import { useApplicationQuestionStore } from "@/lib/stores/application-question-store";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
+import { useFormContext } from "react-hook-form";
 
 export const Route = createFileRoute("/$activeHackathon/_auth/application/questionnaire")({
   component: RouteComponent,
@@ -8,32 +13,51 @@ export const Route = createFileRoute("/$activeHackathon/_auth/application/questi
 
 function RouteComponent() {
   const { activeHackathon } = useHackathon();
-  const questions = useApplicationQuestionStore((s) => s.questionnaireQuestions);
+  const questions = useApplicationQuestionStore((state) => state.questionnaireQuestions);
+  const form = useFormContext<ApplicationFormValues>();
+  const router = useRouter();
 
   if (!questions.length) {
     return <div>No questionnaire questions yet.</div>;
   }
 
+  const handleNext = async () => {
+    const isValid = await form.trigger("questionnaire");
+    if (!isValid) {
+      const firstInvalid = document.querySelector('[aria-invalid="true"]');
+      const fieldContainer = firstInvalid?.closest('[data-slot="field"]');
+      (fieldContainer ?? firstInvalid)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+
+    await router.navigate({
+      to: "/$activeHackathon/application/review",
+      params: { activeHackathon },
+    });
+  };
+
   return (
     <section className="space-y-4">
       <h1 className="font-semibold text-2xl">Questionnaire</h1>
-      <ul className="space-y-3">
-        {questions.map((q) => (
-          <li key={q._id} className="rounded-md border p-3">
-            <div className="font-medium">{q.title ?? "Untitled"}</div>
-            {q.description ? (
-              <div className="text-sm text-text-secondary">{q.description}</div>
-            ) : null}
-          </li>
-        ))}
-      </ul>
+      <FieldSet className="space-y-3">
+        <FieldLegend variant="label" className="sr-only">
+          Questionnaire questions
+        </FieldLegend>
+        <FieldGroup>
+          {questions.map((question) => (
+            <QuestionField key={question._id} section="Questionnaire" question={question} />
+          ))}
+        </FieldGroup>
+      </FieldSet>
       <div className="flex gap-2 pt-2">
-        <Link to="/$activeHackathon/application/skills" params={{ activeHackathon }}>
-          ← Back
-        </Link>
-        <Link to="/$activeHackathon/application/review" params={{ activeHackathon }}>
+        <Button variant="secondary" asChild>
+          <Link to="/$activeHackathon/application/skills" params={{ activeHackathon }}>
+            ← Back
+          </Link>
+        </Button>
+        <Button variant="primary" type="button" onClick={handleNext}>
           Next →
-        </Link>
+        </Button>
       </div>
     </section>
   );
