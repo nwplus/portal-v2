@@ -1,8 +1,8 @@
 import { HACKER_APPLICATION_TEMPLATE } from "@/lib/constants";
+import type { ApplicantDraft } from "@/lib/firebase/types/applicants";
 import type { DeepPartial } from "@/lib/types";
+import { deepMerge } from "@/lib/utils";
 import { create } from "zustand";
-import type { ApplicantDraft } from "../firebase/types/applicants";
-import { deepMerge } from "../utils";
 
 type ApplicantStore = {
   applicantDraft: ApplicantDraft | null;

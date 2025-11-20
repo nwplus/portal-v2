@@ -1,5 +1,5 @@
+import type { HackerApplicationQuestion } from "@/lib/firebase/types/hacker-app-questions";
 import { create } from "zustand";
-import type { HackerApplicationQuestion } from "../firebase/types/hacker-app-questions";
 
 type ApplicationQuestionStore = {
   welcome: HackerApplicationQuestion | null; // since there will only be one welcome question
@@ -30,5 +30,10 @@ export const useApplicationQuestionStore = create<ApplicationQuestionStore>((set
     set({ questionnaireQuestions: questions }),
 
   reset: () =>
-    set({ welcome: null, basicInfoQuestions: [], skillsQuestions: [], questionnaireQuestions: [] }),
+    set({
+      welcome: null,
+      basicInfoQuestions: [],
+      skillsQuestions: [],
+      questionnaireQuestions: [],
+    }),
 }));
