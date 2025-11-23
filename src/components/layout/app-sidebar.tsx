@@ -1,3 +1,4 @@
+import { GoogleIcon } from "@/components/icons";
 import {
   Sidebar,
   SidebarContent,
@@ -23,6 +24,7 @@ import { Link } from "@tanstack/react-router";
 import {
   Calendar,
   ForkKnife,
+  Home,
   Info,
   LogOut,
   Map as MapIcon,
@@ -34,6 +36,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import type { PropsWithChildren } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Button } from "../ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 type MenuItem = {
@@ -61,6 +64,11 @@ const ACCOUNT_MENU_ITEMS: MenuItem[] = [
 ];
 
 const INFORMATION_MENU_ITEMS: MenuItem[] = [
+  {
+    label: "Home",
+    to: "/$activeHackathon",
+    icon: Home,
+  },
   {
     label: "Hacker package",
     to: "/$activeHackathon/hacker-package",
@@ -97,6 +105,7 @@ export function AppSidebar() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isAdmin = useAuthStore((state) => state.isAdmin);
   const logout = useAuthStore((state) => state.logout);
+  const signInWithGoogle = useAuthStore((state) => state.signInWithGoogle);
   const user = useAuthStore((state) => state.user);
   const { isMobile } = useSidebar();
   const LogoComponent = getSidebarHackathonIcon(activeHackathon);
@@ -152,6 +161,7 @@ export function AppSidebar() {
                       to={to}
                       params={{ activeHackathon }}
                       activeProps={{ "data-active": true }}
+                      activeOptions={{ exact: to === "/$activeHackathon" }}
                     >
                       <Icon />
                       <span>{label}</span>
@@ -225,16 +235,14 @@ export function AppSidebar() {
         <SidebarFooter>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                {/* TODO: update styles */}
-                <Link
-                  to="/$activeHackathon/login"
-                  params={{ activeHackathon }}
-                  search={{ redirect: location.pathname }}
-                >
-                  Login
-                </Link>
-              </SidebarMenuButton>
+              <Button
+                variant="login"
+                className="w-full justify-start gap-2 group-data-[collapsible=icon]:justify-center"
+                onClick={() => signInWithGoogle()}
+              >
+                <GoogleIcon />
+                <span className="group-data-[collapsible=icon]:hidden">Log in with Google</span>
+              </Button>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarFooter>

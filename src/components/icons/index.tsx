@@ -5,6 +5,7 @@ export { NwPlusIcon } from "./nwplus.svg";
 export { FacebookIcon } from "./facebook.svg";
 export { InstagramIcon } from "./instagram.svg";
 export { LinkedInIcon } from "./linkedin.svg";
+export { GoogleIcon } from "./google.svg";
 export { NwHacksSidebarIcon } from "./nwhacks-sidebar.svg";
 
 export type CustomIconComponent = React.FC<{ className?: string }>;
