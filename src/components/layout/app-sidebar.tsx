@@ -233,18 +233,19 @@ export function AppSidebar() {
         </SidebarFooter>
       ) : (
         <SidebarFooter>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <Button
-                variant="login"
-                className="w-full justify-start gap-2 group-data-[collapsible=icon]:justify-center"
-                onClick={() => signInWithGoogle()}
-              >
-                <GoogleIcon />
-                <span className="group-data-[collapsible=icon]:hidden">Log in with Google</span>
-              </Button>
-            </SidebarMenuItem>
-          </SidebarMenu>
+          <div className="flex flex-col gap-3 px-2 pb-2">
+            <p className="text-text-secondary text-xs group-data-[collapsible=icon]:hidden">
+              If you are a hacker, sign in to view your account.
+            </p>
+            <Button
+              variant="login"
+              className="w-full justify-start gap-2 group-data-[collapsible=icon]:justify-center"
+              onClick={() => signInWithGoogle()}
+            >
+              <GoogleIcon />
+              <span className="group-data-[collapsible=icon]:hidden">Log in with Google</span>
+            </Button>
+          </div>
         </SidebarFooter>
       )}
     </Sidebar>
