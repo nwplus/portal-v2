@@ -74,7 +74,7 @@ function RouteComponent() {
             <br />
             {displayNameShort} {hackathonYear}
           </h1>
-          <p className="text-base text-text-secondary md:text-md">
+          <p className="text-base text-text-primary md:text-md">
             If you are a hacker, sign in below to view your account.
           </p>
         </div>
