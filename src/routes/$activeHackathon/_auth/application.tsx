@@ -48,6 +48,14 @@ function RouteComponent() {
   const isRsvpPage = matches.some((match) => match.routeId.endsWith("/rsvp"));
   const gradientPosition: BackgroundGradientPosition = isRsvpPage ? "topMiddle" : "bottomRight";
 
+  // Only show the save indicator on specific application sub-routes
+  const leafMatch = matches[matches.length - 1];
+  const showSaveIndicator =
+    leafMatch?.routeId === "/$activeHackathon/_auth/application/basic-info" ||
+    leafMatch?.routeId === "/$activeHackathon/_auth/application/skills" ||
+    leafMatch?.routeId === "/$activeHackathon/_auth/application/questionnaire" ||
+    leafMatch?.routeId === "/$activeHackathon/_auth/application/review";
+
   useApplicationQuestions(displayNameShort);
   useApplicantHydration({
     dbCollectionName,
@@ -63,13 +71,13 @@ function RouteComponent() {
         BasicInfo: applicationQuestions.basicInfoQuestions,
         Skills: applicationQuestions.skillsQuestions,
         Questionnaire: applicationQuestions.questionnaireQuestions,
-        Welcome: applicationQuestions.welcome ? [applicationQuestions.welcome] : [],
+        // Welcome: applicationQuestions.welcome ? [applicationQuestions.welcome] : [],
       }),
     [
       applicationQuestions.basicInfoQuestions,
       applicationQuestions.questionnaireQuestions,
       applicationQuestions.skillsQuestions,
-      applicationQuestions.welcome,
+      // applicationQuestions.welcome,
     ],
   );
 
@@ -78,7 +86,10 @@ function RouteComponent() {
     // biome-ignore lint/suspicious/noExplicitAny: resolver's generics do not align cleanly with our schema type, but runtime shapes match ApplicationFormValues
     resolver: zodResolver(schema as any) as Resolver<ApplicationFormValues>,
     mode: "onBlur",
-    reValidateMode: "onBlur",
+    // Re-validate fields on change once they've been blurred/submitted so
+    // errors (including Select All required errors) clear as soon as users
+    // fix their input.
+    reValidateMode: "onChange",
     defaultValues: deriveDefaultValuesFromApplicantDraft(applicantDraft),
   });
 
@@ -113,19 +124,18 @@ function RouteComponent() {
       statusText = "Unsaved changes";
     }
 
-    return <span className="text-text-secondary text-xs">{statusText}</span>;
+    return <span className="text-sm">{statusText}</span>;
   }, [applicantDraft, dirty, saving]);
 
   return (
     <div className="h-svh w-full bg-bg-pane-container p-4">
       <GradientBackground
         gradientPosition={gradientPosition}
-        className="h-full w-full overflow-y-auto overflow-x-hidden rounded-xl p-4 shadow-sm"
+        className="relative h-full w-full overflow-hidden rounded-xl p-4 shadow-sm"
       >
-        <div className="mb-3 flex items-center justify-between">
-          <div className="font-medium text-sm">Application</div>
-          {saveIndicator}
-        </div>
+        {showSaveIndicator && saveIndicator ? (
+          <div className="absolute top-6 right-6">{saveIndicator}</div>
+        ) : null}
         <ApplicationSchemaMetaContext.Provider value={meta}>
           <FormProvider {...formMethods}>
             <Outlet />

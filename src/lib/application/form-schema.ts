@@ -1,15 +1,18 @@
 import { z } from "zod";
 
 import type { ApplicationFormValues } from "@/lib/application/types";
+import { MAJOR_KEYS } from "@/lib/data/majors";
 import type {
-  HackerApplicationQuestion,
+  HackerApplicationNonWelcomeQuestion,
   HackerApplicationQuestionFormInputField,
   HackerApplicationQuestionMap,
   HackerApplicationQuestionType,
   HackerApplicationSections,
 } from "@/lib/firebase/types/hacker-app-questions";
-import { buildFieldPath, buildOtherFieldPath } from "./form-mapping";
+import { FIXED_QUESTION_CONFIG } from "./fixed-question-config";
+import { buildFieldPath, buildOtherFieldPath, getEffectiveFormInput } from "./form-mapping";
 import { getValueAtPath } from "./object-path";
+import { isGithubUrl, isLinkedinUrl, isValidHttpsUrl } from "./utils";
 
 /**
  * Question buckets by section used for schema generation.
@@ -17,7 +20,7 @@ import { getValueAtPath } from "./object-path";
  */
 export type QuestionBuckets = Pick<
   HackerApplicationQuestionMap,
-  "BasicInfo" | "Skills" | "Questionnaire" | "Welcome"
+  "BasicInfo" | "Skills" | "Questionnaire"
 >;
 
 export type SchemaMeta = {
@@ -47,8 +50,8 @@ export type SchemaMeta = {
  * Builds a Zod schema for a single question based on its type and flags.
  * This is used to populate the object shape for each section of the form.
  */
-function buildFieldSchema(question: HackerApplicationQuestion): z.ZodTypeAny {
-  const questionType = question.type as HackerApplicationQuestionType | undefined;
+function buildFieldSchema(question: HackerApplicationNonWelcomeQuestion): z.ZodTypeAny {
+  const questionType = question.type as HackerApplicationQuestionType;
   const isRequired = Boolean(question.required);
   const options = question.options ?? [];
   const formInput = question.formInput as HackerApplicationQuestionFormInputField | undefined;
@@ -75,7 +78,7 @@ function buildFieldSchema(question: HackerApplicationQuestion): z.ZodTypeAny {
               const words = value.trim().split(/\s+/).filter(Boolean);
               return words.length <= maxWords;
             },
-            { message: `Must be at most ${maxWords} words` },
+            { error: `Must be at most ${maxWords} words` },
           );
         }
       }
@@ -88,7 +91,7 @@ function buildFieldSchema(question: HackerApplicationQuestion): z.ZodTypeAny {
       const base = z.record(z.string(), z.boolean());
       return isRequired
         ? base.refine((value) => Object.values(value).some((flag) => Boolean(flag)), {
-            message: "Select at least one option",
+            error: "Select at least one option",
           })
         : base;
     }
@@ -103,9 +106,17 @@ function buildFieldSchema(question: HackerApplicationQuestion): z.ZodTypeAny {
       const base = z.string();
       const withOptions =
         allowedOptions.length > 0
-          ? base.refine((value) => allowedOptions.includes(value), {
-              message: "Invalid selection",
-            })
+          ? base.refine(
+              (value) => {
+                // Let required / length validators handle "no answer" cases so they
+                // can surface a clearer "This field is required" message.
+                if (!value) return true;
+                return allowedOptions.includes(value);
+              },
+              {
+                error: "Invalid selection",
+              },
+            )
           : base;
 
       const field: z.ZodTypeAny = isRequired
@@ -121,9 +132,18 @@ function buildFieldSchema(question: HackerApplicationQuestion): z.ZodTypeAny {
       const base = z.string();
       const withOptions =
         allowedOptions.length > 0
-          ? base.refine((value) => allowedOptions.includes(value), {
-              message: "Invalid selection",
-            })
+          ? base.refine(
+              (value) => {
+                // Allow empty / missing values to fall through to the required
+                // validator so users see "This field is required" instead of
+                // "Invalid selection" when no option has been chosen.
+                if (!value) return true;
+                return allowedOptions.includes(value);
+              },
+              {
+                error: "Invalid selection",
+              },
+            )
           : base;
 
       const field: z.ZodTypeAny = isRequired
@@ -144,27 +164,133 @@ function buildFieldSchema(question: HackerApplicationQuestion): z.ZodTypeAny {
        * The schema builder may override `question.required` per-field (e.g. resume required,
        * other links optional) before delegating here.
        */
-      const base = z.string().trim();
-      const optionalized = isRequired ? base : base.optional().or(z.literal(""));
+      // Allow empty / undefined inputs at the base level so we can surface
+      // clearer custom messages instead of generic "Invalid input" type errors.
+      const base = z.string().trim().optional().or(z.literal(""));
 
-      // For non-resume Portfolio fields we only care that, when present, the value looks like a URL.
-      // For resume we still store a URL to the uploaded file.
-      return optionalized.refine(
+      // GitHub URL: optional, normalized by the form layer, must point at a GitHub domain when present.
+      if (formInput === "github") {
+        const withGithubCheck = base.refine(
+          (value) => {
+            if (!value) return true;
+            if (typeof value !== "string") return false;
+            return isGithubUrl(value);
+          },
+          {
+            error: "Enter a valid GitHub URL (e.g., https://github.com/your-username)",
+          },
+        );
+
+        return withGithubCheck.optional().or(z.literal(""));
+      }
+
+      // LinkedIn URL: optional, normalized by the form layer, must point at a LinkedIn domain when present.
+      if (formInput === "linkedin") {
+        const withLinkedinCheck = base.refine(
+          (value) => {
+            if (!value) return true;
+            if (typeof value !== "string") return false;
+            return isLinkedinUrl(value);
+          },
+          {
+            error: "Enter a valid LinkedIn URL (e.g., https://linkedin.com/in/your-profile)",
+          },
+        );
+
+        return withLinkedinCheck.optional().or(z.literal(""));
+      }
+
+      // Portfolio URL: optional, but must be a valid https URL when present.
+      if (formInput === "portfolio") {
+        const withPortfolioCheck = base.refine(
+          (value) => {
+            if (!value) return true;
+            if (typeof value !== "string") return false;
+            return isValidHttpsUrl(value);
+          },
+          {
+            error: "Enter a valid URL for your portfolio",
+          },
+        );
+
+        return withPortfolioCheck.optional().or(z.literal(""));
+      }
+
+      // Resume URL: required, stored as a URL to the uploaded file.
+      if (formInput === "resume") {
+        return base.superRefine((value, ctx) => {
+          const text = typeof value === "string" ? value.trim() : "";
+
+          if (!text) {
+            ctx.addIssue({
+              code: "custom",
+              message: "Please upload your resume",
+            });
+            return;
+          }
+
+          if (!isValidHttpsUrl(text)) {
+            ctx.addIssue({
+              code: "custom",
+              message: "Enter a valid URL for your resume",
+            });
+          }
+        });
+      }
+
+      // Fallback: generic https URL validation for any unexpected Portfolio field.
+      const withUrlCheck = base.refine(
         (value) => {
           if (!value) return true;
           if (typeof value !== "string") return false;
-          return /^https?:\/\//i.test(value);
+          return isValidHttpsUrl(value);
         },
-        { message: `Enter a valid URL${formInput ? ` for ${formInput}` : ""}` },
+        { error: `Enter a valid URL${formInput ? ` for ${formInput}` : ""}` },
       );
+
+      // We do not currently treat any fallback Portfolio fields as required; if a value
+      // is provided it must be a valid https URL, otherwise it is allowed to be empty.
+      return withUrlCheck;
     }
 
-    case "Full Legal Name":
-    case "School":
-    case "Major":
+    case "Full Legal Name": {
+      // This is a grouped fixed question that fans out into multiple fields
+      // (legalFirstName / legalLastName) handled by a dedicated component, so
+      // we return a passthrough here.
+      return z.any();
+    }
+
+    case "School": {
+      // Fixed School question backed by a searchable list; for now we validate
+      // it as a plain trimmed string so we can later support custom schools.
+      const base = z.string().trim();
+      return isRequired ? base.min(1, "This field is required") : base.optional().or(z.literal(""));
+    }
+
+    case "Major": {
+      /**
+       * Fixed Major question backed by a predefined set of ApplicantMajor values.
+       * We validate it similarly to a dropdown:
+       * - when required, enforce a non-empty string and restrict to known options
+       * - when optional, allow empty string / undefined but still restrict to known options
+       */
+      const base = z.string();
+      const withOptions = base.refine(
+        (value) => {
+          if (!value) return true;
+          return (MAJOR_KEYS as readonly string[]).includes(value);
+        },
+        { error: "Invalid selection" },
+      );
+
+      return isRequired
+        ? withOptions.min(1, "This field is required")
+        : withOptions.optional().or(z.literal(""));
+    }
+
     case "Country": {
-      // These are handled via fixed components / separate fields;
-      // we return a passthrough to avoid blocking schema generation.
+      // Country remains a fixed type without a dedicated component;
+      // we keep the passthrough behavior to avoid blocking schema generation.
       return z.any();
     }
 
@@ -196,69 +322,83 @@ export function buildApplicationSchema(questions: QuestionBuckets): {
   const otherMeta: SchemaMeta["otherMeta"] = [];
 
   // Iterate through each section's questions and build per-field schemas.
-  const sectionEntries: Array<[HackerApplicationSections, HackerApplicationQuestion[]]> = [
-    ["BasicInfo", questions.BasicInfo ?? []],
-    ["Skills", questions.Skills ?? []],
-    ["Questionnaire", questions.Questionnaire ?? []],
-  ];
+  const sectionEntries: Array<[HackerApplicationSections, HackerApplicationNonWelcomeQuestion[]]> =
+    [
+      ["BasicInfo", questions.BasicInfo ?? []],
+      ["Skills", questions.Skills ?? []],
+      ["Questionnaire", questions.Questionnaire ?? []],
+    ];
 
   for (const [section, sectionQuestions] of sectionEntries) {
     for (const question of sectionQuestions) {
-      const questionType = question.type as HackerApplicationQuestionType | undefined;
+      const questionType = question.type as HackerApplicationQuestionType;
       if (!questionType) continue;
 
-      /**
-       * Special handling: "Portfolio" is a fixed question that represents four skills fields:
-       * - skills.github
-       * - skills.linkedin
-       * - skills.portfolio
-       * - skills.resume
-       *
-       * We map these directly to the underlying ApplicantDraft.skills properties so they can
-       * be edited and validated even though there is only a single Portfolio question in
-       * Firestore.
-       */
-      if (questionType === "Portfolio" && section === "Skills") {
+      // Fixed fan-out questions (e.g., Portfolio, Full Legal Name) that map a single
+      // Firestore question to multiple underlying ApplicantDraft fields.
+      const fixedConfig = FIXED_QUESTION_CONFIG[questionType];
+      if (fixedConfig && fixedConfig.kind === "fanOut" && fixedConfig.section === section) {
         const isGroupRequired = Boolean(question.required);
-        const portfolioKeys: HackerApplicationQuestionFormInputField[] = [
-          "github",
-          "linkedin",
-          "portfolio",
-          "resume",
-        ];
 
-        for (const key of portfolioKeys) {
-          const path = buildFieldPath("Skills", key);
+        for (const field of fixedConfig.fields) {
+          const path = buildFieldPath(section, field.formInput);
           if (!path) continue;
 
           const [, mainKey] = path.split(".");
           if (!mainKey) continue;
 
-          const perFieldQuestion: HackerApplicationQuestion = {
+          const perFieldQuestion: HackerApplicationNonWelcomeQuestion = {
             ...question,
-            formInput: key,
-            // Only resume is required; links remain optional even when the group is required.
-            required: key === "resume" ? isGroupRequired : false,
+            type: (field.typeOverride ?? questionType) as HackerApplicationQuestionType,
+            formInput: field.formInput,
+            required:
+              field.requiredOverride !== undefined
+                ? field.requiredOverride
+                : field.requiredFromGroup
+                  ? isGroupRequired
+                  : question.required,
           };
 
           const fieldSchema = buildFieldSchema(perFieldQuestion);
 
-          skillsShape[mainKey] = fieldSchema;
-          fieldNamesBySection.Skills.push(path);
+          // Avoid clobbering a more specific schema if one was already defined
+          // for this key (e.g., via a legacy dynamic question).
+          if (section === "BasicInfo") {
+            if (!basicInfoShape[mainKey]) {
+              basicInfoShape[mainKey] = fieldSchema;
+              fieldNamesBySection.BasicInfo.push(path);
+            }
+          } else if (section === "Skills") {
+            if (!skillsShape[mainKey]) {
+              skillsShape[mainKey] = fieldSchema;
+              fieldNamesBySection.Skills.push(path);
+            }
+          } else if (section === "Questionnaire") {
+            if (!questionnaireShape[mainKey]) {
+              questionnaireShape[mainKey] = fieldSchema;
+              fieldNamesBySection.Questionnaire.push(path);
+            }
+          }
         }
 
-        // Portfolio questions do not participate in "other" tracking.
+        // Fan-out questions do not participate in "other" tracking.
         continue;
       }
 
-      const formInput = question.formInput as HackerApplicationQuestionFormInputField | undefined;
+      const formInput = getEffectiveFormInput(question) as
+        | HackerApplicationQuestionFormInputField
+        | undefined;
       if (!formInput) continue;
 
       const mainPath = buildFieldPath(section, formInput);
       if (!mainPath) continue;
 
       const otherPath =
-        question.other && questionType ? buildOtherFieldPath(section, formInput) : null;
+        questionType === "Major"
+          ? buildOtherFieldPath(section, formInput)
+          : question.other && questionType
+            ? buildOtherFieldPath(section, formInput)
+            : null;
 
       // Track field paths for step-level validation and "other" enforcement
       if (section === "BasicInfo") fieldNamesBySection.BasicInfo.push(mainPath);
@@ -307,12 +447,20 @@ export function buildApplicationSchema(questions: QuestionBuckets): {
   const skillsSchema = z.object(skillsShape).passthrough();
   const questionnaireSchema = z.object(questionnaireShape).passthrough();
   const termsSchema = z.object({
-    MLHCodeOfConduct: z.boolean().refine((value) => value === true, "Required"),
+    MLHCodeOfConduct: z.boolean().refine((value) => value === true, {
+      error: "This field is required",
+    }),
     MLHEmailSubscription: z.boolean().optional(),
-    MLHPrivacyPolicy: z.boolean().refine((value) => value === true, "Required"),
-    nwPlusPrivacyPolicy: z.boolean().refine((value) => value === true, "Required"),
+    MLHPrivacyPolicy: z.boolean().refine((value) => value === true, {
+      error: "This field is required",
+    }),
+    nwPlusPrivacyPolicy: z.boolean().refine((value) => value === true, {
+      error: "This field is required",
+    }),
     shareWithSponsors: z.boolean().optional(),
-    shareWithnwPlus: z.boolean().refine((value) => value === true, "Required"),
+    shareWithnwPlus: z.boolean().refine((value) => value === true, {
+      error: "This field is required",
+    }),
   });
 
   // Assemble the full schema for react-hook-form resolver consumption.
@@ -338,6 +486,10 @@ export function buildApplicationSchema(questions: QuestionBuckets): {
         needsOtherText = Boolean(record.other);
       } else if (questionType === "Multiple Choice") {
         needsOtherText = typeof mainValue === "string" && mainValue.toLowerCase() === "other";
+      } else if (questionType === "Major") {
+        // Major is a fixed single-selection question where choosing the
+        // "other" option should require a companion free-text value.
+        needsOtherText = typeof mainValue === "string" && mainValue === "other";
       }
 
       if (needsOtherText) {

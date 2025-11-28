@@ -60,16 +60,22 @@ export type HackerApplicationQuestionFormInputField =
   | "otherEngagementSource";
 export interface HackerApplicationQuestion {
   _id?: string; // internal
-  title?: string;
-  content?: string; // only for welcome message
+  title: string;
   description?: string; // q description
-  formInput?: HackerApplicationQuestionFormInputField; // name of input's value
   options?: string[]; // for select and multiselect
   other?: boolean; // for 'other' responses
   required?: boolean;
-  type?: HackerApplicationQuestionType;
   maxWords?: string; // for long answers
 }
+
+export type HackerApplicationWelcomeQuestion = HackerApplicationQuestion & {
+  content: string;
+};
+
+export type HackerApplicationNonWelcomeQuestion = HackerApplicationQuestion & {
+  type: HackerApplicationQuestionType;
+  formInput?: HackerApplicationQuestionFormInputField;
+};
 
 export type HackerApplicationMetadataInfo = {
   lastEditedAt: Timestamp;
@@ -82,8 +88,8 @@ export type HackerApplicationMetadata = Record<
 >;
 
 export type HackerApplicationQuestionMap = {
-  BasicInfo: HackerApplicationQuestion[];
-  Questionnaire: HackerApplicationQuestion[];
-  Skills: HackerApplicationQuestion[];
-  Welcome: HackerApplicationQuestion[];
+  Welcome: HackerApplicationWelcomeQuestion[];
+  BasicInfo: HackerApplicationNonWelcomeQuestion[];
+  Questionnaire: HackerApplicationNonWelcomeQuestion[];
+  Skills: HackerApplicationNonWelcomeQuestion[];
 };

@@ -27,9 +27,8 @@ export function ShortAnswerQuestion(props: QuestionFieldProps) {
 
   return (
     <Field data-invalid={isMainInvalid}>
-      <FieldLabel htmlFor={mainId}>
+      <FieldLabel htmlFor={mainId} isRequired={isRequired}>
         {label}
-        {isRequired ? <span className="text-border-danger"> *</span> : null}
       </FieldLabel>
       {description ? <FieldDescription>{description}</FieldDescription> : null}
       <FieldContent>

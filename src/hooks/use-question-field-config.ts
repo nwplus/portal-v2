@@ -1,8 +1,12 @@
-import { buildFieldPath, buildOtherFieldPath } from "@/lib/application/form-mapping";
+import {
+  buildFieldPath,
+  buildOtherFieldPath,
+  getEffectiveFormInput,
+} from "@/lib/application/form-mapping";
 import { getValueAtPath } from "@/lib/application/object-path";
 import type { ApplicationFormValues } from "@/lib/application/types";
 import type {
-  HackerApplicationQuestion,
+  HackerApplicationNonWelcomeQuestion,
   HackerApplicationSections,
 } from "@/lib/firebase/types/hacker-app-questions";
 import { useFormContext } from "react-hook-form";
@@ -10,7 +14,7 @@ import type { FieldPath } from "react-hook-form";
 
 export interface QuestionFieldConfigInput {
   section: HackerApplicationSections;
-  question: HackerApplicationQuestion;
+  question: HackerApplicationNonWelcomeQuestion;
 }
 
 export interface QuestionFieldConfig {
@@ -24,9 +28,10 @@ export interface QuestionFieldConfig {
   control: ReturnType<typeof useFormContext<ApplicationFormValues>>["control"];
   watch: ReturnType<typeof useFormContext<ApplicationFormValues>>["watch"];
   formState: ReturnType<typeof useFormContext<ApplicationFormValues>>["formState"];
+  trigger: ReturnType<typeof useFormContext<ApplicationFormValues>>["trigger"];
 
   section: HackerApplicationSections;
-  question: HackerApplicationQuestion;
+  question: HackerApplicationNonWelcomeQuestion;
 
   /**
    * Human-facing metadata from Firestore.
@@ -85,11 +90,13 @@ export function useQuestionFieldConfig({
   // Grab the shared ApplicationFormValues form instance from context.
   // All application steps share this single RHF form.
   const form = useFormContext<ApplicationFormValues>();
-  const { register, control, watch, formState } = form;
+  const { register, control, watch, formState, trigger } = form;
 
   // Raw Firestore-driven metadata for this question.
-  // formInput is the key we use to derive ApplicationFormValues paths.
-  const formInput = question.formInput;
+  // formInput is the key we use to derive ApplicationFormValues paths. For fixed
+  // questions like School/Major we hardcode the mapping so it stays stable even
+  // if Firestore metadata is missing or misnamed.
+  const formInput = getEffectiveFormInput(question);
   const label = question.title ?? "Untitled";
 
   // Build the primary RHF field path for this question.
@@ -137,6 +144,7 @@ export function useQuestionFieldConfig({
     control,
     watch,
     formState,
+    trigger,
     section,
     question,
     label,

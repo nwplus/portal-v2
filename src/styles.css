@@ -126,3 +126,12 @@ code {
 *::-webkit-selection {
   background: #ffffff20;
 }
+
+/* Hide scrollbars but keep scrolling */
+.scrollbar-hidden {
+  scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
+}

@@ -1,18 +1,21 @@
-import { DropdownQuestion } from "@/components/features/application/dropdown-question";
-import { FullLegalNameQuestion } from "@/components/features/application/full-legal-name-question";
-import { LongAnswerQuestion } from "@/components/features/application/long-answer-question";
-import { MultipleChoiceQuestion } from "@/components/features/application/multiple-choice-question";
-import { PortfolioQuestion } from "@/components/features/application/portfolio-question";
-import { SelectAllQuestion } from "@/components/features/application/select-all-question";
-import { ShortAnswerQuestion } from "@/components/features/application/short-answer-question";
+import { CountryQuestion } from "@/components/features/application/country";
+import { DropdownQuestion } from "@/components/features/application/dropdown";
+import { FullLegalNameQuestion } from "@/components/features/application/full-legal-name";
+import { LongAnswerQuestion } from "@/components/features/application/long-answer";
+import { MajorQuestion } from "@/components/features/application/major";
+import { MultipleChoiceQuestion } from "@/components/features/application/multiple-choice";
+import { PortfolioQuestion } from "@/components/features/application/portfolio";
+import { SchoolQuestion } from "@/components/features/application/school";
+import { SelectAllQuestion } from "@/components/features/application/select-all";
+import { ShortAnswerQuestion } from "@/components/features/application/short-answer";
 import type {
-  HackerApplicationQuestion,
+  HackerApplicationNonWelcomeQuestion,
   HackerApplicationSections,
 } from "@/lib/firebase/types/hacker-app-questions";
 
 export interface QuestionFieldProps {
   section: HackerApplicationSections;
-  question: HackerApplicationQuestion;
+  question: HackerApplicationNonWelcomeQuestion;
 }
 
 /**
@@ -23,7 +26,6 @@ export interface QuestionFieldProps {
  */
 export function QuestionField(props: QuestionFieldProps) {
   const { question } = props;
-
   switch (question.type) {
     case "Short Answer":
       return <ShortAnswerQuestion {...props} />;
@@ -37,6 +39,12 @@ export function QuestionField(props: QuestionFieldProps) {
       return <DropdownQuestion {...props} />;
     case "Portfolio":
       return <PortfolioQuestion {...props} />;
+    case "School":
+      return <SchoolQuestion {...props} />;
+    case "Major":
+      return <MajorQuestion {...props} />;
+    case "Country":
+      return <CountryQuestion {...props} />;
     case "Full Legal Name":
       return <FullLegalNameQuestion {...props} />;
     default:
