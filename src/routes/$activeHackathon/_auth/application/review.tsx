@@ -1,6 +1,6 @@
 import { TermsCheckbox } from "@/components/features/application/terms-checkbox";
 import { Button } from "@/components/ui/button";
-import { Field, FieldContent, FieldDescription, FieldLabel, FieldSet } from "@/components/ui/field";
+import { Field, FieldContent, FieldLabel, FieldSet } from "@/components/ui/field";
 import { ScrollFade } from "@/components/ui/scroll-fade";
 import { useHackathon } from "@/hooks/use-hackathon";
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";

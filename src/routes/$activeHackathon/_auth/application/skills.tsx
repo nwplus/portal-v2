@@ -1,6 +1,6 @@
 import { QuestionField } from "@/components/features/application/question-field";
 import { Button } from "@/components/ui/button";
-import { FieldGroup, FieldLegend, FieldSet } from "@/components/ui/field";
+import { FieldGroup, FieldSet } from "@/components/ui/field";
 import { ScrollFade } from "@/components/ui/scroll-fade";
 import { useHackathon } from "@/hooks/use-hackathon";
 import type { ApplicationFormValues } from "@/lib/application/types";
