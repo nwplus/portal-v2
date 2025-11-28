@@ -80,8 +80,9 @@ export const Route = createFileRoute("/$activeHackathon")({
     const { applicationsOpen } = usePortalStore.getState();
     const isApplicationsOpen = applicationsOpen?.[activeHackathon] ?? false;
     const isOnApplicationPage = location.pathname.includes("/application");
+    const isOnLoginPage = location.pathname.includes("/login");
 
-    if (isApplicationsOpen && !isOnApplicationPage) {
+    if (isApplicationsOpen && !isOnApplicationPage && !isOnLoginPage) {
       throw redirect({
         to: "/$activeHackathon/application",
         params: { activeHackathon },
@@ -106,7 +107,7 @@ function RouteComponent() {
   );
 
   if (hideSidebar) {
-    return routeContent;
+    return <div className="h-screen">{routeContent}</div>;
   }
 
   return <AppSidebarLayout>{routeContent}</AppSidebarLayout>;
