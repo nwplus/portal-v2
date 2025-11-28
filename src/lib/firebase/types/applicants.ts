@@ -78,6 +78,7 @@ export interface Applicant {
   };
   submission?: {
     lastUpdated?: Timestamp;
+    submittedAt?: Timestamp; // new
     submitted: boolean;
   };
   termsAndConditions: {

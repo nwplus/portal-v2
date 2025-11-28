@@ -24,25 +24,26 @@ export function TermsCheckbox({ name, label, optional }: TermsCheckboxProps) {
 
   return (
     <Field data-invalid={isInvalid} orientation="horizontal">
-      <Controller
-        name={name}
-        control={control}
-        render={({ field }) => (
-          <>
-            <Checkbox
-              id={name}
-              checked={Boolean(field.value)}
-              onCheckedChange={(checked) => field.onChange(Boolean(checked))}
-              aria-invalid={isInvalid}
-            />
-            <FieldLabel htmlFor={name} className="cursor-pointer font-normal">
-              {label}
-              {!optional ? <span className="text-border-danger"> *</span> : null}
-            </FieldLabel>
-          </>
-        )}
-      />
-      <FieldError errors={error ? [error] : undefined} />
+      <div className="flex flex-col gap-2">
+        <Controller
+          name={name}
+          control={control}
+          render={({ field }) => (
+            <div className="flex gap-2">
+              <Checkbox
+                id={name}
+                checked={Boolean(field.value)}
+                onCheckedChange={(checked) => field.onChange(Boolean(checked))}
+                aria-invalid={isInvalid}
+              />
+              <FieldLabel htmlFor={name} isRequired={!optional}>
+                {label}
+              </FieldLabel>
+            </div>
+          )}
+        />
+        <FieldError errors={error ? [error] : undefined} />
+      </div>
     </Field>
   );
 }

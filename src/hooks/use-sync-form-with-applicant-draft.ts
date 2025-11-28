@@ -13,8 +13,11 @@ export function useSyncFormWithApplicantDraft(
   formMethods: UseFormReturn<ApplicationFormValues, any, ApplicationFormValues>,
 ) {
   const patchApplicant = useApplicantStore((state) => state.patchApplicant);
+  const hasInitialDraft = useApplicantStore((state) => state.applicantDraft !== null);
 
   useEffect(() => {
+    if (!hasInitialDraft) return;
+
     const subscription = formMethods.watch((values) => {
       patchApplicant({
         basicInfo: values.basicInfo,
@@ -25,5 +28,5 @@ export function useSyncFormWithApplicantDraft(
     });
 
     return () => subscription.unsubscribe();
-  }, [formMethods, patchApplicant]);
+  }, [formMethods, patchApplicant, hasInitialDraft]);
 }

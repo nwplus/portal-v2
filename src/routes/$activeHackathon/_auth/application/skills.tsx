@@ -1,6 +1,7 @@
 import { QuestionField } from "@/components/features/application/question-field";
 import { Button } from "@/components/ui/button";
 import { FieldGroup, FieldLegend, FieldSet } from "@/components/ui/field";
+import { ScrollFade } from "@/components/ui/scroll-fade";
 import { useHackathon } from "@/hooks/use-hackathon";
 import type { ApplicationFormValues } from "@/lib/application/types";
 import { useApplicationQuestionStore } from "@/lib/stores/application-question-store";
@@ -37,29 +38,30 @@ function RouteComponent() {
   };
 
   return (
-    <section className="space-y-4">
-      <h1 className="font-semibold text-2xl">Skills</h1>
-      <FieldSet className="space-y-3">
-        <FieldLegend variant="label" className="sr-only">
-          Skills questions
-        </FieldLegend>
-        <FieldGroup>
-          {questions.map((question) => (
-            <QuestionField key={question._id} section="Skills" question={question} />
-          ))}
-        </FieldGroup>
-      </FieldSet>
-
-      <div className="flex gap-2 pt-2">
-        <Button variant="secondary" asChild>
-          <Link to="/$activeHackathon/application/basic-info" params={{ activeHackathon }}>
-            ← Back
-          </Link>
-        </Button>
-        <Button variant="primary" type="button" onClick={handleNext}>
-          Next →
-        </Button>
+    <div className="flex h-full gap-12">
+      <div className="flex flex-[3] flex-col gap-6 p-4">
+        <ScrollFade className="flex flex-col gap-6">
+          <h1 className="font-medium text-lg">👀 Academic background</h1>
+          <FieldSet>
+            <FieldGroup>
+              {questions.map((question) => (
+                <QuestionField key={question._id} section="Skills" question={question} />
+              ))}
+            </FieldGroup>
+          </FieldSet>
+        </ScrollFade>
+        <div className="flex justify-between">
+          <Button variant="secondary" asChild>
+            <Link to="/$activeHackathon/application/basic-info" params={{ activeHackathon }}>
+              ← Back
+            </Link>
+          </Button>
+          <Button variant="primary" type="button" onClick={handleNext}>
+            Next →
+          </Button>
+        </div>
       </div>
-    </section>
+      <div className="flex min-h-0 flex-[2] items-center justify-center"> right side </div>
+    </div>
   );
 }

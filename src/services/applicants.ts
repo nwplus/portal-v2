@@ -4,6 +4,7 @@ import type { Applicant, ApplicantDraft } from "@/lib/firebase/types/applicants"
 import {
   type DocumentData,
   type DocumentReference,
+  type Timestamp,
   doc,
   getDoc,
   serverTimestamp,
@@ -93,10 +94,16 @@ export async function submitApplicantDraft(
     submission: {
       ...(draft.submission ?? { submitted: false }),
       submitted: true,
+      submittedAt: serverTimestamp() as Timestamp,
+    },
+    status: {
+      applicationStatus: "applied",
     },
   };
 
   await createOrMergeApplicant(dbCollectionName, uid, submittedDraft);
+
+  // TODO: send email to applicant
 
   return submittedDraft;
 }

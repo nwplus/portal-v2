@@ -1,16 +1,19 @@
-import type { HackerApplicationQuestion } from "@/lib/firebase/types/hacker-app-questions";
+import type {
+  HackerApplicationNonWelcomeQuestion,
+  HackerApplicationWelcomeQuestion,
+} from "@/lib/firebase/types/hacker-app-questions";
 import { create } from "zustand";
 
 type ApplicationQuestionStore = {
-  welcome: HackerApplicationQuestion | null; // since there will only be one welcome question
-  basicInfoQuestions: HackerApplicationQuestion[];
-  skillsQuestions: HackerApplicationQuestion[];
-  questionnaireQuestions: HackerApplicationQuestion[];
+  welcome: HackerApplicationWelcomeQuestion | null; // since there will only be one welcome question
+  basicInfoQuestions: HackerApplicationNonWelcomeQuestion[];
+  skillsQuestions: HackerApplicationNonWelcomeQuestion[];
+  questionnaireQuestions: HackerApplicationNonWelcomeQuestion[];
 
-  setWelcome: (welcome: HackerApplicationQuestion | null) => void;
-  setBasicInfoQuestions: (questions: HackerApplicationQuestion[]) => void;
-  setSkillsQuestions: (questions: HackerApplicationQuestion[]) => void;
-  setQuestionnaireQuestions: (questions: HackerApplicationQuestion[]) => void;
+  setWelcome: (welcome: HackerApplicationWelcomeQuestion | null) => void;
+  setBasicInfoQuestions: (questions: HackerApplicationNonWelcomeQuestion[]) => void;
+  setSkillsQuestions: (questions: HackerApplicationNonWelcomeQuestion[]) => void;
+  setQuestionnaireQuestions: (questions: HackerApplicationNonWelcomeQuestion[]) => void;
 
   reset: () => void;
 };
@@ -21,12 +24,12 @@ export const useApplicationQuestionStore = create<ApplicationQuestionStore>((set
   skillsQuestions: [],
   questionnaireQuestions: [],
 
-  setWelcome: (welcome: HackerApplicationQuestion | null) => set({ welcome }),
-  setBasicInfoQuestions: (questions: HackerApplicationQuestion[]) =>
+  setWelcome: (welcome: HackerApplicationWelcomeQuestion | null) => set({ welcome }),
+  setBasicInfoQuestions: (questions: HackerApplicationNonWelcomeQuestion[]) =>
     set({ basicInfoQuestions: questions }),
-  setSkillsQuestions: (questions: HackerApplicationQuestion[]) =>
+  setSkillsQuestions: (questions: HackerApplicationNonWelcomeQuestion[]) =>
     set({ skillsQuestions: questions }),
-  setQuestionnaireQuestions: (questions: HackerApplicationQuestion[]) =>
+  setQuestionnaireQuestions: (questions: HackerApplicationNonWelcomeQuestion[]) =>
     set({ questionnaireQuestions: questions }),
 
   reset: () =>

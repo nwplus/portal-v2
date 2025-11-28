@@ -12,12 +12,14 @@ import type { ApplicationFormValues } from "@/lib/application/types";
 import type { FieldPath } from "react-hook-form";
 
 /**
- * Renders a multi-line style text input for "Long Answer" questions.
+ * Renders a single-line text input for "Short Answer" questions.
  *
- * For now this reuses the same Input as Short Answer; swapping to a textarea
- * later only requires changing this component, not the form wiring.
+ * Uses useQuestionFieldConfig to:
+ * - Bind the input to the correct RHF path.
+ * - Display validation errors for this question.
+ * - Attach the label to the input via mainId.
  */
-export function LongAnswerQuestion(props: QuestionFieldProps) {
+export function ShortAnswerQuestion(props: QuestionFieldProps) {
   const { register, label, description, isRequired, mainPath, mainId, mainError, isMainInvalid } =
     useQuestionFieldConfig(props);
 
@@ -25,9 +27,8 @@ export function LongAnswerQuestion(props: QuestionFieldProps) {
 
   return (
     <Field data-invalid={isMainInvalid}>
-      <FieldLabel htmlFor={mainId}>
+      <FieldLabel htmlFor={mainId} isRequired={isRequired}>
         {label}
-        {isRequired ? <span className="text-border-danger"> *</span> : null}
       </FieldLabel>
       {description ? <FieldDescription>{description}</FieldDescription> : null}
       <FieldContent>

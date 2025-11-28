@@ -32,9 +32,21 @@ export function subscribeToHackerAppQuestions(
     const sectionQuery = query(sectionCollection);
 
     const unsubscribe = onSnapshot(sectionQuery, (snap) => {
-      buckets[section] = snap.docs
-        .map((d) => ({ _id: d.id, ...(d.data() as HackerApplicationQuestion) }))
-        .sort((a, b) => (a._id < b._id ? -1 : a._id > b._id ? 1 : 0));
+      const docs = snap.docs
+        .map((d) => ({
+          ...(d.data() as HackerApplicationQuestion),
+          _id: `${section}-${d.id}`,
+        }))
+        .sort((a, b) => (a._id ?? "").localeCompare(b._id ?? ""));
+
+      if (section === "Welcome") {
+        buckets.Welcome = docs as HackerApplicationQuestionMap["Welcome"];
+      } else {
+        buckets[section] = docs as HackerApplicationQuestionMap[Exclude<
+          HackerApplicationSections,
+          "Welcome"
+        >];
+      }
 
       loadedSections.add(section);
       if (loadedSections.size === sections.length) {

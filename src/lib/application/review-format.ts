@@ -1,9 +1,15 @@
 import type { ApplicantDraft } from "@/lib/firebase/types/applicants";
 import type {
-  HackerApplicationQuestion,
+  HackerApplicationNonWelcomeQuestion,
   HackerApplicationSections,
 } from "@/lib/firebase/types/hacker-app-questions";
-import { buildFieldPath, buildOtherFieldPath, getValueAtPath, normalizeOptionKey } from "./utils";
+import {
+  buildFieldPath,
+  buildOtherFieldPath,
+  getEffectiveFormInput,
+  getValueAtPath,
+  normalizeOptionKey,
+} from "./utils";
 
 /**
  * Formats an applicant's answer to a question for display on the review page.
@@ -13,13 +19,13 @@ import { buildFieldPath, buildOtherFieldPath, getValueAtPath, normalizeOptionKey
  * - Handles "Other (please specify)" by showing the free-text value instead of the literal "Other".
  */
 export function formatAnswerForReview(
-  section: HackerApplicationSections,
-  question: HackerApplicationQuestion,
+  section: Omit<HackerApplicationSections, "Welcome">,
+  question: HackerApplicationNonWelcomeQuestion,
   applicantDraft: ApplicantDraft | null,
 ): string {
   if (!applicantDraft) return "Not answered";
 
-  const formInput = question.formInput;
+  const formInput = getEffectiveFormInput(question);
   if (!formInput) return "Not answered";
 
   const mainPath = buildFieldPath(section, formInput);
