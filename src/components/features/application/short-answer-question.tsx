@@ -11,14 +11,6 @@ import { useQuestionFieldConfig } from "@/hooks/use-question-field-config";
 import type { ApplicationFormValues } from "@/lib/application/types";
 import type { FieldPath } from "react-hook-form";
 
-/**
- * Renders a single-line text input for "Short Answer" questions.
- *
- * Uses useQuestionFieldConfig to:
- * - Bind the input to the correct RHF path.
- * - Display validation errors for this question.
- * - Attach the label to the input via mainId.
- */
 export function ShortAnswerQuestion(props: QuestionFieldProps) {
   const { register, label, description, isRequired, mainPath, mainId, mainError, isMainInvalid } =
     useQuestionFieldConfig(props);

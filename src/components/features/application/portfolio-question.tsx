@@ -19,16 +19,6 @@ import { useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import type { FieldPath } from "react-hook-form";
 
-/**
- * Renders the grouped "Portfolio" question:
- * - Resume upload (required when the group is required)
- * - LinkedIn URL
- * - GitHub URL
- * - Portfolio URL
- *
- * This component owns the fan-out into multiple Skills fields and the resume
- * upload behavior, while still plugging into the shared ApplicationFormValues form.
- */
 export function PortfolioQuestion({ question }: QuestionFieldProps) {
   const form = useFormContext<ApplicationFormValues>();
   const { register, watch, formState, setValue, setError, clearErrors } = form;

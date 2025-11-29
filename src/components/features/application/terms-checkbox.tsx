@@ -11,12 +11,6 @@ interface TermsCheckboxProps {
   optional?: boolean;
 }
 
-/**
- * Terms and conditions checkbox used on the application review page.
- * - Binds a single boolean field in termsAndConditions via Controller.
- * - Shows a required "*" marker when optional is false.
- * - Renders validation errors using the shared FieldError component.
- */
 export function TermsCheckbox({ name, label, optional }: TermsCheckboxProps) {
   const { control, formState } = useFormContext<ApplicationFormValues>();
   const error = getValueAtPath(formState.errors, name) as { message?: string } | undefined;

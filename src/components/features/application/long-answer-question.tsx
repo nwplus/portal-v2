@@ -11,12 +11,6 @@ import { useQuestionFieldConfig } from "@/hooks/use-question-field-config";
 import type { ApplicationFormValues } from "@/lib/application/types";
 import type { FieldPath } from "react-hook-form";
 
-/**
- * Renders a multi-line style text input for "Long Answer" questions.
- *
- * Uses the shared Textarea component but keeps the same form wiring
- * as short answer questions.
- */
 export function LongAnswerQuestion(props: QuestionFieldProps) {
   const {
     register,
