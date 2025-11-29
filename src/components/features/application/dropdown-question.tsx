@@ -12,12 +12,6 @@ import type { ApplicationFormValues } from "@/lib/application/types";
 import { Controller } from "react-hook-form";
 import type { FieldPath } from "react-hook-form";
 
-/**
- * Renders a "Dropdown" question using the shared Dropdown UI component.
- *
- * The underlying value is a single string; we bridge the controlled Dropdown
- * component with RHF via Controller.
- */
 export function DropdownQuestion(props: QuestionFieldProps) {
   const {
     control,

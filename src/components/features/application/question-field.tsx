@@ -1,13 +1,13 @@
-import { CountryQuestion } from "@/components/features/application/country";
-import { DropdownQuestion } from "@/components/features/application/dropdown";
-import { FullLegalNameQuestion } from "@/components/features/application/full-legal-name";
-import { LongAnswerQuestion } from "@/components/features/application/long-answer";
-import { MajorQuestion } from "@/components/features/application/major";
-import { MultipleChoiceQuestion } from "@/components/features/application/multiple-choice";
-import { PortfolioQuestion } from "@/components/features/application/portfolio";
-import { SchoolQuestion } from "@/components/features/application/school";
-import { SelectAllQuestion } from "@/components/features/application/select-all";
-import { ShortAnswerQuestion } from "@/components/features/application/short-answer";
+import { CountryQuestion } from "@/components/features/application/country-question";
+import { DropdownQuestion } from "@/components/features/application/dropdown-question";
+import { FullLegalNameQuestion } from "@/components/features/application/full-legal-name-question";
+import { LongAnswerQuestion } from "@/components/features/application/long-answer-question";
+import { MajorQuestion } from "@/components/features/application/major-question";
+import { MultipleChoiceQuestion } from "@/components/features/application/multiple-choice-question";
+import { PortfolioQuestion } from "@/components/features/application/portfolio-question";
+import { SchoolQuestion } from "@/components/features/application/school-question";
+import { SelectAllQuestion } from "@/components/features/application/select-all-question";
+import { ShortAnswerQuestion } from "@/components/features/application/short-answer-question";
 import type {
   HackerApplicationNonWelcomeQuestion,
   HackerApplicationSections,
@@ -48,7 +48,7 @@ export function QuestionField(props: QuestionFieldProps) {
     case "Full Legal Name":
       return <FullLegalNameQuestion {...props} />;
     default:
-      // Unknown question type; render nothing.
+      console.error(`Unknown question type: ${question.type}`);
       return null;
   }
 }

@@ -14,12 +14,6 @@ import { normalizeOptionKey } from "@/lib/application/utils";
 import { Controller } from "react-hook-form";
 import type { FieldPath } from "react-hook-form";
 
-/**
- * Renders a "Select All" question: a set of checkboxes backed by a boolean map.
- *
- * Values are stored as Record<string, boolean>, with normalized keys so that
- * Firestore data stays analytics-friendly and consistent even when labels change.
- */
 export function SelectAllQuestion(props: QuestionFieldProps) {
   const {
     register,

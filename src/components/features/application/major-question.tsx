@@ -13,14 +13,6 @@ import type { ApplicantMajor } from "@/lib/firebase/types/applicants";
 import { Controller, useFormContext } from "react-hook-form";
 import type { FieldPath } from "react-hook-form";
 
-/**
- * Renders the fixed "Major" question as a dropdown backed by MAJOR_OPTIONS.
- *
- * The underlying value persisted to the form (and eventually the DB) is the
- * ApplicantMajor key (e.g. "computerScience"), while the human-readable label
- * (e.g. "Computer science, computer engineering, or software engineering")
- * is shown in the UI.
- */
 export function MajorQuestion({ question }: QuestionFieldProps) {
   const {
     control,

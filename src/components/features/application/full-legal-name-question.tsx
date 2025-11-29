@@ -12,13 +12,6 @@ import type { ApplicationFormValues } from "@/lib/application/types";
 import { useFormContext } from "react-hook-form";
 import type { FieldPath } from "react-hook-form";
 
-/**
- * Renders the grouped "Full Legal Name" question.
- *
- * This question fans out into two BasicInfo fields:
- * - basicInfo.legalFirstName
- * - basicInfo.legalLastName
- */
 export function FullLegalNameQuestion({ question }: QuestionFieldProps) {
   const form = useFormContext<ApplicationFormValues>();
   const {
