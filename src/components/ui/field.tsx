@@ -1,9 +1,8 @@
-import { type VariantProps, cva } from "class-variance-authority";
-import { useMemo } from "react";
-
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { type VariantProps, cva } from "class-variance-authority";
+import { Fragment, useMemo } from "react";
 
 function FieldSet({ className, ...props }: React.ComponentProps<"fieldset">) {
   return (
@@ -119,18 +118,22 @@ function FieldLabel({
   );
 }
 
-function FieldDescription({ className, ...props }: React.ComponentProps<"p">) {
+function FieldDescription({ className, children, ...props }: React.ComponentProps<"p">) {
+  const content = typeof children === "string" ? linkify(children) : children;
+
   return (
     <p
       data-slot="field-description"
       className={cn(
         "font-normal text-sm text-text-secondary leading-normal group-has-[[data-orientation=horizontal]]/field:text-balance",
         "nth-last-2:-mt-1 [[data-variant=legend]+&]:-mt-1.5 last:mt-0",
-        "[&>a:hover]:text-primary [&>a]:underline [&>a]:underline-offset-4",
+        "[&>a:hover]:text-text-secondary/80 [&>a]:text-text-secondary [&>a]:underline [&>a]:underline-offset-4",
         className,
       )}
       {...props}
-    />
+    >
+      {content}
+    </p>
   );
 }
 
@@ -229,3 +232,21 @@ export {
   FieldSet,
   FieldContent,
 };
+
+// Converts URLs in text to clickable anchor elements
+function linkify(text: string): React.ReactNode {
+  const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/g;
+  const parts = text.split(urlRegex);
+
+  return parts.map((part) => {
+    if (urlRegex.test(part)) {
+      const href = part.startsWith("http") ? part : `https://${part}`;
+      return (
+        <a key={part} href={href} target="_blank" rel="noopener noreferrer">
+          {part}
+        </a>
+      );
+    }
+    return <Fragment key={part}>{part}</Fragment>;
+  });
+}
