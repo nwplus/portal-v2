@@ -181,7 +181,13 @@ function FieldError({
       return null;
     }
 
-    const uniqueErrors = [...new Map(errors.map((error) => [error?.message, error])).values()];
+    const withMessages = errors.filter((error) => error?.message) as { message: string }[];
+
+    if (!withMessages.length) {
+      return null;
+    }
+
+    const uniqueErrors = [...new Map(withMessages.map((error) => [error.message, error])).values()];
 
     if (uniqueErrors?.length === 1) {
       return uniqueErrors[0]?.message;
