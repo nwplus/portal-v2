@@ -12,9 +12,9 @@ export const MAJOR_OPTIONS: Readonly<Record<ApplicantMajor, string>> = Object.fr
   socialScience: "Social science (such as anthropology, psychology, political science, etc.)",
   arts: "Fine arts or performing arts (such as graphic design, music, studio art, etc.)",
   healthScience: "Health science (such as nursing, pharmacy, radiology, etc.)",
-  other: "Other (Please Specify)",
   undecidedOrUndeclared: "Undecided / No Declared Major",
   schoolDoesNotOfferMajors: "My school does not offer majors / primary areas of study",
+  other: "Other (Please Specify)",
   preferNotToAnswer: "Prefer not to answer",
 });
 

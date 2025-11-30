@@ -269,23 +269,16 @@ function buildFieldSchema(question: HackerApplicationNonWelcomeQuestion): z.ZodT
 
     case "Major": {
       /**
-       * Fixed Major question backed by a predefined set of ApplicantMajor values.
-       * We validate it similarly to a dropdown:
-       * - when required, enforce a non-empty string and restrict to known options
-       * - when optional, allow empty string / undefined but still restrict to known options
+       * Fixed Major question backed by a boolean map keyed by ApplicantMajor.
+       * When required, at least one entry must be truthy.
        */
-      const base = z.string();
-      const withOptions = base.refine(
-        (value) => {
-          if (!value) return true;
-          return (MAJOR_KEYS as readonly string[]).includes(value);
-        },
-        { error: "Invalid selection" },
-      );
+      const base = z.record(z.string(), z.boolean());
 
       return isRequired
-        ? withOptions.min(1, "This field is required")
-        : withOptions.optional().or(z.literal(""));
+        ? base.refine((value) => Object.values(value).some((flag) => Boolean(flag)), {
+            error: "This field is required",
+          })
+        : base;
     }
 
     case "Country": {
@@ -487,9 +480,8 @@ export function buildApplicationSchema(questions: QuestionBuckets): {
       } else if (questionType === "Multiple Choice") {
         needsOtherText = typeof mainValue === "string" && mainValue.toLowerCase() === "other";
       } else if (questionType === "Major") {
-        // Major is a fixed single-selection question where choosing the
-        // "other" option should require a companion free-text value.
-        needsOtherText = typeof mainValue === "string" && mainValue === "other";
+        const record = (mainValue ?? {}) as Record<string, boolean>;
+        needsOtherText = Boolean(record.other);
       }
 
       if (needsOtherText) {

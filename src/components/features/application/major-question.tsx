@@ -7,6 +7,7 @@ import {
   FieldError,
   FieldLabel,
 } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import type { ApplicationFormValues } from "@/lib/application/types";
 import { MAJOR_KEYS, MAJOR_OPTIONS } from "@/lib/data/majors";
 import type { ApplicantMajor } from "@/lib/firebase/types/applicants";
@@ -17,6 +18,9 @@ export function MajorQuestion({ question }: QuestionFieldProps) {
   const {
     control,
     register,
+    setValue,
+    clearErrors,
+    trigger,
     formState: { errors },
   } = useFormContext<ApplicationFormValues>();
 
@@ -33,8 +37,7 @@ export function MajorQuestion({ question }: QuestionFieldProps) {
   const isMajorInvalid = Boolean(majorError);
   const isOtherInvalid = Boolean(otherMajorError);
   const isInvalid = isMajorInvalid || isOtherInvalid;
-
-  const majorItems = MAJOR_KEYS as ApplicantMajor[];
+  const errorMessage = otherMajorError ?? majorError;
 
   return (
     <Field data-invalid={isInvalid}>
@@ -44,37 +47,56 @@ export function MajorQuestion({ question }: QuestionFieldProps) {
         <Controller
           name={majorPath}
           control={control}
-          render={({ field }) => (
-            <div className="space-y-2">
-              <Dropdown
-                items={majorItems}
-                value={(field.value as ApplicantMajor | null) ?? null}
-                onValueChange={(value) => field.onChange((value as ApplicantMajor | null) ?? "")}
-                itemToString={(key) => (key ? MAJOR_OPTIONS[key as ApplicantMajor] : "")}
-                itemToKey={(key) => key}
-                name={field.name}
-                invalid={isMajorInvalid}
-                onBlur={field.onBlur}
-              />
+          render={({ field }) => {
+            const record = (field.value ?? {}) as Record<string, boolean>;
 
-              {/* TODO: replace with dropdown creatable */}
-              {field.value === "other" ? (
-                <div className="space-y-1">
-                  <label className="font-normal text-xs" htmlFor="basicInfo-otherMajor">
-                    Other (please specify)
-                  </label>
-                  <input
-                    id="basicInfo-otherMajor"
-                    className="h-10 w-full rounded-md border border-border-subtle bg-bg-text-field px-3.5 text-sm text-text-primary placeholder:text-text-secondary focus:border-border-active focus:ring-2 focus:ring-border-active/20 aria-invalid:border-border-danger aria-invalid:ring-border-danger/20"
+            const selectedKey =
+              (MAJOR_KEYS.find((key) => record[key]) as ApplicantMajor | undefined) ?? null;
+
+            const isOtherSelected = Boolean(record.other);
+
+            return (
+              <div className="space-y-2">
+                <Dropdown
+                  items={MAJOR_KEYS as ApplicantMajor[]}
+                  value={selectedKey}
+                  onValueChange={(value) => {
+                    const key = (value as ApplicantMajor | null) ?? null;
+
+                    const nextRecord: Record<string, boolean> = {};
+                    for (const k of MAJOR_KEYS) {
+                      nextRecord[k] = Boolean(key && k === key);
+                    }
+
+                    field.onChange(nextRecord);
+
+                    if (key !== "other") {
+                      setValue(otherMajorPath, "");
+                      clearErrors(otherMajorPath);
+                    }
+
+                    void trigger(majorPath);
+                  }}
+                  itemToString={(key) => (key ? MAJOR_OPTIONS[key as ApplicantMajor] : "")}
+                  itemToKey={(key) => key}
+                  name={field.name}
+                  invalid={isMajorInvalid}
+                  onBlur={field.onBlur}
+                />
+
+                {isOtherSelected ? (
+                  <Input
+                    id={otherMajorPath}
+                    placeholder="Please specify"
                     aria-invalid={isOtherInvalid}
                     {...register(otherMajorPath)}
                   />
-                </div>
-              ) : null}
-            </div>
-          )}
+                ) : null}
+              </div>
+            );
+          }}
         />
-        <FieldError errors={[majorError, otherMajorError]} />
+        <FieldError errors={errorMessage ? [errorMessage] : undefined} />
       </FieldContent>
     </Field>
   );
