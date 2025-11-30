@@ -44,9 +44,13 @@ function RouteComponent() {
   const matches = useMatches();
   const applicationQuestions = useApplicationQuestionStore();
 
-  // the gradient position is different for the rsvp page
   const isRsvpPage = matches.some((match) => match.routeId.endsWith("/rsvp"));
-  const gradientPosition: BackgroundGradientPosition = isRsvpPage ? "topMiddle" : "bottomRight";
+  const isIndexPage = matches.some((match) => match.routeId.endsWith("/application"));
+  const gradientPosition: BackgroundGradientPosition = isIndexPage
+    ? "bottomMiddle"
+    : isRsvpPage
+      ? "topMiddle"
+      : "bottomRight";
 
   // Only show the save indicator on specific application sub-routes
   const leafMatch = matches[matches.length - 1];

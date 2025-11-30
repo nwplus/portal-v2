@@ -109,6 +109,22 @@ export async function submitApplicantDraft(
 }
 
 /**
+ * Withdraws an applicant's submitted application by setting status back to inProgress.
+ */
+export async function withdrawApplicant(dbCollectionName: string, uid: string): Promise<void> {
+  const ref = getApplicantRef(dbCollectionName, uid);
+
+  await setDoc(
+    ref,
+    {
+      status: { applicationStatus: "inProgress" },
+      submission: { submitted: false },
+    },
+    { merge: true },
+  );
+}
+
+/**
  * Uploads a resume file to Firebase Storage and returns the public download URL.
  *
  * Files are stored under `applicantResumes/{userId}` to match existing
