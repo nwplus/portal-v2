@@ -11,7 +11,6 @@ import type {
 } from "@/lib/firebase/types/hacker-app-questions";
 import { FIXED_QUESTION_CONFIG } from "./fixed-question-config";
 import { buildFieldPath, buildOtherFieldPath, getEffectiveFormInput } from "./form-mapping";
-import { getValueAtPath } from "./object-path";
 import { isGithubUrl, isLinkedinUrl, isValidHttpsUrl } from "./utils";
 
 /**
@@ -436,9 +435,44 @@ export function buildApplicationSchema(questions: QuestionBuckets): {
     }
   }
 
-  const basicInfoSchema = z.object(basicInfoShape).passthrough();
-  const skillsSchema = z.object(skillsShape).passthrough();
-  const questionnaireSchema = z.object(questionnaireShape).passthrough();
+  // Helper to build a section schema with "other" field validation
+  function buildSectionSchema(shape: Record<string, z.ZodTypeAny>, sectionPrefix: string) {
+    return z
+      .object(shape)
+      .passthrough()
+      .superRefine((values, ctx) => {
+        for (const { questionType, mainPath, otherPath } of otherMeta) {
+          if (!mainPath.startsWith(sectionPrefix) || !otherPath) continue;
+
+          const mainKey = mainPath.split(".")[1];
+          const otherKey = otherPath.split(".")[1];
+          if (!mainKey || !otherKey) continue;
+
+          const mainValue = values[mainKey];
+          const otherValue = values[otherKey];
+
+          let needsOtherText = false;
+          if (questionType === "Select All" || questionType === "Major") {
+            const record = (mainValue ?? {}) as Record<string, boolean>;
+            needsOtherText = Boolean(record.other);
+          } else if (questionType === "Multiple Choice") {
+            needsOtherText = typeof mainValue === "string" && mainValue.toLowerCase() === "other";
+          }
+
+          if (needsOtherText) {
+            const text = typeof otherValue === "string" ? otherValue.trim() : "";
+            if (!text) {
+              ctx.addIssue({ code: "custom", message: "Please specify", path: [otherKey] });
+            }
+          }
+        }
+      });
+  }
+
+  const basicInfoSchema = buildSectionSchema(basicInfoShape, "basicInfo.");
+  const skillsSchema = buildSectionSchema(skillsShape, "skills.");
+  const questionnaireSchema = buildSectionSchema(questionnaireShape, "questionnaire.");
+
   const termsSchema = z.object({
     MLHCodeOfConduct: z.boolean().refine((value) => value === true, {
       error: "This field is required",
@@ -457,45 +491,12 @@ export function buildApplicationSchema(questions: QuestionBuckets): {
   });
 
   // Assemble the full schema for react-hook-form resolver consumption.
-  let schema = z.object({
+  const schema = z.object({
     basicInfo: basicInfoSchema,
     skills: skillsSchema,
     questionnaire: questionnaireSchema,
     termsAndConditions: termsSchema,
   }) as z.ZodType<ApplicationFormValues>;
-
-  // Cross-field validation: if "Other" is selected/checked, require a non-empty otherX value.
-  schema = schema.superRefine((values, context) => {
-    for (const { questionType, mainPath, otherPath } of otherMeta) {
-      if (!otherPath) continue;
-
-      const mainValue = getValueAtPath<unknown>(values, mainPath);
-      const otherValue = getValueAtPath<unknown>(values, otherPath);
-
-      let needsOtherText = false;
-
-      if (questionType === "Select All") {
-        const record = (mainValue ?? {}) as Record<string, boolean>;
-        needsOtherText = Boolean(record.other);
-      } else if (questionType === "Multiple Choice") {
-        needsOtherText = typeof mainValue === "string" && mainValue.toLowerCase() === "other";
-      } else if (questionType === "Major") {
-        const record = (mainValue ?? {}) as Record<string, boolean>;
-        needsOtherText = Boolean(record.other);
-      }
-
-      if (needsOtherText) {
-        const text = typeof otherValue === "string" ? otherValue.trim() : "";
-        if (!text) {
-          context.addIssue({
-            code: "custom",
-            message: "Please specify",
-            path: otherPath.split("."),
-          });
-        }
-      }
-    }
-  });
 
   const meta: SchemaMeta = { fieldNamesBySection, otherMeta };
   return { schema, meta };
