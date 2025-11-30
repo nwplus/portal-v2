@@ -178,32 +178,43 @@ function RouteComponent() {
             {/* Terms and Conditions */}
             <FieldSet className="space-y-3">
               <h1 className="font-medium text-lg">🔒 Terms and conditions</h1>
-              <TermsCheckbox
-                name="termsAndConditions.MLHCodeOfConduct"
-                label="I have read and agree to the MLH Code of Conduct."
-              />
-              <TermsCheckbox
-                name="termsAndConditions.MLHPrivacyPolicy"
-                label="I authorize MLH to share my application/registration information with MLH for event administration, ranking, and MLH administration."
-              />
-              <TermsCheckbox
-                name="termsAndConditions.nwPlusPrivacyPolicy"
-                label="I agree to the nwPlus Privacy Policy."
-              />
-              <TermsCheckbox
-                name="termsAndConditions.shareWithnwPlus"
-                label="I agree that my application data may be used internally by nwPlus."
-              />
-              <TermsCheckbox
-                name="termsAndConditions.shareWithSponsors"
-                label="I agree that my application data may be shared with sponsors."
-                optional
-              />
-              <TermsCheckbox
-                name="termsAndConditions.MLHEmailSubscription"
-                label="I would like to receive emails from MLH about future events."
-                optional
-              />
+              <TermsCheckbox fieldPath="termsAndConditions.MLHCodeOfConduct">
+                I have read and agree to the{" "}
+                <a
+                  href="https://mlh.io/code-of-conduct"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline"
+                >
+                  MLH Code of Conduct
+                </a>
+                .
+              </TermsCheckbox>
+              <TermsCheckbox fieldPath="termsAndConditions.MLHPrivacyPolicy">
+                I authorize MLH to share my application/registration information with MLH for event
+                administration, ranking, and MLH administration.
+              </TermsCheckbox>
+              <TermsCheckbox fieldPath="termsAndConditions.nwPlusPrivacyPolicy">
+                I agree to the{" "}
+                <a
+                  href="https://nwplus.io/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline"
+                >
+                  nwPlus Privacy Policy
+                </a>
+                .
+              </TermsCheckbox>
+              <TermsCheckbox fieldPath="termsAndConditions.shareWithnwPlus">
+                I agree that my application data may be used internally by nwPlus.
+              </TermsCheckbox>
+              <TermsCheckbox fieldPath="termsAndConditions.shareWithSponsors" optional>
+                I agree that my application data may be shared with sponsors.
+              </TermsCheckbox>
+              <TermsCheckbox fieldPath="termsAndConditions.MLHEmailSubscription" optional>
+                I would like to receive emails from MLH about future events.
+              </TermsCheckbox>
             </FieldSet>
           </div>
         </ScrollFade>
