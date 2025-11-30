@@ -1,6 +1,8 @@
 import { db } from "@/lib/firebase/client";
 import { storage } from "@/lib/firebase/client";
 import type { Applicant, ApplicantDraft } from "@/lib/firebase/types/applicants";
+import { useApplicantStore } from "@/lib/stores/applicant-store";
+import { useAuthStore } from "@/lib/stores/auth-store";
 import {
   type DocumentData,
   type DocumentReference,
@@ -75,8 +77,6 @@ export async function createOrMergeApplicant(
   const { _id: _omitId, submission: _omitSubmission, ...rest } = draft;
   const payload = { ...rest, _id: uid, submission: mergedSubmission };
 
-  // TODO: validation
-  // merge + write to firestore
   await setDoc(ref, payload, { merge: true });
 }
 
@@ -109,22 +109,6 @@ export async function submitApplicantDraft(
 }
 
 /**
- * Withdraws an applicant's submitted application by setting status back to inProgress.
- */
-export async function withdrawApplicant(dbCollectionName: string, uid: string): Promise<void> {
-  const ref = getApplicantRef(dbCollectionName, uid);
-
-  await setDoc(
-    ref,
-    {
-      status: { applicationStatus: "inProgress" },
-      submission: { submitted: false },
-    },
-    { merge: true },
-  );
-}
-
-/**
  * Uploads a resume file to Firebase Storage and returns the public download URL.
  *
  * Files are stored under `applicantResumes/{userId}` to match existing
@@ -141,4 +125,22 @@ export async function uploadResumeToStorage(userId: string, file: File): Promise
     console.error("Failed to upload resume", error);
     return null;
   }
+}
+
+/**
+ * Saves the current applicant draft to Firestore
+ *
+ * @param dbCollectionName - firestore collection name for the hackathon
+ */
+export async function saveApplicantDraft(dbCollectionName: string): Promise<void> {
+  const { applicantDraft, setDirty, setLastLocalSaveAt } = useApplicantStore.getState();
+  const { user } = useAuthStore.getState();
+
+  if (!applicantDraft || !user?.uid) {
+    return;
+  }
+
+  await createOrMergeApplicant(dbCollectionName, user.uid, applicantDraft);
+  setDirty(false);
+  setLastLocalSaveAt(Date.now());
 }

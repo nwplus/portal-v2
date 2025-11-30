@@ -58,7 +58,7 @@ function RouteComponent() {
                 {applicationStatus === "inProgress" && (
                   <>
                     <PencilLine className="size-5" strokeWidth={2} />
-                    Application in progress
+                    {hasStartedApplication ? "Application in progress" : "Application not started"}
                   </>
                 )}
                 {applicationStatus === "applied" && (
@@ -103,6 +103,7 @@ function RouteComponent() {
           <>
             <ReactMarkdown
               components={{
+                p: ({ children }) => <p className="mb-0">{children}</p>,
                 a: ({ href, children }) => (
                   <a
                     href={href}
@@ -113,7 +114,6 @@ function RouteComponent() {
                     {children}
                   </a>
                 ),
-                p: ({ children }) => <p className="space-y-4">{children}</p>,
               }}
             >
               {welcome.content}

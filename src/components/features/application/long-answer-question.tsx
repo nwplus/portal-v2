@@ -42,7 +42,6 @@ export function LongAnswerQuestion(props: QuestionFieldProps) {
       </FieldLabel>
       {description ? <FieldDescription>{description}</FieldDescription> : null}
       <FieldContent>
-        <FieldError errors={mainError ? [mainError] : undefined} />
         <Textarea id={mainId} aria-invalid={isMainInvalid} {...register(mainPath)} />
         {typeof maxWords === "number" && maxWords > 0 ? (
           <div className="mt-1 flex items-center justify-between text-text-secondary text-xs">
@@ -54,6 +53,7 @@ export function LongAnswerQuestion(props: QuestionFieldProps) {
             </span>
           </div>
         ) : null}
+        <FieldError errors={mainError ? [mainError] : undefined} />
       </FieldContent>
     </Field>
   );

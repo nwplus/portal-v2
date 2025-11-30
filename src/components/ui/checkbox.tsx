@@ -9,7 +9,7 @@ function Checkbox({ className, ...props }: React.ComponentProps<typeof CheckboxP
     <CheckboxPrimitive.Root
       data-slot="checkbox"
       className={cn(
-        "peer size-4 shrink-0 rounded-[4px] border border-border-subtle bg-bg-translucent-card text-bg-button-control shadow-xs outline-none transition-shadow focus-visible:border-border-active focus-visible:ring-[3px] focus-visible:ring-border-subtle/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-border-danger aria-invalid:ring-border-danger/20 data-[state=checked]:border-border-active",
+        "peer background:var(--background-translucent-card) size-4 shrink-0 rounded-[4px] border border-border-subtle text-bg-button-control shadow-xs outline-none transition-shadow focus-visible:border-border-active focus-visible:ring-[3px] focus-visible:ring-border-subtle/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-border-danger aria-invalid:ring-border-danger/20 data-[state=checked]:border-border-active",
         className,
       )}
       {...props}
