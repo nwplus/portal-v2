@@ -8,8 +8,6 @@ import {
 } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { useQuestionFieldConfig } from "@/hooks/use-question-field-config";
-import type { ApplicationFormValues } from "@/lib/application/types";
-import type { FieldPath } from "react-hook-form";
 
 export function LongAnswerQuestion(props: QuestionFieldProps) {
   const {
@@ -27,12 +25,10 @@ export function LongAnswerQuestion(props: QuestionFieldProps) {
 
   if (!mainPath) return null;
 
-  const fieldPath = mainPath as FieldPath<ApplicationFormValues>;
-
   const maxWordsRaw = question.maxWords;
   const maxWords = maxWordsRaw ? Number.parseInt(maxWordsRaw, 10) : undefined;
 
-  const currentValue = watch(fieldPath) ?? "";
+  const currentValue = watch(mainPath) ?? "";
   const currentWordCount =
     typeof currentValue === "string" ? currentValue.trim().split(/\s+/).filter(Boolean).length : 0;
 
@@ -47,7 +43,7 @@ export function LongAnswerQuestion(props: QuestionFieldProps) {
       {description ? <FieldDescription>{description}</FieldDescription> : null}
       <FieldContent>
         <FieldError errors={mainError ? [mainError] : undefined} />
-        <Textarea id={mainId} aria-invalid={isMainInvalid} {...register(fieldPath)} />
+        <Textarea id={mainId} aria-invalid={isMainInvalid} {...register(mainPath)} />
         {typeof maxWords === "number" && maxWords > 0 ? (
           <div className="mt-1 flex items-center justify-between text-text-secondary text-xs">
             <span>
