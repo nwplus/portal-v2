@@ -17,6 +17,7 @@ const COUNTRY_OPTIONS = countries as string[];
 export function CountryQuestion({ question }: QuestionFieldProps) {
   const {
     control,
+    trigger,
     formState: { errors },
   } = useFormContext<ApplicationFormValues>();
 
@@ -47,7 +48,10 @@ export function CountryQuestion({ question }: QuestionFieldProps) {
             <Dropdown
               items={COUNTRY_OPTIONS}
               value={field.value ?? null}
-              onValueChange={(value) => field.onChange(value ?? "")}
+              onValueChange={(value) => {
+                field.onChange(value ?? "");
+                void trigger(countryPath);
+              }}
               createOtherOption
               name={field.name}
               invalid={isInvalid}

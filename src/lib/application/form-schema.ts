@@ -293,9 +293,8 @@ function buildFieldSchema(question: HackerApplicationNonWelcomeQuestion): z.ZodT
     }
 
     case "Country": {
-      // Country remains a fixed type without a dedicated component;
-      // we keep the passthrough behavior to avoid blocking schema generation.
-      return z.any();
+      const base = z.string().trim().min(1, "This field is required");
+      return isRequired ? base : base.optional();
     }
 
     default: {
