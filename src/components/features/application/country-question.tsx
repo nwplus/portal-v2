@@ -48,6 +48,7 @@ export function CountryQuestion({ question }: QuestionFieldProps) {
               items={COUNTRY_OPTIONS}
               value={field.value ?? null}
               onValueChange={(value) => field.onChange(value ?? "")}
+              createOtherOption
               name={field.name}
               invalid={isInvalid}
               onBlur={field.onBlur}

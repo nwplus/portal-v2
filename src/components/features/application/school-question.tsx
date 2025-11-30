@@ -41,6 +41,7 @@ export function SchoolQuestion({ question }: QuestionFieldProps) {
               items={SCHOOL_OPTIONS}
               value={field.value ?? null}
               onValueChange={(value) => field.onChange(value ?? "")}
+              createOtherOption
               name={field.name}
               invalid={isInvalid}
               onBlur={field.onBlur}
