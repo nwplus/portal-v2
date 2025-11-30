@@ -1,10 +1,14 @@
 import { NoisyBackground } from "@/components/visual/noisy-background";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { usePortalStore } from "@/lib/stores/portal-store";
+import { loadPortalStore } from "@/lib/utils";
 import { Outlet, createRootRoute } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
 export const Route = createRootRoute({
+  beforeLoad: async () => {
+    await loadPortalStore();
+  },
   component: () => {
     const authLoading = useAuthStore((state) => state.loading);
     const portalLoading = usePortalStore((state) => state.loading);
