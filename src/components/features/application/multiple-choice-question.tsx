@@ -9,15 +9,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useQuestionFieldConfig } from "@/hooks/use-question-field-config";
-import type { ApplicationFormValues } from "@/lib/application/types";
 import { Controller } from "react-hook-form";
-import type { FieldPath } from "react-hook-form";
 
 export function MultipleChoiceQuestion(props: QuestionFieldProps) {
   const {
     register,
     control,
     trigger,
+    setValue,
     label,
     description,
     isRequired,
@@ -43,7 +42,7 @@ export function MultipleChoiceQuestion(props: QuestionFieldProps) {
 
       <FieldContent>
         <Controller
-          name={mainPath as FieldPath<ApplicationFormValues>}
+          name={mainPath}
           control={control}
           render={({ field }) => {
             const currentValue = field.value as string | undefined;
@@ -54,7 +53,11 @@ export function MultipleChoiceQuestion(props: QuestionFieldProps) {
                 value={currentValue ?? ""}
                 onValueChange={(value) => {
                   field.onChange(value);
-                  void trigger(mainPath as FieldPath<ApplicationFormValues>);
+                  void trigger(mainPath);
+                  if (currentValue === "other" && value !== "other" && otherPath) {
+                    setValue(otherPath, "");
+                    void trigger(otherPath);
+                  }
                 }}
               >
                 {options.map((optionLabel, index) => {
@@ -68,7 +71,7 @@ export function MultipleChoiceQuestion(props: QuestionFieldProps) {
                         onClick={() => {
                           if (currentValue === optionLabel) {
                             field.onChange("");
-                            void trigger(mainPath as FieldPath<ApplicationFormValues>);
+                            void trigger(mainPath);
                           }
                         }}
                       />
@@ -89,7 +92,9 @@ export function MultipleChoiceQuestion(props: QuestionFieldProps) {
                         onClick={() => {
                           if (currentValue === "other") {
                             field.onChange("");
-                            void trigger(mainPath as FieldPath<ApplicationFormValues>);
+                            setValue(otherPath, "");
+                            void trigger(mainPath);
+                            void trigger(otherPath);
                           }
                         }}
                       />
@@ -103,7 +108,7 @@ export function MultipleChoiceQuestion(props: QuestionFieldProps) {
                         className="mt-1"
                         placeholder="Please specify"
                         aria-invalid={isOtherInvalid}
-                        {...register(otherPath as FieldPath<ApplicationFormValues>)}
+                        {...register(otherPath)}
                       />
                     ) : null}
                   </>
