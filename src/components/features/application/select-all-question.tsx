@@ -9,16 +9,15 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useQuestionFieldConfig } from "@/hooks/use-question-field-config";
-import type { ApplicationFormValues } from "@/lib/application/types";
 import { normalizeOptionKey } from "@/lib/application/utils";
 import { Controller } from "react-hook-form";
-import type { FieldPath } from "react-hook-form";
 
 export function SelectAllQuestion(props: QuestionFieldProps) {
   const {
     register,
     control,
     trigger,
+    setValue,
     label,
     description,
     isRequired,
@@ -43,7 +42,7 @@ export function SelectAllQuestion(props: QuestionFieldProps) {
       {description ? <FieldDescription>{description}</FieldDescription> : null}
       <FieldContent>
         <Controller
-          name={mainPath as FieldPath<ApplicationFormValues>}
+          name={mainPath}
           control={control}
           render={({ field }) => {
             const rawRecord = (field.value ?? {}) as Record<string, boolean>;
@@ -76,10 +75,7 @@ export function SelectAllQuestion(props: QuestionFieldProps) {
               };
 
               field.onChange(nextValue);
-              // Ensure validation re-runs for this question on each change so
-              // "Select at least one option" clears as soon as a valid choice
-              // is made.
-              void trigger(mainPath as FieldPath<ApplicationFormValues>);
+              void trigger(mainPath);
             };
 
             return (
@@ -108,7 +104,13 @@ export function SelectAllQuestion(props: QuestionFieldProps) {
                       <Checkbox
                         id={`${baseId}-other`}
                         checked={Boolean(selectedRecord.other)}
-                        onCheckedChange={(checked) => handleToggle("other", Boolean(checked))}
+                        onCheckedChange={(checked) => {
+                          handleToggle("other", Boolean(checked));
+                          if (!checked) {
+                            setValue(otherPath, "");
+                            void trigger(otherPath);
+                          }
+                        }}
                         aria-invalid={isMainInvalid || isOtherInvalid}
                       />
                       <FieldLabel htmlFor={`${baseId}-other`} className="font-normal text-sm">
@@ -121,7 +123,7 @@ export function SelectAllQuestion(props: QuestionFieldProps) {
                         className="mt-1"
                         placeholder="Please specify"
                         aria-invalid={isOtherInvalid}
-                        {...register(otherPath as FieldPath<ApplicationFormValues>)}
+                        {...register(otherPath)}
                       />
                     ) : null}
                   </>
