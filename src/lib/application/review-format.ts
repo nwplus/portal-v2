@@ -1,3 +1,4 @@
+import { MAJOR_KEYS, MAJOR_OPTIONS } from "@/lib/data/majors";
 import type { ApplicantDraft } from "@/lib/firebase/types/applicants";
 import type {
   HackerApplicationNonWelcomeQuestion,
@@ -46,22 +47,13 @@ export function formatAnswerForReview(
     case "Select All": {
       const record = (mainValue ?? {}) as Record<string, boolean>;
       const options = question.options ?? [];
-      const labels: string[] = [];
 
-      for (const optionLabel of options) {
-        const key = normalizeOptionKey(optionLabel);
-        const isSelected = Boolean(record[key] ?? record[optionLabel]);
-        if (!isSelected) continue;
-        labels.push(optionLabel);
-      }
+      const labels = options.filter((label) => record[normalizeOptionKey(label)]);
 
       // Handle "Other (please specify)" when present
-      if (question.other) {
-        const otherSelected = Boolean(record.other);
-        if (otherSelected) {
-          const otherText = typeof otherValue === "string" ? otherValue.trim() : "";
-          labels.push(otherText || "Other");
-        }
+      if (question.other && record.other) {
+        const otherText = typeof otherValue === "string" ? otherValue.trim() : "";
+        labels.push(otherText);
       }
 
       return labels.length ? labels.join(", ") : "Not answered";
@@ -77,6 +69,21 @@ export function formatAnswerForReview(
       }
 
       return raw;
+    }
+
+    case "Major": {
+      const record = (mainValue ?? {}) as Record<string, boolean>;
+
+      const majorOtherPath = buildOtherFieldPath(section, formInput);
+      const otherMajorText = majorOtherPath
+        ? (getValueAtPath<string>(applicantDraft, majorOtherPath) ?? "").trim()
+        : "";
+
+      const labels = MAJOR_KEYS.filter((key) => record[key]).map((key) =>
+        key === "other" && otherMajorText ? otherMajorText : MAJOR_OPTIONS[key],
+      );
+
+      return labels.length ? labels.join(", ") : "Not answered";
     }
 
     case "Dropdown": {
