@@ -80,13 +80,13 @@ function RouteComponent() {
                 {applicationStatus === "rejected" && "Application rejected"}
               </Tag>
               {applicationStatus === "acceptedNoResponseYet" && (
-                <Tag variant="active" gap-2 pr-6 pl-5>
+                <Tag variant="active" className="gap-2 pr-6 pl-5">
                   <Clock className="size-5" strokeWidth={2} />
                   Awaiting RSVP
                 </Tag>
               )}
               {applicationStatus === "acceptedAndAttending" && (
-                <Tag variant="active" gap-2 pr-6 pl-5>
+                <Tag variant="active" className="gap-2 pr-6 pl-5">
                   <Check className="size-5" strokeWidth={2} />
                   RSVP'd
                 </Tag>

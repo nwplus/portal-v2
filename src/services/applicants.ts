@@ -97,13 +97,12 @@ export async function submitApplicantDraft(
       submittedAt: serverTimestamp() as Timestamp,
     },
     status: {
+      ...(draft.status ?? {}),
       applicationStatus: "applied",
     },
   };
 
   await createOrMergeApplicant(dbCollectionName, uid, submittedDraft);
-
-  // TODO: send email to applicant
 
   return submittedDraft;
 }
