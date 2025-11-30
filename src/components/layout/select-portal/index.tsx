@@ -130,7 +130,7 @@ const useGeneratedPortals = (hackathons: Hackathon[]) => {
 
       return {
         hackathon: hackathonName,
-        href: `/${hackathonName}`,
+        href: `/${hackathonName.toLowerCase()}`,
         id: hackathon._id,
         logo: getHackathonIcon(hackathon._id),
         dates,
