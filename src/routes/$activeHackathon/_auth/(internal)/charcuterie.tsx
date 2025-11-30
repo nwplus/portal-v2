@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dropdown } from "@/components/ui/dropdown";
 import { Input } from "@/components/ui/input";
+import { Tag } from "@/components/ui/tag";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { createFileRoute } from "@tanstack/react-router";
@@ -244,6 +245,17 @@ function RouteComponent() {
               </div>
               <p className="text-sm text-text-error">Please accept the terms to continue.</p>
             </div>
+          </div>
+        </section>
+
+        {/* Tags Section */}
+        <section className="space-y-8">
+          <h2 className="mb-1 font-semibold text-2xl">Tags</h2>
+
+          <div className="flex flex-wrap items-center gap-4">
+            <Tag>Active</Tag>
+            <Tag variant="disabled">Disabled</Tag>
+            <Tag variant="success">Success</Tag>
           </div>
         </section>
 
