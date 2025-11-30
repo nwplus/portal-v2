@@ -12,6 +12,7 @@ interface DropdownProps<T = string> {
   itemToKey?: (item: T) => string | number;
   createOtherOption?: boolean; // if true, allows the user to create a custom option
   createOtherItem?: (input: string) => T;
+  onCommit?: () => void;
   /**
    * wiring hooks for form libraries like React Hook Form.
    */
@@ -30,6 +31,7 @@ export function Dropdown<T = string>({
   itemToKey = (item) => String(item),
   createOtherOption = false,
   createOtherItem,
+  onCommit,
   name,
   inputId,
   invalid,
@@ -76,6 +78,7 @@ export function Dropdown<T = string>({
 
     if (!raw) {
       onValueChange?.(null);
+      onCommit?.();
       return;
     }
 
@@ -83,12 +86,22 @@ export function Dropdown<T = string>({
 
     if (existingMatch) {
       onValueChange?.(existingMatch);
+      onCommit?.();
       return;
     }
 
     const nextValue = createOtherItem ? createOtherItem(raw) : (raw as T);
     onValueChange?.(nextValue);
-  }, [allItems, createOtherItem, createOtherOption, itemToString, onValueChange, searchValue]);
+    onCommit?.();
+  }, [
+    allItems,
+    createOtherItem,
+    createOtherOption,
+    itemToString,
+    onCommit,
+    onValueChange,
+    searchValue,
+  ]);
 
   // Virtualizer drives which rows are mounted and their positions.
   const virtualizer = useVirtualizer({
@@ -201,7 +214,7 @@ export function Dropdown<T = string>({
           <Combobox.Popup className="max-h-[min(var(--available-height),15rem)] w-[var(--anchor-width)] max-w-[var(--available-width)] origin-[var(--transform-origin)] rounded-md border border-border-subtle bg-bg-dropdown text-sm shadow-lg transition-[transform,scale,opacity] data-[ending-style]:scale-95 data-[starting-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0">
             <Combobox.Empty className="px-4 py-2 text-sm text-text-secondary empty:m-0 empty:p-0">
               {createOtherOption
-                ? "No results found. Hit enter to create a new option."
+                ? `No results found. Hit enter to save "${searchValue}"`
                 : "No results found."}
             </Combobox.Empty>
             <Combobox.List className="p-0">

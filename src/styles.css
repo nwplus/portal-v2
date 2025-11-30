@@ -84,17 +84,18 @@ code {
 
   --color-bg-main: var(--background-main);
   --color-bg-pane-container: var(--background-pane-container);
-  --color-bg-translucent-card: var(--background-translucent-card);
+  --color-bg-translucent-card: var(--background-translucent-card); /* not used, since tailwind doesn't support gradients -> use css variable instead */
   --color-bg-selected-accent: var(--background-selected-accent);
   --color-bg-text-field: var(--background-text-field);
   --color-bg-dropdown: var(--background-dropdown);
   --color-bg-dropdown-selected: var(--background-dropdown-selected);
 
-  --color-bg-progress-bar-complete: var(--progress-bar-complete);
-  --color-bg-progress-bar-incomplete: var(--progress-bar-incomplete);
   --color-tag-active: var(--tag-active);
   --color-tag-success: var(--tag-success);
   --color-tag-disabled: var(--tag-disabled);
+
+  --color-bg-progress-bar-complete: var(--progress-bar-complete); /* not used, since tailwind doesn't support gradients -> use css variable instead */
+  --color-bg-progress-bar-incomplete: var(--progress-bar-incomplete);
 
   --color-bg-button-primary: var(--background-button-primary);
   --color-bg-button-secondary: var(--background-button-secondary);

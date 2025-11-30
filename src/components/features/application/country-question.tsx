@@ -52,6 +52,7 @@ export function CountryQuestion({ question }: QuestionFieldProps) {
                 void trigger(countryPath);
               }}
               createOtherOption
+              onCommit={() => void trigger(countryPath)}
               name={field.name}
               invalid={isInvalid}
               onBlur={field.onBlur}

@@ -84,7 +84,7 @@ export function PortalEntrance({
             !isUpNext && "scale-60 opacity-80 md:scale-100 md:opacity-100",
           )}
         >
-          <div className="flex aspect-square h-[80px] scale-90 items-center justify-center">
+          <div className="mb-6 flex aspect-square h-[50px] scale-90 items-center justify-center">
             <LogoComponent />
           </div>
           <SubHeader className="font-semibold text-3xl">{hackathon}</SubHeader>

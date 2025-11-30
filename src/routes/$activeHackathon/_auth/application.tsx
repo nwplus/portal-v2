@@ -1,3 +1,4 @@
+import { Navbar } from "@/components/features/application/navbar";
 import { GradientBackground } from "@/components/layout/gradient-background";
 import { useApplicantAutosave } from "@/hooks/use-applicant-autosave";
 import { useApplicantHydration } from "@/hooks/use-applicant-hydration";
@@ -14,7 +15,7 @@ import { useApplicationQuestionStore } from "@/lib/stores/application-question-s
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { fetchApplicant } from "@/services/applicants";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Outlet, createFileRoute, useMatches } from "@tanstack/react-router";
+import { Outlet, createFileRoute, useLocation } from "@tanstack/react-router";
 import { createContext, useContext, useEffect, useMemo, useRef } from "react";
 import type { Resolver } from "react-hook-form";
 import { FormProvider, useForm } from "react-hook-form";
@@ -37,28 +38,22 @@ export const Route = createFileRoute("/$activeHackathon/_auth/application")({
 
 function RouteComponent() {
   const { dbCollectionName, displayNameShort } = useHackathonInfo();
-  const dirty = useApplicantStore((s) => s.dirty);
   const applicantDraft = useApplicantStore((s) => s.applicantDraft);
   const user = useAuthStore((s) => s.user);
   const { applicant } = Route.useLoaderData();
-  const matches = useMatches();
+  const location = useLocation();
   const applicationQuestions = useApplicationQuestionStore();
 
-  const isRsvpPage = matches.some((match) => match.routeId.endsWith("/rsvp"));
-  const isIndexPage = matches.some((match) => match.routeId.endsWith("/application"));
+  const isRsvpPage = location.pathname.endsWith("/rsvp");
+  const isIndexPage = location.pathname.endsWith("/application");
   const gradientPosition: BackgroundGradientPosition = isIndexPage
     ? "bottomMiddle"
     : isRsvpPage
       ? "topMiddle"
       : "bottomRight";
 
-  // Only show the save indicator on specific application sub-routes
-  const leafMatch = matches[matches.length - 1];
-  const showSaveIndicator =
-    leafMatch?.routeId === "/$activeHackathon/_auth/application/basic-info" ||
-    leafMatch?.routeId === "/$activeHackathon/_auth/application/skills" ||
-    leafMatch?.routeId === "/$activeHackathon/_auth/application/questionnaire" ||
-    leafMatch?.routeId === "/$activeHackathon/_auth/application/review";
+  const formStepSuffixes = ["/basic-info", "/skills", "/questionnaire", "/review"];
+  const showNavbar = formStepSuffixes.some((suffix) => location.pathname.endsWith(suffix));
 
   useApplicationQuestions(displayNameShort);
   useApplicantHydration({
@@ -114,35 +109,18 @@ function RouteComponent() {
   // Mirror form values into the applicant store so autosave continues to work.
   useSyncFormWithApplicantDraft(formMethods);
 
-  // TODO: style
-  const saveIndicator = useMemo(() => {
-    if (!applicantDraft) return null;
-
-    let statusText = "Saved";
-
-    if (applicantDraft.submission?.submitted) {
-      statusText = "Submitted";
-    } else if (saving) {
-      statusText = "Saving…";
-    } else if (dirty) {
-      statusText = "Unsaved changes";
-    }
-
-    return <span className="text-sm">{statusText}</span>;
-  }, [applicantDraft, dirty, saving]);
-
   return (
     <div className="h-svh w-full bg-bg-pane-container p-4">
       <GradientBackground
         gradientPosition={gradientPosition}
-        className="relative h-full w-full overflow-hidden rounded-xl p-4 shadow-sm"
+        className="relative flex h-full w-full flex-col overflow-hidden rounded-xl p-4 shadow-sm"
       >
-        {showSaveIndicator && saveIndicator ? (
-          <div className="absolute top-6 right-6">{saveIndicator}</div>
-        ) : null}
+        {showNavbar ? <Navbar saving={saving} /> : null}
         <ApplicationSchemaMetaContext.Provider value={meta}>
           <FormProvider {...formMethods}>
-            <Outlet />
+            <div className="min-h-0 flex-1">
+              <Outlet />
+            </div>
           </FormProvider>
         </ApplicationSchemaMetaContext.Provider>
       </GradientBackground>
