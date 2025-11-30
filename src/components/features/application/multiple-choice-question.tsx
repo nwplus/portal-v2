@@ -65,6 +65,12 @@ export function MultipleChoiceQuestion(props: QuestionFieldProps) {
                         id={optionId}
                         value={optionLabel}
                         aria-invalid={isMainInvalid}
+                        onClick={() => {
+                          if (currentValue === optionLabel) {
+                            field.onChange("");
+                            void trigger(mainPath as FieldPath<ApplicationFormValues>);
+                          }
+                        }}
                       />
                       <FieldLabel htmlFor={optionId} className="font-normal text-sm">
                         {optionLabel}
@@ -80,6 +86,12 @@ export function MultipleChoiceQuestion(props: QuestionFieldProps) {
                         id={`${baseId}-other`}
                         value="other"
                         aria-invalid={isMainInvalid || isOtherInvalid}
+                        onClick={() => {
+                          if (currentValue === "other") {
+                            field.onChange("");
+                            void trigger(mainPath as FieldPath<ApplicationFormValues>);
+                          }
+                        }}
                       />
                       <FieldLabel htmlFor={`${baseId}-other`} className="font-normal text-sm">
                         Other (please specify)
