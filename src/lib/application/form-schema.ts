@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 import type { ApplicationFormValues } from "@/lib/application/types";
-import { MAJOR_KEYS } from "@/lib/data/majors";
 import type {
   HackerApplicationNonWelcomeQuestion,
   HackerApplicationQuestionFormInputField,
@@ -57,6 +56,19 @@ function buildFieldSchema(question: HackerApplicationNonWelcomeQuestion): z.ZodT
 
   switch (questionType) {
     case "Short Answer": {
+      if (formInput === "phoneNumber") {
+        const phoneRegex = /^(?=(?:.*\d){7,})\+?[\d\s()-]{6,20}$/;
+        const base = z
+          .string()
+          .trim()
+          .refine((val) => !val || phoneRegex.test(val), {
+            message: "Enter a valid phone number",
+          });
+        return isRequired
+          ? base.refine((val) => val.length > 0, { message: "This field is required" })
+          : base.optional().or(z.literal(""));
+      }
+
       const base = z.string().trim();
       return isRequired ? base.min(1, "This field is required") : base.optional().or(z.literal(""));
     }
