@@ -8,8 +8,6 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useQuestionFieldConfig } from "@/hooks/use-question-field-config";
-import type { ApplicationFormValues } from "@/lib/application/types";
-import type { FieldPath } from "react-hook-form";
 
 export function ShortAnswerQuestion(props: QuestionFieldProps) {
   const { register, label, description, isRequired, mainPath, mainId, mainError, isMainInvalid } =
@@ -24,11 +22,7 @@ export function ShortAnswerQuestion(props: QuestionFieldProps) {
       </FieldLabel>
       {description ? <FieldDescription>{description}</FieldDescription> : null}
       <FieldContent>
-        <Input
-          id={mainId}
-          aria-invalid={isMainInvalid}
-          {...register(mainPath as FieldPath<ApplicationFormValues>)}
-        />
+        <Input id={mainId} aria-invalid={isMainInvalid} {...register(mainPath)} />
         <FieldError errors={mainError ? [mainError] : undefined} />
       </FieldContent>
     </Field>

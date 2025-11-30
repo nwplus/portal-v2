@@ -8,9 +8,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { useQuestionFieldConfig } from "@/hooks/use-question-field-config";
-import type { ApplicationFormValues } from "@/lib/application/types";
 import { Controller } from "react-hook-form";
-import type { FieldPath } from "react-hook-form";
 
 export function DropdownQuestion(props: QuestionFieldProps) {
   const {
@@ -37,7 +35,7 @@ export function DropdownQuestion(props: QuestionFieldProps) {
       {description ? <FieldDescription>{description}</FieldDescription> : null}
       <FieldContent>
         <Controller
-          name={mainPath as FieldPath<ApplicationFormValues>}
+          name={mainPath}
           control={control}
           render={({ field }) => (
             <Dropdown
@@ -45,7 +43,7 @@ export function DropdownQuestion(props: QuestionFieldProps) {
               value={field.value ?? null}
               onValueChange={(value) => {
                 field.onChange(value ?? "");
-                void trigger(mainPath as FieldPath<ApplicationFormValues>);
+                void trigger(mainPath);
               }}
               name={field.name}
               inputId={mainId}

@@ -28,7 +28,7 @@ export function MajorQuestion({ question }: QuestionFieldProps) {
   const description = question.description;
   const isRequired = Boolean(question.required);
 
-  const majorPath = "basicInfo.major" as FieldPath<ApplicationFormValues>;
+  const majorPath = "basicInfo.major";
   const otherMajorPath = "basicInfo.otherMajor" as FieldPath<ApplicationFormValues>;
   const majorError = errors.basicInfo?.major as { message?: string } | undefined;
   const otherMajorError = (errors.basicInfo as Record<string, unknown>)?.otherMajor as

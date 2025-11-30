@@ -10,7 +10,6 @@ import {
 import type { ApplicationFormValues } from "@/lib/application/types";
 import countries from "@/lib/data/countries.json";
 import { Controller, useFormContext } from "react-hook-form";
-import type { FieldPath } from "react-hook-form";
 
 const COUNTRY_OPTIONS = countries as string[];
 
@@ -25,7 +24,7 @@ export function CountryQuestion({ question }: QuestionFieldProps) {
   const description = question.description;
   const isRequired = Boolean(question.required);
 
-  const countryPath = "basicInfo.countryOfResidence" as FieldPath<ApplicationFormValues>;
+  const countryPath = "basicInfo.countryOfResidence";
   const countryError = errors.basicInfo?.countryOfResidence as
     | {
         message?: string;

@@ -10,7 +10,6 @@ import {
 import type { ApplicationFormValues } from "@/lib/application/types";
 import schools from "@/lib/data/schools.json";
 import { Controller, useFormContext } from "react-hook-form";
-import type { FieldPath } from "react-hook-form";
 
 const SCHOOL_OPTIONS = schools as string[];
 
@@ -24,7 +23,7 @@ export function SchoolQuestion({ question }: QuestionFieldProps) {
   const description = question.description;
   const isRequired = Boolean(question.required);
 
-  const schoolPath = "basicInfo.school" as FieldPath<ApplicationFormValues>;
+  const schoolPath = "basicInfo.school";
   const schoolError = errors.basicInfo?.school as { message?: string } | undefined;
   const isInvalid = Boolean(schoolError);
 

@@ -29,6 +29,7 @@ export interface QuestionFieldConfig {
   watch: ReturnType<typeof useFormContext<ApplicationFormValues>>["watch"];
   formState: ReturnType<typeof useFormContext<ApplicationFormValues>>["formState"];
   trigger: ReturnType<typeof useFormContext<ApplicationFormValues>>["trigger"];
+  setValue: ReturnType<typeof useFormContext<ApplicationFormValues>>["setValue"];
 
   section: HackerApplicationSections;
   question: HackerApplicationNonWelcomeQuestion;
@@ -90,7 +91,7 @@ export function useQuestionFieldConfig({
   // Grab the shared ApplicationFormValues form instance from context.
   // All application steps share this single RHF form.
   const form = useFormContext<ApplicationFormValues>();
-  const { register, control, watch, formState, trigger } = form;
+  const { register, control, watch, formState, trigger, setValue } = form;
 
   // Raw Firestore-driven metadata for this question.
   // formInput is the key we use to derive ApplicationFormValues paths. For fixed
@@ -145,6 +146,7 @@ export function useQuestionFieldConfig({
     watch,
     formState,
     trigger,
+    setValue,
     section,
     question,
     label,
