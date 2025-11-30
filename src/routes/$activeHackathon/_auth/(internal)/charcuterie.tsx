@@ -254,6 +254,8 @@ function RouteComponent() {
           <div className="grid gap-6 md:grid-cols-2">
             <DropdownExample />
             <DropdownErrorExample />
+            <DropdownCreatableExample />
+            <DropdownCreatableObjectExample />
           </div>
         </section>
       </div>
@@ -323,6 +325,60 @@ function DropdownErrorExample() {
       {!hasError && (
         <p className="text-sm text-text-secondary">Error state clears when a selection is made.</p>
       )}
+    </div>
+  );
+}
+
+function DropdownCreatableExample() {
+  const [value, setValue] = useState<string | null>(null);
+
+  return (
+    <div className="space-y-2">
+      <Dropdown
+        label="Favorite country (creatable)"
+        items={["Canada", "United States", "Mexico", "United Kingdom", "France", "Germany"]}
+        value={value}
+        onValueChange={setValue}
+        createOtherOption
+      />
+      <p className="text-sm text-text-secondary">
+        Type a country name and press Enter or blur to save custom values.
+      </p>
+    </div>
+  );
+}
+
+type LanguageOption = { id: string; name: string };
+
+function DropdownCreatableObjectExample() {
+  const [value, setValue] = useState<LanguageOption | null>(null);
+
+  const items: LanguageOption[] = [
+    { id: "ts", name: "TypeScript" },
+    { id: "js", name: "JavaScript" },
+    { id: "py", name: "Python" },
+    { id: "rb", name: "Ruby" },
+    { id: "go", name: "Go" },
+  ];
+
+  return (
+    <div className="space-y-2">
+      <Dropdown
+        label="Favorite language (creatable object)"
+        items={items}
+        value={value}
+        onValueChange={setValue}
+        itemToKey={(item) => item.id}
+        itemToString={(item) => item.name}
+        createOtherOption
+        createOtherItem={(input) => ({
+          id: "otherLanguage",
+          name: input,
+        })}
+      />
+      <p className="text-sm text-text-secondary">
+        Uses <code>createOtherItem</code> to turn free text into typed objects.
+      </p>
     </div>
   );
 }

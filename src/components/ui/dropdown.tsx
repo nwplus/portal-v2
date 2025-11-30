@@ -10,6 +10,8 @@ interface DropdownProps<T = string> {
   onValueChange?: (value: T | null) => void;
   itemToString?: (item: T) => string;
   itemToKey?: (item: T) => string | number;
+  createOtherOption?: boolean; // if true, allows the user to create a custom option
+  createOtherItem?: (input: string) => T;
   /**
    * wiring hooks for form libraries like React Hook Form.
    */
@@ -26,6 +28,8 @@ export function Dropdown<T = string>({
   onValueChange,
   itemToString = (item) => String(item),
   itemToKey = (item) => String(item),
+  createOtherOption = false,
+  createOtherItem,
   name,
   inputId,
   invalid,
@@ -47,14 +51,44 @@ export function Dropdown<T = string>({
   const resolvedSearchValue =
     searchValue === "" || deferredSearchValue === "" ? searchValue : deferredSearchValue;
 
-  // Only recompute the filtered list when search or items change.
+  const allItems = useMemo(() => {
+    if (!createOtherOption || selectedValue == null) {
+      return items;
+    }
+
+    const selectedLabel = itemToString(selectedValue);
+    const exists = items.some((item) => itemToString(item) === selectedLabel);
+    return exists ? items : [...items, selectedValue];
+  }, [createOtherOption, itemToString, items, selectedValue]);
+
   const filteredItems = useMemo(
     () =>
       resolvedSearchValue === ""
-        ? items
-        : items.filter((item) => contains(item, resolvedSearchValue, itemToString)),
-    [contains, items, itemToString, resolvedSearchValue],
+        ? allItems
+        : allItems.filter((item) => contains(item, resolvedSearchValue, itemToString)),
+    [allItems, contains, itemToString, resolvedSearchValue],
   );
+
+  const commitInputToValue = useCallback(() => {
+    if (!createOtherOption) return;
+
+    const raw = searchValue.trim();
+
+    if (!raw) {
+      onValueChange?.(null);
+      return;
+    }
+
+    const existingMatch = allItems.find((item) => itemToString(item) === raw);
+
+    if (existingMatch) {
+      onValueChange?.(existingMatch);
+      return;
+    }
+
+    const nextValue = createOtherItem ? createOtherItem(raw) : (raw as T);
+    onValueChange?.(nextValue);
+  }, [allItems, createOtherItem, createOtherOption, itemToString, onValueChange, searchValue]);
 
   // Virtualizer drives which rows are mounted and their positions.
   const virtualizer = useVirtualizer({
@@ -92,7 +126,7 @@ export function Dropdown<T = string>({
   return (
     <Combobox.Root
       virtualized
-      items={items}
+      items={allItems}
       filteredItems={filteredItems}
       open={open}
       onOpenChange={setOpen}
@@ -131,7 +165,14 @@ export function Dropdown<T = string>({
             aria-invalid={invalid || undefined}
             data-invalid={invalid || undefined}
             onBlur={() => {
+              commitInputToValue();
               onBlur?.();
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && createOtherOption && filteredItems.length === 0) {
+                event.preventDefault();
+                commitInputToValue();
+              }
             }}
             className="h-9 w-full min-w-0 rounded-md border border-border-subtle bg-bg-text-field py-1 pr-10 pl-3 text-base text-text-primary shadow-xs outline-none transition-[color,box-shadow] selection:bg-bg-text-field selection:text-text-primary placeholder:text-text-secondary focus:border-border-active focus:ring-2 focus:ring-border-active/20 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-border-danger aria-invalid:ring-border-danger/20 md:text-sm"
           />
@@ -159,7 +200,9 @@ export function Dropdown<T = string>({
         >
           <Combobox.Popup className="max-h-[min(var(--available-height),15rem)] w-[var(--anchor-width)] max-w-[var(--available-width)] origin-[var(--transform-origin)] rounded-md border border-border-subtle bg-bg-dropdown text-sm shadow-lg transition-[transform,scale,opacity] data-[ending-style]:scale-95 data-[starting-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0">
             <Combobox.Empty className="px-4 py-2 text-sm text-text-secondary empty:m-0 empty:p-0">
-              No results found.
+              {createOtherOption
+                ? "No results found. Hit enter to create a new option."
+                : "No results found."}
             </Combobox.Empty>
             <Combobox.List className="p-0">
               {filteredItems.length > 0 ? (
