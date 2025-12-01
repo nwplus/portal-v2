@@ -4,7 +4,6 @@ import { httpsCallable } from "firebase/functions";
 import { Fragment, type ReactNode, useState } from "react";
 import { useFormContext } from "react-hook-form";
 
-import { ProgressBar } from "@/components/features/application/progress-bar";
 import { TermsCheckbox } from "@/components/features/application/terms-checkbox";
 import { Button } from "@/components/ui/button";
 import { Field, FieldContent, FieldLabel, FieldSet } from "@/components/ui/field";
@@ -279,7 +278,7 @@ function TermsSection() {
   );
 }
 
-export const Route = createFileRoute("/$activeHackathon/_auth/application/review")({
+export const Route = createFileRoute("/$activeHackathon/_auth/application/_step-layout/review")({
   component: RouteComponent,
 });
 
@@ -345,44 +344,36 @@ function RouteComponent() {
   };
 
   return (
-    <div className="flex h-full">
-      <div className="flex flex-1 gap-16 px-6 py-2">
-        <ProgressBar step={4} />
+    <>
+      <ScrollFade className="flex flex-col gap-16">
+        <h1 className="font-semibold text-2xl">Review your application</h1>
 
-        <div className="flex min-h-0 flex-1 flex-col justify-between gap-10 overflow-hidden">
-          <ScrollFade className="flex flex-col gap-16">
-            <h1 className="font-semibold text-2xl">Review your application</h1>
-
-            <div className="space-y-20">
-              <BasicInfoSection applicantDraft={applicantDraft} />
-              <SkillsSection applicantDraft={applicantDraft} />
-              <QuestionnaireSection applicantDraft={applicantDraft} />
-              <TermsSection />
-            </div>
-          </ScrollFade>
-
-          {hasValidationErrors && (
-            <p className="text-sm text-text-error">
-              One or more answers are still missing. Use the back button to revisit each section.
-            </p>
-          )}
-
-          {submitError && <p className="text-sm text-text-error">{submitError}</p>}
-
-          <div className="flex justify-between">
-            <Button variant="secondary" asChild>
-              <Link to="/$activeHackathon/application/questionnaire" params={{ activeHackathon }}>
-                ← Back
-              </Link>
-            </Button>
-            <Button variant="primary" onClick={handleSubmitApplication} disabled={submitting}>
-              {submitting ? "Submitting…" : "Submit application"}
-            </Button>
-          </div>
+        <div className="space-y-20">
+          <BasicInfoSection applicantDraft={applicantDraft} />
+          <SkillsSection applicantDraft={applicantDraft} />
+          <QuestionnaireSection applicantDraft={applicantDraft} />
+          <TermsSection />
         </div>
-      </div>
+      </ScrollFade>
 
-      <div className="flex min-h-0 flex-1 items-center justify-center">right side</div>
-    </div>
+      {hasValidationErrors && (
+        <p className="text-sm text-text-error">
+          One or more answers are still missing. Use the back button to revisit each section.
+        </p>
+      )}
+
+      {submitError && <p className="text-sm text-text-error">{submitError}</p>}
+
+      <div className="flex justify-between">
+        <Button variant="secondary" asChild>
+          <Link to="/$activeHackathon/application/questionnaire" params={{ activeHackathon }}>
+            ← Back
+          </Link>
+        </Button>
+        <Button variant="primary" onClick={handleSubmitApplication} disabled={submitting}>
+          {submitting ? "Submitting…" : "Submit application"}
+        </Button>
+      </div>
+    </>
   );
 }

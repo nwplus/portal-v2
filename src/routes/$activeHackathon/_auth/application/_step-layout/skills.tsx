@@ -1,4 +1,3 @@
-import { ProgressBar } from "@/components/features/application/progress-bar";
 import { QuestionField } from "@/components/features/application/question-field";
 import { Button } from "@/components/ui/button";
 import { FieldGroup, FieldSet } from "@/components/ui/field";
@@ -11,7 +10,7 @@ import { saveApplicantDraft } from "@/services/applicants";
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 import { useFormContext } from "react-hook-form";
 
-export const Route = createFileRoute("/$activeHackathon/_auth/application/skills")({
+export const Route = createFileRoute("/$activeHackathon/_auth/application/_step-layout/skills")({
   component: RouteComponent,
 });
 
@@ -44,33 +43,27 @@ function RouteComponent() {
   };
 
   return (
-    <div className="flex h-full">
-      <div className="flex flex-1 gap-16 px-6 py-2">
-        <ProgressBar step={2} />
-        <div className="flex min-h-0 flex-1 flex-col justify-between gap-6 overflow-hidden">
-          <ScrollFade className="flex flex-col gap-6">
-            <h1 className="font-semibold text-2xl">👀 Academic background</h1>
-            <FieldSet>
-              <FieldGroup>
-                {questions.map((question) => (
-                  <QuestionField key={question._id} section="Skills" question={question} />
-                ))}
-              </FieldGroup>
-            </FieldSet>
-          </ScrollFade>
-          <div className="flex justify-between">
-            <Button variant="secondary" asChild>
-              <Link to="/$activeHackathon/application/basic-info" params={{ activeHackathon }}>
-                ← Back
-              </Link>
-            </Button>
-            <Button variant="primary" type="button" onClick={handleNext}>
-              Next →
-            </Button>
-          </div>
-        </div>
+    <>
+      <ScrollFade className="flex flex-col gap-16">
+        <h1 className="font-semibold text-2xl">👀 Academic background</h1>
+        <FieldSet>
+          <FieldGroup>
+            {questions.map((question) => (
+              <QuestionField key={question._id} section="Skills" question={question} />
+            ))}
+          </FieldGroup>
+        </FieldSet>
+      </ScrollFade>
+      <div className="flex justify-between">
+        <Button variant="secondary" asChild>
+          <Link to="/$activeHackathon/application/basic-info" params={{ activeHackathon }}>
+            ← Back
+          </Link>
+        </Button>
+        <Button variant="primary" type="button" onClick={handleNext}>
+          Next →
+        </Button>
       </div>
-      <div className="flex min-h-0 flex-1 items-center justify-center"> right side </div>
-    </div>
+    </>
   );
 }
