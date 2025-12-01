@@ -2,26 +2,14 @@ import { Navbar } from "@/components/features/application/navbar";
 import { PolaroidStack } from "@/components/features/application/polaroid-stack";
 import { ProgressBar } from "@/components/features/application/progress-bar";
 import { useApplicantAutosave } from "@/hooks/use-applicant-autosave";
+import { useHackathon } from "@/hooks/use-hackathon";
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
 import { useApplicantStore } from "@/lib/stores/applicant-store";
 import { useAuthStore } from "@/lib/stores/auth-store";
-import { Outlet, createFileRoute, redirect, useLocation } from "@tanstack/react-router";
+import { Navigate, Outlet, createFileRoute, useLocation } from "@tanstack/react-router";
 import type { WheelEvent } from "react";
 
 export const Route = createFileRoute("/$activeHackathon/_auth/application/_step-layout")({
-  beforeLoad: async ({ params }) => {
-    const { applicantDraft } = useApplicantStore.getState();
-
-    if (
-      applicantDraft?.submission?.submitted ||
-      applicantDraft?.status?.applicationStatus !== "inProgress"
-    ) {
-      throw redirect({
-        to: "/$activeHackathon/application",
-        params: { activeHackathon: params.activeHackathon },
-      });
-    }
-  },
   component: RouteComponent,
 });
 
@@ -37,9 +25,12 @@ function RouteComponent() {
   const lastSegment = location.pathname.split("/").pop() ?? "";
   const step = STEP_MAP[lastSegment] ?? 1;
 
+  const { activeHackathon } = useHackathon();
   const { dbCollectionName } = useHackathonInfo();
   const user = useAuthStore((s) => s.user);
   const saving = useApplicantAutosave(dbCollectionName, user?.uid);
+  const applicantDraft = useApplicantStore((s) => s.applicantDraft);
+  const hydratedDbCollectionName = useApplicantStore((s) => s.dbCollectionName);
 
   // Forwards wheel events from outside the scroll container to the form
   const handleWheel = (e: WheelEvent) => {
@@ -51,6 +42,18 @@ function RouteComponent() {
       scrollContainer.scrollTop += e.deltaY;
     }
   };
+
+  // Block until the draft is hydrated for the CURRENT hackathon.
+  // This prevents stale data from a previous hackathon triggering the redirect.
+  const isHydrating = hydratedDbCollectionName !== dbCollectionName;
+
+  if (!applicantDraft || isHydrating) {
+    return null;
+  }
+
+  if (applicantDraft.status?.applicationStatus !== "inProgress") {
+    return <Navigate to="/$activeHackathon/application" params={{ activeHackathon }} />;
+  }
 
   return (
     <div className="flex h-full flex-col">

@@ -13,14 +13,15 @@ interface Params {
   user: User | null;
 }
 
-// Creates a fresh draft for new applicants. Existing applicants are already
-// hydrated in the route's beforeLoad, so this hook only handles the "no applicant" case.
+// The loader provides an existing applicant when one exists; this hook normalizes that data or
+// creates a fresh draft so the applicant store is ready before the form renders
 export function useApplicantHydration(params: Params) {
   const { dbCollectionName, applicant, user } = params;
   const setApplicant = useApplicantStore((s) => s.setApplicant);
   const resetApplicant = useApplicantStore((s) => s.reset);
 
   useEffect(() => {
+    // always reset the store whenever the hackathon context or user changes.
     const uid = user?.uid;
 
     if (!dbCollectionName || !uid) {
@@ -28,19 +29,23 @@ export function useApplicantHydration(params: Params) {
       return;
     }
 
-    const currentDraft = useApplicantStore.getState().applicantDraft;
-    const userChanged = currentDraft?._id !== uid;
+    resetApplicant();
 
-    if (userChanged) {
-      resetApplicant();
-    }
-
-    // Existing applicants are already hydrated by the route's beforeLoad.
     if (applicant) {
+      // hydrate with the fetched applicant after normalizing submission defaults.
+      const normalizedApplicant: ApplicantDraft = {
+        ...applicant,
+        submission: {
+          ...(applicant.submission ?? {}),
+          submitted: applicant.submission?.submitted ?? false,
+        },
+      };
+
+      setApplicant(normalizedApplicant, dbCollectionName);
       return;
     }
 
-    // New user: create a fresh draft and write to Firestore.
+    // guard against late async completions after the context changes.
     let cancelled = false;
 
     const nameParts = (user?.displayName ?? "").trim().split(/\s+/).filter(Boolean);
@@ -54,11 +59,12 @@ export function useApplicantHydration(params: Params) {
       },
     };
 
+    // create the minimal draft and hydrate once the write completes
     const hydrate = async () => {
       try {
         await createOrMergeApplicant(dbCollectionName, uid, draft);
         if (!cancelled) {
-          setApplicant(draft);
+          setApplicant(draft, dbCollectionName);
         }
       } catch (error) {
         console.error("Applicant hydration failed", error);
