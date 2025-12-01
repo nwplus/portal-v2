@@ -16,7 +16,7 @@ import { useAuthStore } from "@/lib/stores/auth-store";
 import { fetchApplicant } from "@/services/applicants";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Outlet, createFileRoute, useLocation } from "@tanstack/react-router";
-import { createContext, useContext, useEffect, useMemo, useRef } from "react";
+import { createContext, useEffect, useMemo, useRef } from "react";
 import type { Resolver } from "react-hook-form";
 import { FormProvider, useForm } from "react-hook-form";
 
@@ -144,7 +144,3 @@ function deriveDefaultValuesFromApplicantDraft(
 }
 
 const ApplicationSchemaMetaContext = createContext<SchemaMeta | null>(null);
-
-export function useApplicationSchemaMeta() {
-  return useContext(ApplicationSchemaMetaContext);
-}

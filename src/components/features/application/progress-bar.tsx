@@ -10,13 +10,18 @@ export function ProgressBar({ step }: ProgressBarProps) {
       {[1, 2, 3, 4].map((oval) => (
         <div
           key={oval}
-          className={cn(
-            "h-[15%] w-2 rounded-full transition-colors",
-            oval <= step
-              ? "[background:var(--progress-bar-complete)]"
-              : "[background:var(--progress-bar-incomplete)]",
-          )}
-        />
+          className="relative h-[15%] w-2 overflow-hidden rounded-full [background:var(--progress-bar-incomplete)]"
+        >
+          <div
+            className={cn(
+              "absolute inset-0 origin-top rounded-full transition-transform duration-500 ease-out [background:var(--progress-bar-complete)]",
+              oval <= step ? "scale-y-100" : "scale-y-0",
+            )}
+            style={{
+              transitionDelay: oval <= step ? `${(oval - 1) * 100}ms` : "0ms",
+            }}
+          />
+        </div>
       ))}
     </div>
   );
