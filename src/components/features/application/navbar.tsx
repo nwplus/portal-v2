@@ -44,7 +44,7 @@ export function Navbar({ saving = false, variant }: ApplicationNavbarProps) {
             asChild
             className="text-text-secondary hover:text-text-secondary/80"
           >
-            <Link to="/$activeHackathon" params={{ activeHackathon }}>
+            <Link to="/">
               &lt; Back to Portal
             </Link>
           </Button>
