@@ -10,9 +10,11 @@ import { saveApplicantDraft } from "@/services/applicants";
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 import { useFormContext } from "react-hook-form";
 
-export const Route = createFileRoute("/$activeHackathon/_auth/application/_step-layout/basic-info")({
-  component: RouteComponent,
-});
+export const Route = createFileRoute("/$activeHackathon/_auth/application/_step-layout/basic-info")(
+  {
+    component: RouteComponent,
+  },
+);
 
 function RouteComponent() {
   const { activeHackathon } = useHackathon();
@@ -44,7 +46,7 @@ function RouteComponent() {
 
   return (
     <>
-      <ScrollFade className="flex flex-col gap-16">
+      <ScrollFade className="flex flex-col gap-10">
         <h1 className="font-semibold text-2xl">👋 Tell us a little bit about yourself</h1>
         <FieldSet>
           <FieldGroup>

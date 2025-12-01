@@ -36,7 +36,8 @@ export function useApplicantAutosave(dbCollectionName: string, uid: string | und
         !dirty ||
         !applicantDraft ||
         applicantDraft._id !== uid ||
-        !!applicantDraft.submission?.submitted
+        !!applicantDraft.submission?.submitted ||
+        applicantDraft.status?.applicationStatus !== "inProgress"
       ) {
         schedule();
         return;

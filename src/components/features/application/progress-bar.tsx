@@ -14,12 +14,9 @@ export function ProgressBar({ step }: ProgressBarProps) {
         >
           <div
             className={cn(
-              "absolute inset-0 origin-top rounded-full transition-transform duration-500 ease-out [background:var(--progress-bar-complete)]",
+              "absolute inset-0 origin-top rounded-full transition-transform duration-700 ease-out [background:var(--progress-bar-complete)]",
               oval <= step ? "scale-y-100" : "scale-y-0",
             )}
-            style={{
-              transitionDelay: oval <= step ? `${(oval - 1) * 100}ms` : "0ms",
-            }}
           />
         </div>
       ))}

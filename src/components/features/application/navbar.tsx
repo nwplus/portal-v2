@@ -22,7 +22,7 @@ export function Navbar({ saving }: ApplicationNavbarProps) {
     : dirty
       ? "Unsaved changes"
       : lastLocalSaveAt
-        ? `Autosaved at ${formatTime(lastLocalSaveAt)}`
+        ? `✓ Autosaved on ${formatTime(lastLocalSaveAt)}`
         : "Autosaved";
 
   return (
