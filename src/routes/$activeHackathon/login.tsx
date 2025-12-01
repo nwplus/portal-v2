@@ -34,22 +34,22 @@ function RouteComponent() {
 
   return (
     <GradientBackground gradientPosition="bottomMiddle">
-      <div className="flex h-full flex-col items-center justify-center gap-10 pb-32 text-center">
-        <div className="flex aspect-square size-16 items-center justify-center rounded-lg">
+      <div className="flex h-full flex-col items-center justify-center gap-8 px-6 pb-32 text-center md:gap-10">
+        <div className="flex aspect-square size-10 items-center justify-center rounded-lg md:size-16">
           <HackathonIcon />
         </div>
 
-        <div className="flex flex-col gap-4">
-          <h1 className="font-semibold text-6xl text-text-primary">
+        <div className="flex flex-col gap-2 md:gap-4">
+          <h1 className="font-semibold text-3xl text-text-primary md:text-6xl">
             Welcome to
             <br />
             {displayNameFull}
           </h1>
-          <p className="font-medium text-lg">We're so glad you're here!</p>
+          <p className="font-medium text-sm md:text-lg">We're so glad you're here!</p>
         </div>
 
         <div className="flex flex-col items-center gap-4">
-          <p className="font-medium text-lg">To continue, please sign in below.</p>
+          <p className="font-medium text-sm md:text-lg">To continue, please sign in below.</p>
           <Button variant="primary" onClick={handleSignIn}>
             Log in with Google
           </Button>
