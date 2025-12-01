@@ -124,7 +124,7 @@ function RouteComponent() {
         {applicationStatus === "inProgress" && (
           <Button variant="primary" asChild>
             <Link to="/$activeHackathon/application/basic-info" params={{ activeHackathon }}>
-              {hasStartedApplication ? "Continue application" : "Get started"}
+              {hasStartedApplication ? "Continue application →" : "Get started →"}
             </Link>
           </Button>
         )}

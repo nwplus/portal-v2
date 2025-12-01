@@ -345,7 +345,7 @@ function RouteComponent() {
 
   return (
     <>
-      <ScrollFade className="flex flex-col gap-16">
+      <ScrollFade className="flex flex-col gap-10">
         <h1 className="font-semibold text-2xl">Review your application</h1>
 
         <div className="space-y-20">

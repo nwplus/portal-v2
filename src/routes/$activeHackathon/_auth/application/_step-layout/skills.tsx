@@ -22,7 +22,7 @@ function RouteComponent() {
   const router = useRouter();
 
   if (!questions.length) {
-    return <div>No skills questions yet.</div>;
+    return null;
   }
 
   const handleNext = async () => {
@@ -44,7 +44,7 @@ function RouteComponent() {
 
   return (
     <>
-      <ScrollFade className="flex flex-col gap-16">
+      <ScrollFade className="flex flex-col gap-10">
         <h1 className="font-semibold text-2xl">👀 Academic background</h1>
         <FieldSet>
           <FieldGroup>
