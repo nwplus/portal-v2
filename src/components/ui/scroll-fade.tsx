@@ -54,6 +54,7 @@ export function ScrollFade({ children, className }: ScrollFadeProps) {
   return (
     <div
       ref={scrollRef}
+      data-scroll-container
       className={cn("scrollbar-hidden overflow-y-auto", className)}
       style={{
         maskImage: showBottomFade
