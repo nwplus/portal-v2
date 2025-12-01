@@ -112,8 +112,8 @@ export function DevelopingPolaroid({
           className="pointer-events-none absolute inset-0 z-20"
           style={{
             background:
-              "linear-gradient(160deg, transparent 0%, transparent 38%, rgba(255, 255, 255, 0.05) 40%, rgba(255, 255, 255, 0.08) 42%, rgba(255, 255, 255, 0.05) 44%, transparent 46%, transparent 50%, rgba(255, 255, 255, 0.05) 52%, rgba(255, 255, 255, 0.08) 56%, rgba(255, 255, 255, 0.1) 60%, rgba(255, 255, 255, 0.08) 64%, rgba(255, 255, 255, 0.05) 68%, transparent 70%, transparent 100%)",
-            transform: shimmerStarted ? "translateY(120%)" : "translateY(-100%)",
+              "linear-gradient(160deg, transparent 0%, transparent 37%, rgba(255, 255, 255, 0.05) 39%, rgba(255, 255, 255, 0.08) 42%, rgba(255, 255, 255, 0.05) 45%, transparent 47%, transparent 51%, rgba(255, 255, 255, 0.05) 53%, rgba(255, 255, 255, 0.08) 56%, rgba(255, 255, 255, 0.1) 60%, rgba(255, 255, 255, 0.08) 64%, rgba(255, 255, 255, 0.05) 67%, transparent 69%, transparent 100%)",
+            transform: shimmerStarted ? "translateY(100%)" : "translateY(-85%)",
             transition: shimmerStarted
               ? `transform ${REVEAL_DURATION * 1.5}ms ease-in-out`
               : "none",
