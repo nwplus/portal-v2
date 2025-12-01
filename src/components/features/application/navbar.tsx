@@ -44,7 +44,7 @@ export function Navbar({ saving = false, variant }: ApplicationNavbarProps) {
             asChild
             className="text-text-secondary hover:text-text-secondary/80"
           >
-            <Link to="/">&lt; Back to Portal</Link>
+            <Link to="/">← Back to Portal</Link>
           </Button>
         </div>
 
@@ -67,7 +67,7 @@ export function Navbar({ saving = false, variant }: ApplicationNavbarProps) {
         <Link
           to="/$activeHackathon/application"
           params={{ activeHackathon }}
-          className="text-sm text-text-secondary transition-colors hover:text-text-secondary/80"
+          className="text-text-secondary text-xs transition-colors hover:text-text-secondary/80 md:text-sm"
         >
           &lt; Exit application
         </Link>
@@ -77,7 +77,7 @@ export function Navbar({ saving = false, variant }: ApplicationNavbarProps) {
         <LogoIcon />
       </div>
 
-      <div className="flex-1 text-right text-sm">{statusText}</div>
+      <div className="flex-1 text-right text-xs md:text-sm">{statusText}</div>
     </nav>
   );
 }

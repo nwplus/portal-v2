@@ -4,7 +4,7 @@ import { type VariantProps, cva } from "class-variance-authority";
 import type * as React from "react";
 
 const tagVariants = cva(
-  "inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap rounded-full border bg-transparent px-4 py-1 font-regular text-md [&>svg]:pointer-events-none",
+  "inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap rounded-full border bg-transparent px-1 py-1 font-regular text-md md:px-4 [&>svg]:pointer-events-none",
   {
     variants: {
       variant: {

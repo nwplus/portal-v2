@@ -106,10 +106,10 @@ function RouteComponent() {
   useSyncFormWithApplicantDraft(formMethods);
 
   return (
-    <div className="h-svh w-full bg-bg-pane-container p-4">
+    <div className="h-svh w-full bg-bg-pane-container p-0 md:p-4">
       <GradientBackground
         gradientPosition={gradientPosition}
-        className="relative flex h-full w-full flex-col overflow-hidden rounded-xl p-4 shadow-sm"
+        className="scrollbar-hidden relative flex h-full w-full flex-col overflow-y-auto rounded-none p-4 shadow-none md:overflow-hidden md:rounded-xl md:shadow-sm"
       >
         <ApplicationSchemaMetaContext.Provider value={meta}>
           <FormProvider {...formMethods}>

@@ -13,7 +13,7 @@ interface DevelopingPolaroidProps {
 }
 
 const FALL_DURATION = 1000;
-const REVEAL_DURATION = 4000;
+const REVEAL_DURATION = 2000;
 
 // Displays a polaroid image with a developing effect animation.
 export function DevelopingPolaroid({
@@ -57,7 +57,7 @@ export function DevelopingPolaroid({
     const baseDelay = falling ? delay + FALL_DURATION : delay;
 
     const shimmerTimer = setTimeout(() => setShimmerStarted(true), baseDelay);
-    const revealTimer = setTimeout(() => setShouldAnimate(true), baseDelay + 2000);
+    const revealTimer = setTimeout(() => setShouldAnimate(true), baseDelay + 1000);
 
     return () => {
       clearTimeout(shimmerTimer);
@@ -113,9 +113,9 @@ export function DevelopingPolaroid({
           style={{
             background:
               "linear-gradient(160deg, transparent 0%, transparent 37%, rgba(255, 255, 255, 0.05) 39%, rgba(255, 255, 255, 0.08) 42%, rgba(255, 255, 255, 0.05) 45%, transparent 47%, transparent 51%, rgba(255, 255, 255, 0.05) 53%, rgba(255, 255, 255, 0.08) 56%, rgba(255, 255, 255, 0.1) 60%, rgba(255, 255, 255, 0.08) 64%, rgba(255, 255, 255, 0.05) 67%, transparent 69%, transparent 100%)",
-            transform: shimmerStarted ? "translateY(100%)" : "translateY(-85%)",
+            transform: shimmerStarted ? "translateY(100%)" : "translateY(-90%)",
             transition: shimmerStarted
-              ? `transform ${REVEAL_DURATION * 1.5}ms ease-in-out`
+              ? `transform ${REVEAL_DURATION * 1.25}ms ease-in-out`
               : "none",
           }}
         />

@@ -42,29 +42,29 @@ function RouteComponent() {
   return (
     <>
       <Navbar variant="index" />
-      <div className="grid h-full grid-cols-2 pb-[15vh]">
-        <div className="flex w-[90%] items-center justify-center">
-          <div className="flex flex-col items-start gap-10">
-            <div className="flex aspect-square size-16 items-center justify-center rounded-lg">
+      <div className="flex h-full flex-col px-6 pb-[10vh] md:grid md:grid-cols-2 md:gap-0 md:px-0 md:pb-[15vh]">
+        <div className="flex w-full items-center justify-start md:w-[90%] md:justify-center">
+          <div className="flex flex-col items-start gap-4 md:gap-10">
+            <div className="flex aspect-square size-7 items-center justify-center rounded-lg md:size-16">
               <HackathonIcon />
             </div>
-            <div className="flex flex-col items-start gap-2">
-              <h1 className="font-medium text-6xl">Welcome to</h1>
-              <h1 className="font-medium text-6xl">{displayNameFull}</h1>
+            <div className="flex flex-col items-start gap-0 md:gap-2">
+              <h1 className="font-medium text-3xl md:text-6xl">Welcome to</h1>
+              <h1 className="font-medium text-3xl md:text-6xl">{displayNameFull}</h1>
             </div>
             <div className="flex flex-col items-start gap-2">
-              <h1 className="font-regular text-xl">
+              <p className="font-regular text-sm md:text-xl">
                 🗓️ {`${hackathonWeekend?.[activeHackathon]}, ${hackathonStartDate?.getFullYear()}`}{" "}
-              </h1>
-              <h1 className="font-regular text-xl">📍 {location?.[activeHackathon]} </h1>
+              </p>
+              <p className="font-regular text-sm md:text-xl">📍 {location?.[activeHackathon]} </p>
             </div>
 
             <div className="flex flex-col items-start gap-3">
-              <div className="flex flex-row gap-6">
-                <Tag variant="active" className="gap-2 pr-6 pl-5">
+              <div className="flex flex-row flex-wrap gap-3 md:gap-6">
+                <Tag variant="active" className="gap-2 pr-6 pl-5 text-xs md:text-base">
                   {applicationStatus === "inProgress" && (
                     <>
-                      <PencilLine className="size-5" strokeWidth={2} />
+                      <PencilLine className="size-3 md:size-5" strokeWidth={2} />
                       {hasStartedApplication
                         ? "Application in progress"
                         : "Application not started"}
@@ -72,7 +72,7 @@ function RouteComponent() {
                   )}
                   {applicationStatus === "applied" && (
                     <>
-                      <Check className="size-5" strokeWidth={2} />
+                      <Check className="size-3 md:size-5" strokeWidth={2} />
                       Application submitted
                     </>
                   )}
@@ -80,7 +80,7 @@ function RouteComponent() {
                   {(applicationStatus === "acceptedNoResponseYet" ||
                     applicationStatus === "acceptedAndAttending") && (
                     <>
-                      <PartyPopper className="size-5" strokeWidth={2} />
+                      <PartyPopper className="size-3 md:size-5" strokeWidth={2} />
                       Application accepted
                     </>
                   )}
@@ -90,26 +90,28 @@ function RouteComponent() {
                 </Tag>
                 {applicationStatus === "acceptedNoResponseYet" && (
                   <Tag variant="active" className="gap-2 pr-6 pl-5">
-                    <Clock className="size-5" strokeWidth={2} />
+                    <Clock className="size-3 md:size-5" strokeWidth={2} />
                     Awaiting RSVP
                   </Tag>
                 )}
                 {applicationStatus === "acceptedAndAttending" && (
                   <Tag variant="active" className="gap-2 pr-6 pl-5">
-                    <Check className="size-5" strokeWidth={2} />
+                    <Check className="size-3 md:size-5" strokeWidth={2} />
                     RSVP'd
                   </Tag>
                 )}
               </div>
               {applicationStatus === "inProgress" && (
-                <p className="font-regular text-sm">due {applicationDeadline?.[activeHackathon]}</p>
+                <p className="font-regular text-text-secondary text-xs md:text-sm">
+                  due {applicationDeadline?.[activeHackathon]}
+                </p>
               )}
             </div>
           </div>
         </div>
-        <div className="flex max-w-[80%] flex-col items-start justify-center gap-12">
+        <div className="flex w-full flex-col items-center justify-center gap-8 py-8 md:max-w-[80%] md:items-start md:gap-12 md:py-0">
           {(applicationStatus === "inProgress" || applicationStatus === "applied") && (
-            <div className="flex flex-col items-start gap-6">
+            <div className="flex flex-col items-start gap-4 rounded-2xl border border-border-subtle p-5 text-sm [background:var(--background-translucent-card)] md:gap-6 md:rounded-none md:border-0 md:p-0 md:text-base md:[background:none]">
               <ReactMarkdown
                 components={{
                   a: ({ href, children }) => (
@@ -126,7 +128,7 @@ function RouteComponent() {
               >
                 {welcome.content}
               </ReactMarkdown>
-              <p className="font-cursive text-4xl">- the {displayNameShort} team</p>
+              <p className="font-cursive text-2xl md:text-4xl">- the {displayNameShort} team</p>
             </div>
           )}
           {applicationStatus === "inProgress" && (

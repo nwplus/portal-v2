@@ -187,7 +187,7 @@ export function Dropdown<T = string>({
                 commitInputToValue();
               }
             }}
-            className="h-9 w-full min-w-0 rounded-md border border-border-subtle bg-bg-text-field py-1 pr-10 pl-3 text-base text-text-primary shadow-xs outline-none transition-[color,box-shadow] selection:bg-bg-text-field selection:text-text-primary placeholder:text-text-secondary focus:border-border-active focus:ring-2 focus:ring-border-active/20 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-border-danger aria-invalid:ring-border-danger/20 md:text-sm"
+            className="h-9 w-full min-w-0 rounded-md border border-border-subtle py-1 pr-10 pl-3 text-base text-text-primary shadow-xs outline-none transition-[color,box-shadow] [background:var(--background-text-field)] selection:bg-bg-text-field selection:text-text-primary placeholder:text-text-secondary focus:border-border-active focus:ring-2 focus:ring-border-active/20 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-border-danger aria-invalid:ring-border-danger/20 md:text-sm"
           />
           <div className="pointer-events-none absolute top-0 right-2 flex h-9 items-center justify-center text-text-secondary">
             <Combobox.Trigger
