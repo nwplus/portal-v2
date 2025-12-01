@@ -40,7 +40,7 @@ function RouteComponent() {
   return (
     <>
       <Navbar variant="index" />
-      <div className="grid h-full grid-cols-2">
+      <div className="grid h-full grid-cols-2 pb-[10vh]">
         <div className="flex w-[90%] justify-center pt-[20vh]">
           <div className="flex flex-col items-start gap-10">
             <div className="flex aspect-square size-16 items-center justify-center rounded-lg">

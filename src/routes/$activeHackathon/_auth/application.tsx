@@ -20,30 +20,15 @@ import { FormProvider, useForm } from "react-hook-form";
 
 export const Route = createFileRoute("/$activeHackathon/_auth/application")({
   staticData: { hideSidebar: true },
-  // fetch and hydrate the applicant draft here to ensure _step-layout's guard sees the correct applicationStatus on refresh
-  beforeLoad: async ({ context }) => {
+  loader: async ({ context }) => {
     const { dbCollectionName } = context;
     const { user } = useAuthStore.getState();
-
-    useApplicantStore.getState().reset();
 
     if (!user?.uid || !dbCollectionName) {
       return { applicant: null };
     }
 
     const applicant = await fetchApplicant(dbCollectionName, user.uid);
-
-    if (applicant) {
-      const normalizedApplicant: ApplicantDraft = {
-        ...applicant,
-        submission: {
-          submitted: applicant.submission?.submitted ?? false,
-          ...(applicant.submission ?? {}),
-        },
-      };
-      useApplicantStore.getState().setApplicant(normalizedApplicant);
-    }
-
     return { applicant };
   },
   component: () => <RouteComponent />,
@@ -53,7 +38,7 @@ function RouteComponent() {
   const { dbCollectionName, displayNameShort } = useHackathonInfo();
   const applicantDraft = useApplicantStore((s) => s.applicantDraft);
   const user = useAuthStore((s) => s.user);
-  const { applicant } = Route.useRouteContext();
+  const { applicant } = Route.useLoaderData();
   const applicationQuestions = useApplicationQuestionStore();
 
   // Use resolvedLocation so gradient position only changes after child routes finish loading

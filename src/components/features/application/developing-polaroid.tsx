@@ -13,7 +13,7 @@ interface DevelopingPolaroidProps {
 }
 
 const FALL_DURATION = 1000;
-const REVEAL_DURATION = 5000;
+const REVEAL_DURATION = 4000;
 
 // Displays a polaroid image with a developing effect animation.
 export function DevelopingPolaroid({
