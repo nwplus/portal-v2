@@ -19,6 +19,8 @@ function RouteComponent() {
   const { activeHackathon } = useHackathon();
   const { displayNameFull, displayNameShort } = useHackathonInfo();
   const hackathonWeekend = usePortalStore((state) => state.hackathonWeekend);
+  const hackathonStart = usePortalStore((state) => state.hackathonStart);
+  const hackathonStartDate = hackathonStart ? new Date(hackathonStart[activeHackathon]) : null;
   const location = usePortalStore((state) => state.location);
   const applicationDeadline = usePortalStore((state) => state.applicationDeadline);
   const welcome = useApplicationQuestionStore((s) => s.welcome);
@@ -51,7 +53,9 @@ function RouteComponent() {
               <h1 className="font-medium text-6xl">{displayNameFull}</h1>
             </div>
             <div className="flex flex-col items-start gap-2">
-              <h1 className="font-regular text-xl">🗓️ {hackathonWeekend?.[activeHackathon]} </h1>
+              <h1 className="font-regular text-xl">
+                🗓️ {`${hackathonWeekend?.[activeHackathon]}, ${hackathonStartDate?.getFullYear()}`}{" "}
+              </h1>
               <h1 className="font-regular text-xl">📍 {location?.[activeHackathon]} </h1>
             </div>
 
