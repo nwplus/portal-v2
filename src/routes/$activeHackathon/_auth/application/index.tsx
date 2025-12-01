@@ -1,4 +1,5 @@
 import { Navbar } from "@/components/features/application/navbar";
+import { statusBlurbs } from "@/components/features/application/status-blurbs";
 import { Button } from "@/components/ui/button";
 import { Tag } from "@/components/ui/tag";
 import { useHackathon } from "@/hooks/use-hackathon";
@@ -40,8 +41,8 @@ function RouteComponent() {
   return (
     <>
       <Navbar variant="index" />
-      <div className="grid h-full grid-cols-2 pb-[10vh]">
-        <div className="flex w-[90%] justify-center pt-[20vh]">
+      <div className="grid h-full grid-cols-2 pb-[15vh]">
+        <div className="flex w-[90%] items-center justify-center">
           <div className="flex flex-col items-start gap-10">
             <div className="flex aspect-square size-16 items-center justify-center rounded-lg">
               <HackathonIcon />
@@ -103,7 +104,7 @@ function RouteComponent() {
             </div>
           </div>
         </div>
-        <div className="flex flex-col items-start justify-center gap-12">
+        <div className="flex max-w-[80%] flex-col items-start justify-center gap-12">
           {(applicationStatus === "inProgress" || applicationStatus === "applied") && (
             <div className="flex flex-col items-start gap-6">
               <ReactMarkdown

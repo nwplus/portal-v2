@@ -140,6 +140,14 @@ function buildFieldSchema(question: HackerApplicationNonWelcomeQuestion): z.ZodT
     case "Dropdown": {
       const allowedOptions = options;
       const base = z.string();
+      const allowOther = Boolean(question.other);
+
+      if (allowOther) {
+        const trimmed = base.trim();
+        return isRequired
+          ? trimmed.min(1, "This field is required")
+          : trimmed.optional().or(z.literal(""));
+      }
 
       // For required fields, check non-empty first, then validate options
       if (isRequired) {

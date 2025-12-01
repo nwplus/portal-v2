@@ -37,10 +37,17 @@ function RouteComponent() {
     const scrollContainer = document.querySelector("[data-scroll-container]");
     if (!scrollContainer) return;
 
-    const target = e.target as Node;
-    if (!scrollContainer.contains(target)) {
-      scrollContainer.scrollTop += e.deltaY;
+    const target = e.target as HTMLElement;
+    if (scrollContainer.contains(target)) return;
+
+    let el: HTMLElement | null = target;
+    while (el) {
+      const { overflowY } = getComputedStyle(el);
+      if (overflowY === "auto" || overflowY === "scroll") return;
+      el = el.parentElement;
     }
+
+    scrollContainer.scrollTop += e.deltaY;
   };
 
   // Block until the draft is hydrated for the CURRENT hackathon.
