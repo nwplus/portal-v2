@@ -68,15 +68,15 @@ export function SelectPortal() {
           select a <span style={titleGradientStyle}>portal</span>
         </PageHeader>
       </div>
-      <div className="flex h-full w-full flex-col justify-center overflow-hidden px-0 pt-[clamp(2rem,5vw,5rem)] md:px-6 md:pt-0">
-        <div className="flex w-full flex-col gap-[clamp(1.5rem,4vw,2.5rem)] md:flex-row md:gap-3">
+      <div className="select-portal flex h-full w-full flex-col justify-center overflow-hidden px-0 pt-[clamp(2rem,5vw,5rem)] md:px-6 md:pt-0">
+        <div className="portals flex w-full flex-col gap-[clamp(3rem,6vh,4rem)] sm:gap-[clamp(1.5rem,4vw,2.5rem)] md:flex-row md:gap-3">
           {portals?.map((h) => (
             <PortalEntrance {...h} key={h.hackathon} />
           ))}
         </div>
       </div>
       {!!user && (
-        <div className="absolute bottom-[clamp(1.5rem,4vw,2.5rem)] z-100 flex w-full select-none flex-col items-center opacity-50">
+        <div className="text-xs sm:text-lg absolute bottom-[clamp(1.5rem,4vw,2.5rem)] z-100 flex w-full select-none flex-col items-center opacity-50">
           <div>Signed in as {user?.email}</div>
           <div className="flex gap-1">
             <div>Not you?</div>
