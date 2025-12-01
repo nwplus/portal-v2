@@ -1,17 +1,27 @@
+import { Button } from "@/components/ui/button";
 import { useHackathon } from "@/hooks/use-hackathon";
 import { useApplicantStore } from "@/lib/stores/applicant-store";
+import { useAuthStore } from "@/lib/stores/auth-store";
 import { getHackathonIcon } from "@/lib/utils";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 
 interface ApplicationNavbarProps {
-  saving: boolean;
+  saving?: boolean;
+  variant: "application-step" | "index";
 }
 
-export function Navbar({ saving }: ApplicationNavbarProps) {
+export function Navbar({ saving = false, variant }: ApplicationNavbarProps) {
   const { activeHackathon } = useHackathon();
   const LogoIcon = getHackathonIcon(activeHackathon);
   const dirty = useApplicantStore((s) => s.dirty);
   const lastLocalSaveAt = useApplicantStore((s) => s.lastLocalSaveAt);
+  const logout = useAuthStore((s) => s.logout);
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate({ to: "/" });
+  };
 
   const formatTime = (timestamp: number) => {
     return new Date(timestamp).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
@@ -24,6 +34,34 @@ export function Navbar({ saving }: ApplicationNavbarProps) {
       : lastLocalSaveAt
         ? `✓ Autosaved on ${formatTime(lastLocalSaveAt)}`
         : "Autosaved";
+
+  if (variant === "index") {
+    return (
+      <nav className="mx-auto mb-6 flex w-full items-center">
+        <div className="flex-1">
+          <Button
+            variant="ghost"
+            asChild
+            className="text-text-secondary hover:text-text-secondary/80"
+          >
+            <Link to="/$activeHackathon" params={{ activeHackathon }}>
+              &lt; Back to Portal
+            </Link>
+          </Button>
+        </div>
+
+        <div className="flex-1 text-right">
+          <Button
+            variant="ghost"
+            onClick={handleLogout}
+            className="text-text-secondary hover:text-text-secondary/80"
+          >
+            Logout
+          </Button>
+        </div>
+      </nav>
+    );
+  }
 
   return (
     <nav className="mx-auto mb-6 flex w-[95%] items-center">
