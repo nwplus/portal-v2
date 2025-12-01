@@ -179,6 +179,9 @@ export function PortfolioQuestion({ question }: QuestionFieldProps) {
                   </Button>
                 </div>
               </div>
+              <p className="text-text-secondary text-xs">
+                Accepted formats: pdf, doc, docx, png, jpg (max 3MB)
+              </p>
               <input
                 ref={resumeFileInputRef}
                 id={resumeId}

@@ -28,6 +28,7 @@ export function DropdownQuestion(props: QuestionFieldProps) {
 
   const options = question.options ?? [];
   const isInvalid = isMainInvalid;
+  const allowOther = Boolean(question.other);
 
   return (
     <Field data-invalid={isInvalid}>
@@ -45,6 +46,8 @@ export function DropdownQuestion(props: QuestionFieldProps) {
                 field.onChange(value ?? "");
                 void trigger(mainPath);
               }}
+              createOtherOption={allowOther}
+              onCommit={() => void trigger(mainPath)}
               name={field.name}
               inputId={mainId}
               invalid={isInvalid}
