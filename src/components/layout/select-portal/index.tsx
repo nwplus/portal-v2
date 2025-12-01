@@ -76,7 +76,7 @@ export function SelectPortal() {
         </div>
       </div>
       {!!user && (
-        <div className="text-xs sm:text-lg absolute bottom-[clamp(1.5rem,4vw,2.5rem)] z-100 flex w-full select-none flex-col items-center opacity-50">
+        <div className="absolute bottom-[clamp(1.5rem,4vw,2.5rem)] z-100 flex w-full select-none flex-col items-center text-xs opacity-50 sm:text-lg">
           <div>Signed in as {user?.email}</div>
           <div className="flex gap-1">
             <div>Not you?</div>
