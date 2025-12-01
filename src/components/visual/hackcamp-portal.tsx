@@ -6,6 +6,7 @@ export function HackCampPortal() {
       viewBox="0 0 513 667"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      className="max-h-[60svh]"
     >
       <mask
         id="mask0_1681_3988"
@@ -56,8 +57,8 @@ export function HackCampPortal() {
           gradientTransform="matrix(26.158 -288.102 218.748 23.6446 219.477 264.722)"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#B64001" />
-          <stop offset="1" stop-color="#0F131A" stop-opacity="0" />
+          <stop stopColor="#B64001" />
+          <stop offset="1" stopColor="#0F131A" stopOpacity="0" />
         </radialGradient>
         <radialGradient
           id="paint1_radial_1681_3988"
@@ -67,8 +68,8 @@ export function HackCampPortal() {
           gradientUnits="userSpaceOnUse"
           gradientTransform="translate(309.05 383.445) rotate(-89.9103) scale(270.176 205.143)"
         >
-          <stop stop-color="#AF3F30" />
-          <stop offset="1" stop-color="#0F131A" stop-opacity="0" />
+          <stop stopColor="#AF3F30" />
+          <stop offset="1" stopColor="#0F131A" stopOpacity="0" />
         </radialGradient>
         <radialGradient
           id="paint2_radial_1681_3988"
@@ -78,8 +79,8 @@ export function HackCampPortal() {
           gradientTransform="matrix(-19.6705 250.727 -215.833 -45.3046 182.595 375.37)"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#AF6D30" />
-          <stop offset="1" stop-color="#0F131A" stop-opacity="0" />
+          <stop stopColor="#AF6D30" />
+          <stop offset="1" stopColor="#0F131A" stopOpacity="0" />
         </radialGradient>
         <radialGradient
           id="paint3_radial_1681_3988"
@@ -89,8 +90,8 @@ export function HackCampPortal() {
           gradientTransform="matrix(-4.72015 251.873 -217.926 -24.6732 320.311 271.265)"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#AF7A30" />
-          <stop offset="1" stop-color="#0F131A" stop-opacity="0" />
+          <stop stopColor="#AF7A30" />
+          <stop offset="1" stopColor="#0F131A" stopOpacity="0" />
         </radialGradient>
         <radialGradient
           id="paint4_radial_1681_3988"
@@ -100,8 +101,8 @@ export function HackCampPortal() {
           gradientTransform="matrix(2.04286 290.58 -159.177 1.93838 263.6 410.782)"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#494E1C" />
-          <stop offset="1" stop-color="#221F09" stop-opacity="0" />
+          <stop stopColor="#494E1C" />
+          <stop offset="1" stopColor="#221F09" stopOpacity="0" />
         </radialGradient>
       </defs>
     </svg>

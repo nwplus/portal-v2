@@ -6,7 +6,7 @@ export function cmdfPortal() {
       viewBox="0 0 569 713"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className="translate-x-2.5"
+      className="max-h-[60svh] translate-x-2.5"
     >
       <mask
         id="mask0_1681_4018"
@@ -61,8 +61,8 @@ export function cmdfPortal() {
           gradientUnits="userSpaceOnUse"
           gradientTransform="translate(257.863 225.104) rotate(-94.9891) scale(202.248 229.503)"
         >
-          <stop stop-color="#E8BD22" />
-          <stop offset="1" stop-color="#0F131A" stop-opacity="0" />
+          <stop stopColor="#E8BD22" />
+          <stop offset="1" stopColor="#0F131A" stopOpacity="0" />
         </radialGradient>
         <radialGradient
           id="paint1_radial_1681_4018"
@@ -72,8 +72,8 @@ export function cmdfPortal() {
           gradientUnits="userSpaceOnUse"
           gradientTransform="translate(277.595 431.837) rotate(88.7206) scale(264.378 232.097)"
         >
-          <stop stop-color="#E8BD22" />
-          <stop offset="1" stop-color="#0F131A" stop-opacity="0" />
+          <stop stopColor="#E8BD22" />
+          <stop offset="1" stopColor="#0F131A" stopOpacity="0" />
         </radialGradient>
         <radialGradient
           id="paint2_radial_1681_4018"
@@ -83,8 +83,8 @@ export function cmdfPortal() {
           gradientTransform="matrix(21.0325 -215.001 156.69 10.5209 291.994 345.988)"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#E8BD22" />
-          <stop offset="1" stop-color="#2A6E59" stop-opacity="0" />
+          <stop stopColor="#E8BD22" />
+          <stop offset="1" stopColor="#2A6E59" stopOpacity="0" />
         </radialGradient>
         <radialGradient
           id="paint3_radial_1681_4018"
@@ -94,8 +94,8 @@ export function cmdfPortal() {
           gradientTransform="matrix(-32.5794 232.037 -216.934 -54.0335 205.243 382.942)"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#56BEBE" />
-          <stop offset="1" stop-color="#0F131A" stop-opacity="0" />
+          <stop stopColor="#56BEBE" />
+          <stop offset="1" stopColor="#0F131A" stopOpacity="0" />
         </radialGradient>
         <radialGradient
           id="paint4_radial_1681_4018"
@@ -105,8 +105,8 @@ export function cmdfPortal() {
           gradientTransform="matrix(255.983 -17.428 -13.9365 277.862 328.459 393.916)"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#44855D" />
-          <stop offset="1" stop-color="#0F131A" stop-opacity="0" />
+          <stop stopColor="#44855D" />
+          <stop offset="1" stopColor="#0F131A" stopOpacity="0" />
         </radialGradient>
         <radialGradient
           id="paint5_radial_1681_4018"
@@ -116,8 +116,8 @@ export function cmdfPortal() {
           gradientTransform="matrix(46.2614 -238.848 142.334 32.9601 196.643 379.752)"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#0B6596" />
-          <stop offset="1" stop-color="#05281E" stop-opacity="0" />
+          <stop stopColor="#0B6596" />
+          <stop offset="1" stopColor="#05281E" stopOpacity="0" />
         </radialGradient>
       </defs>
     </svg>
