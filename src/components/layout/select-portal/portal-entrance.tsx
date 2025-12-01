@@ -88,12 +88,14 @@ export function PortalEntrance({
           <div className="mb-[clamp(0.75rem,3vw,1.5rem)] flex aspect-square h-[clamp(2.5rem,8vw,4.5rem)] scale-90 items-center justify-center">
             <LogoComponent />
           </div>
-          <SubHeader className="font-semibold text-[4vh] sm:text-4xl md:text-3xl">{hackathon}</SubHeader>
+          <SubHeader className="font-semibold text-[4vh] sm:text-4xl md:text-3xl">
+            {hackathon}
+          </SubHeader>
           <div className="text-center font-medium text-[2.5vh] sm:text-lg">{dates}</div>
         </div>
 
         <div className="flex w-full select-none flex-col items-center">
-          <div className="pb-2 md:pb-2 text-[2vh] sm:text-lg">
+          <div className="pb-2 text-[2vh] sm:text-lg md:pb-2">
             {isUpNext ? "Applications open!" : isPassed ? "Portal closed" : "Opening soon"}
           </div>
           {isUpNext && (
@@ -102,7 +104,11 @@ export function PortalEntrance({
             </Button>
           )}
           {website && (
-            <Button variant="link" className="z-101 pb-0 opacity-70 text-[1.75vh] sm:text-sm" asChild>
+            <Button
+              variant="link"
+              className="z-101 pb-0 text-[1.75vh] opacity-70 sm:text-sm"
+              asChild
+            >
               <a href={website} target="_blank" rel="noreferrer noopener">
                 Visit website
               </a>

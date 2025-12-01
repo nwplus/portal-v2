@@ -44,9 +44,7 @@ export function Navbar({ saving = false, variant }: ApplicationNavbarProps) {
             asChild
             className="text-text-secondary hover:text-text-secondary/80"
           >
-            <Link to="/">
-              &lt; Back to Portal
-            </Link>
+            <Link to="/">&lt; Back to Portal</Link>
           </Button>
         </div>
 
