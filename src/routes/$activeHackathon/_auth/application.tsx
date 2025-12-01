@@ -1,6 +1,4 @@
-import { Navbar } from "@/components/features/application/navbar";
 import { GradientBackground } from "@/components/layout/gradient-background";
-import { useApplicantAutosave } from "@/hooks/use-applicant-autosave";
 import { useApplicantHydration } from "@/hooks/use-applicant-hydration";
 import { useApplicationQuestions } from "@/hooks/use-application-questions";
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
@@ -15,22 +13,37 @@ import { useApplicationQuestionStore } from "@/lib/stores/application-question-s
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { fetchApplicant } from "@/services/applicants";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Outlet, createFileRoute, useLocation } from "@tanstack/react-router";
+import { Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
 import { createContext, useEffect, useMemo, useRef } from "react";
 import type { Resolver } from "react-hook-form";
 import { FormProvider, useForm } from "react-hook-form";
 
 export const Route = createFileRoute("/$activeHackathon/_auth/application")({
   staticData: { hideSidebar: true },
-  loader: async ({ context }) => {
+  // fetch and hydrate the applicant draft here to ensure _step-layout's guard sees the correct applicationStatus on refresh
+  beforeLoad: async ({ context }) => {
     const { dbCollectionName } = context;
     const { user } = useAuthStore.getState();
+
+    useApplicantStore.getState().reset();
 
     if (!user?.uid || !dbCollectionName) {
       return { applicant: null };
     }
 
     const applicant = await fetchApplicant(dbCollectionName, user.uid);
+
+    if (applicant) {
+      const normalizedApplicant: ApplicantDraft = {
+        ...applicant,
+        submission: {
+          submitted: applicant.submission?.submitted ?? false,
+          ...(applicant.submission ?? {}),
+        },
+      };
+      useApplicantStore.getState().setApplicant(normalizedApplicant);
+    }
+
     return { applicant };
   },
   component: () => <RouteComponent />,
@@ -40,20 +53,20 @@ function RouteComponent() {
   const { dbCollectionName, displayNameShort } = useHackathonInfo();
   const applicantDraft = useApplicantStore((s) => s.applicantDraft);
   const user = useAuthStore((s) => s.user);
-  const { applicant } = Route.useLoaderData();
-  const location = useLocation();
+  const { applicant } = Route.useRouteContext();
   const applicationQuestions = useApplicationQuestionStore();
 
-  const isRsvpPage = location.pathname.endsWith("/rsvp");
-  const isIndexPage = location.pathname.endsWith("/application");
+  // Use resolvedLocation so gradient position only changes after child routes finish loading
+  const resolvedPathname = useRouterState({
+    select: (state) => state.resolvedLocation?.pathname ?? state.location.pathname,
+  });
+  const isRsvpPage = resolvedPathname.endsWith("/rsvp");
+  const isIndexPage = resolvedPathname.endsWith("/application");
   const gradientPosition: BackgroundGradientPosition = isIndexPage
     ? "bottomMiddle"
     : isRsvpPage
       ? "topMiddle"
       : "bottomRight";
-
-  const formStepSuffixes = ["/basic-info", "/skills", "/questionnaire", "/review"];
-  const showNavbar = formStepSuffixes.some((suffix) => location.pathname.endsWith(suffix));
 
   useApplicationQuestions(displayNameShort);
   useApplicantHydration({
@@ -61,8 +74,6 @@ function RouteComponent() {
     applicant,
     user,
   });
-
-  const saving = useApplicantAutosave(dbCollectionName, user?.uid);
 
   const { schema, meta } = useMemo(
     () =>
@@ -115,7 +126,6 @@ function RouteComponent() {
         gradientPosition={gradientPosition}
         className="relative flex h-full w-full flex-col overflow-hidden rounded-xl p-4 shadow-sm"
       >
-        {showNavbar ? <Navbar saving={saving} /> : null}
         <ApplicationSchemaMetaContext.Provider value={meta}>
           <FormProvider {...formMethods}>
             <div className="min-h-0 flex-1">
