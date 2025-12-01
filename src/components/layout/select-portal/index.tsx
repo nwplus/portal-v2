@@ -64,7 +64,7 @@ export function SelectPortal() {
         </div>
       </div>
       <div className="absolute top-[clamp(1.5rem,4vw,2.5rem)] w-full pt-[clamp(3rem,8vw,7.5rem)]">
-        <PageHeader className="select-none text-center font-mono font-semibold tracking-tight">
+        <PageHeader className="z-101 select-none text-center font-mono font-semibold tracking-tight">
           select a <span style={titleGradientStyle}>portal</span>
         </PageHeader>
       </div>

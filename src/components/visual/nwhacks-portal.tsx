@@ -6,6 +6,7 @@ export function nwHacksPortal() {
       viewBox="0 0 557 688"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      className="max-h-[60svh]"
     >
       <mask
         id="mask0_1681_4028"
@@ -53,8 +54,8 @@ export function nwHacksPortal() {
           gradientUnits="userSpaceOnUse"
           gradientTransform="translate(293.617 455.229) rotate(90) scale(263.631 212.253)"
         >
-          <stop stop-color="#55A2D2" />
-          <stop offset="1" stop-color="#0F131A" stop-opacity="0" />
+          <stop stopColor="#55A2D2" />
+          <stop offset="1" stopColor="#0F131A" stopOpacity="0" />
         </radialGradient>
         <radialGradient
           id="paint1_radial_1681_4028"
@@ -64,8 +65,8 @@ export function nwHacksPortal() {
           gradientUnits="userSpaceOnUse"
           gradientTransform="translate(227.345 321.992) rotate(90) scale(263.631 212.253)"
         >
-          <stop stop-color="#55A2D2" />
-          <stop offset="1" stop-color="#0F131A" stop-opacity="0" />
+          <stop stopColor="#55A2D2" />
+          <stop offset="1" stopColor="#0F131A" stopOpacity="0" />
         </radialGradient>
         <radialGradient
           id="paint2_radial_1681_4028"
@@ -75,8 +76,8 @@ export function nwHacksPortal() {
           gradientTransform="matrix(19.946 -244.683 223.387 43.8772 358.192 329.671)"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#551860" />
-          <stop offset="1" stop-color="#0F131A" stop-opacity="0" />
+          <stop stopColor="#551860" />
+          <stop offset="1" stopColor="#0F131A" stopOpacity="0" />
         </radialGradient>
         <radialGradient
           id="paint3_radial_1681_4028"
@@ -86,8 +87,8 @@ export function nwHacksPortal() {
           gradientTransform="matrix(4.47563 -245.778 225.52 23.7424 205.421 418.22)"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#551860" />
-          <stop offset="1" stop-color="#0F131A" stop-opacity="0" />
+          <stop stopColor="#551860" />
+          <stop offset="1" stopColor="#0F131A" stopOpacity="0" />
         </radialGradient>
         <radialGradient
           id="paint4_radial_1681_4028"
@@ -97,8 +98,8 @@ export function nwHacksPortal() {
           gradientTransform="matrix(2.43466 -228.437 255.658 3.3765 281.833 212.268)"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#AF4B50" />
-          <stop offset="1" stop-color="#0F131A" stop-opacity="0" />
+          <stop stopColor="#AF4B50" />
+          <stop offset="1" stopColor="#0F131A" stopOpacity="0" />
         </radialGradient>
         <radialGradient
           id="paint5_radial_1681_4028"
@@ -108,8 +109,8 @@ export function nwHacksPortal() {
           gradientTransform="matrix(-2.58449 -283.537 164.691 -2.13466 274.324 295.244)"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#592463" />
-          <stop offset="1" stop-color="#221F09" stop-opacity="0" />
+          <stop stopColor="#592463" />
+          <stop offset="1" stopColor="#221F09" stopOpacity="0" />
         </radialGradient>
       </defs>
     </svg>
