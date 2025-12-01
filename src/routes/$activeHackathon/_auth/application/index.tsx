@@ -1,5 +1,4 @@
 import { Navbar } from "@/components/features/application/navbar";
-import { statusBlurbs } from "@/components/features/application/status-blurbs";
 import { Button } from "@/components/ui/button";
 import { Tag } from "@/components/ui/tag";
 import { useHackathon } from "@/hooks/use-hackathon";
