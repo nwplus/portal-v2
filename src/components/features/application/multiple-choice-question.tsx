@@ -108,7 +108,11 @@ export function MultipleChoiceQuestion(props: QuestionFieldProps) {
                         className="mt-1"
                         placeholder="Please specify"
                         aria-invalid={isOtherInvalid}
-                        {...register(otherPath)}
+                        {...register(otherPath, {
+                          onBlur: () => {
+                            void trigger(otherPath);
+                          },
+                        })}
                       />
                     ) : null}
                   </>
