@@ -120,6 +120,16 @@ code {
   }
 }
 
+@media (max-width: 375px) {
+  .select-portal .portals {
+    gap: 2.5rem;
+  }
+
+  .select-portal .logo-wrap {
+    margin-bottom: 0.1rem;
+  }
+}
+
 *::selection {
   background: #ffffff20;
 }
