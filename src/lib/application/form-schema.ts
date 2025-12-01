@@ -139,29 +139,32 @@ function buildFieldSchema(question: HackerApplicationNonWelcomeQuestion): z.ZodT
 
     case "Dropdown": {
       const allowedOptions = options;
-
       const base = z.string();
+
+      // For required fields, check non-empty first, then validate options
+      if (isRequired) {
+        return base.min(1, "This field is required").refine(
+          (value) => {
+            if (allowedOptions.length === 0) return true;
+            return allowedOptions.includes(value);
+          },
+          { error: "Invalid selection" },
+        );
+      }
+
+      // For optional fields, allow empty values to pass through
       const withOptions =
         allowedOptions.length > 0
           ? base.refine(
               (value) => {
-                // Allow empty / missing values to fall through to the required
-                // validator so users see "This field is required" instead of
-                // "Invalid selection" when no option has been chosen.
                 if (!value) return true;
                 return allowedOptions.includes(value);
               },
-              {
-                error: "Invalid selection",
-              },
+              { error: "Invalid selection" },
             )
           : base;
 
-      const field: z.ZodTypeAny = isRequired
-        ? withOptions.min(1, "This field is required")
-        : withOptions.optional().or(z.literal(""));
-
-      return field;
+      return withOptions.optional().or(z.literal(""));
     }
 
     case "Portfolio": {
@@ -450,7 +453,7 @@ export function buildApplicationSchema(questions: QuestionBuckets): {
   function buildSectionSchema(shape: Record<string, z.ZodTypeAny>, sectionPrefix: string) {
     return z
       .object(shape)
-      .passthrough()
+      .loose()
       .superRefine((values, ctx) => {
         for (const { questionType, mainPath, otherPath } of otherMeta) {
           if (!mainPath.startsWith(sectionPrefix) || !otherPath) continue;
