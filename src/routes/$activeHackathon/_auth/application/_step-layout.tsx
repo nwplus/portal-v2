@@ -1,4 +1,5 @@
 import { Navbar } from "@/components/features/application/navbar";
+import { PolaroidStack } from "@/components/features/application/polaroid-stack";
 import { ProgressBar } from "@/components/features/application/progress-bar";
 import { useApplicantAutosave } from "@/hooks/use-applicant-autosave";
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
@@ -61,7 +62,9 @@ function RouteComponent() {
             <Outlet />
           </div>
         </div>
-        <div className="flex min-h-0 flex-1 items-center justify-center">right side</div>
+        <div className="flex min-h-0 flex-1 items-center justify-center">
+          <PolaroidStack step={step} className="w-[70%]" />
+        </div>
       </div>
     </div>
   );
