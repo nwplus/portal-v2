@@ -54,7 +54,7 @@ function RouteComponent() {
 
   return (
     <div className="flex h-full flex-col">
-      <Navbar saving={saving} />
+      <Navbar saving={saving} variant="application-step" />
       <div className="flex min-h-0 flex-1" onWheel={handleWheel}>
         <div className="flex flex-1 gap-[max(3rem,10%)] px-6 py-2">
           <ProgressBar step={step} />
