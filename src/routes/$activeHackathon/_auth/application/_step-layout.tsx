@@ -4,6 +4,7 @@ import { ProgressBar } from "@/components/features/application/progress-bar";
 import { useApplicantAutosave } from "@/hooks/use-applicant-autosave";
 import { useHackathon } from "@/hooks/use-hackathon";
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useApplicantStore } from "@/lib/stores/applicant-store";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { Navigate, Outlet, createFileRoute, useLocation } from "@tanstack/react-router";
@@ -24,6 +25,7 @@ function RouteComponent() {
   const location = useLocation();
   const lastSegment = location.pathname.split("/").pop() ?? "";
   const step = STEP_MAP[lastSegment] ?? 1;
+  const isMobile = useIsMobile();
 
   const { activeHackathon } = useHackathon();
   const { dbCollectionName } = useHackathonInfo();
@@ -65,16 +67,23 @@ function RouteComponent() {
   return (
     <div className="flex h-full flex-col">
       <Navbar saving={saving} variant="application-step" />
+      {isMobile && (
+        <div className="px-6 pb-4">
+          <ProgressBar step={step} orientation="horizontal" />
+        </div>
+      )}
       <div className="flex min-h-0 flex-1" onWheel={handleWheel}>
         <div className="flex flex-1 gap-[max(3rem,10%)] px-6 py-2">
-          <ProgressBar step={step} />
+          {!isMobile && <ProgressBar step={step} />}
           <div className="flex min-h-0 flex-1 flex-col justify-between gap-10 overflow-hidden">
             <Outlet />
           </div>
         </div>
-        <div className="flex min-h-0 flex-1 items-center justify-center">
-          <PolaroidStack step={step} className="w-[70%]" />
-        </div>
+        {!isMobile && (
+          <div className="flex min-h-0 flex-1 items-center justify-center">
+            <PolaroidStack step={step} className="w-[70%]" />
+          </div>
+        )}
       </div>
     </div>
   );

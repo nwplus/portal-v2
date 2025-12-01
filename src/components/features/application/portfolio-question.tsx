@@ -160,7 +160,7 @@ export function PortfolioQuestion({ question }: QuestionFieldProps) {
                   Resume
                 </FieldLabel>
                 <div className="flex items-center gap-2">
-                  <span className="text-text-secondary text-xs">
+                  <span className="hidden text-text-secondary text-xs md:block">
                     {resumeFileName
                       ? `${resumeFileName} uploaded`
                       : currentResumeUrl
@@ -182,6 +182,13 @@ export function PortfolioQuestion({ question }: QuestionFieldProps) {
               <p className="text-text-secondary text-xs">
                 Accepted formats: pdf, doc, docx, png, jpg (max 3MB)
               </p>
+              <span className="text-text-secondary text-xs md:hidden">
+                {resumeFileName
+                  ? `${resumeFileName} uploaded`
+                  : currentResumeUrl
+                    ? "Resume uploaded"
+                    : "No file uploaded"}
+              </span>
               <input
                 ref={resumeFileInputRef}
                 id={resumeId}
