@@ -2,6 +2,7 @@ import { GradientBackground } from "@/components/layout/gradient-background";
 import { useApplicantHydration } from "@/hooks/use-applicant-hydration";
 import { useApplicationQuestions } from "@/hooks/use-application-questions";
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useSyncFormWithApplicantDraft } from "@/hooks/use-sync-form-with-applicant-draft";
 import type { SchemaMeta } from "@/lib/application/form-schema";
 import { buildApplicationSchema } from "@/lib/application/form-schema";
@@ -47,11 +48,14 @@ function RouteComponent() {
   });
   const isRsvpPage = resolvedPathname.endsWith("/rsvp");
   const isIndexPage = resolvedPathname.endsWith("/application");
-  const gradientPosition: BackgroundGradientPosition = isIndexPage
+  const isMobile = useIsMobile();
+  const gradientPosition: BackgroundGradientPosition = isMobile
     ? "bottomMiddle"
-    : isRsvpPage
-      ? "topMiddle"
-      : "bottomRight";
+    : isIndexPage
+      ? "bottomMiddle"
+      : isRsvpPage
+        ? "topMiddle"
+        : "bottomRight";
 
   useApplicationQuestions(displayNameShort);
   useApplicantHydration({
@@ -109,7 +113,7 @@ function RouteComponent() {
     <div className="h-svh w-full bg-bg-pane-container p-0 md:p-4">
       <GradientBackground
         gradientPosition={gradientPosition}
-        className="scrollbar-hidden relative flex h-full w-full flex-col overflow-y-auto rounded-none p-4 shadow-none md:overflow-hidden md:rounded-xl md:shadow-sm"
+        className="scrollbar-hidden relative flex h-full w-full flex-col overflow-hidden rounded-none p-4 shadow-none md:rounded-xl md:shadow-sm"
       >
         <ApplicationSchemaMetaContext.Provider value={meta}>
           <FormProvider {...formMethods}>
