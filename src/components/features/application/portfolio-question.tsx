@@ -26,7 +26,7 @@ export function PortfolioQuestion({ question }: QuestionFieldProps) {
   const user = useAuthStore((state) => state.user);
   const userId = user?.uid ?? null;
   const [uploadingResume, setUploadingResume] = useState(false);
-  const [resumeFileNameOverride, setResumeFileNameOverride] = useState<string | null>(null);
+  const [resumeFileName, setResumeFileName] = useState<string | null>(null);
   const resumeFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const label = question.title ?? "Untitled";
@@ -61,22 +61,6 @@ export function PortfolioQuestion({ question }: QuestionFieldProps) {
 
   const currentResumeUrl =
     resumePath != null ? watch(resumePath as FieldPath<ApplicationFormValues>) : undefined;
-
-  const deriveResumeFileName = (url: unknown): string | null => {
-    if (typeof url !== "string" || !url.trim()) return null;
-    try {
-      const parsed = new URL(url);
-      const lastSegment = parsed.pathname.split("/").pop();
-      if (!lastSegment) return null;
-      const decoded = decodeURIComponent(lastSegment);
-      const name = decoded.split("/").pop();
-      return name && name !== "applicantResumes" ? name : null;
-    } catch {
-      return null;
-    }
-  };
-
-  const resumeFileName = resumeFileNameOverride ?? deriveResumeFileName(currentResumeUrl);
 
   const isAnyInvalid = Boolean(resumeError || linkedinError || githubError || portfolioError);
 
@@ -131,7 +115,7 @@ export function PortfolioQuestion({ question }: QuestionFieldProps) {
         return;
       }
 
-      setResumeFileNameOverride(file.name);
+      setResumeFileName(file.name);
       setValue(resumePath as FieldPath<ApplicationFormValues>, url, {
         shouldDirty: true,
         shouldValidate: true,
