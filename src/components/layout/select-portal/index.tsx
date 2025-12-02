@@ -41,7 +41,7 @@ export function SelectPortal() {
   const titleGradientStyle = usePortalTextGradientStyle();
 
   return (
-    <div className="relative min-h-screen w-full overflow-x-hidden">
+    <div className="relative h-full w-full overflow-y-auto overflow-x-hidden">
       <div className="absolute top-0 left-0 z-10 flex w-full justify-between p-[clamp(1rem,4vw,1.5rem)]">
         <div className="opacity-50">
           <NwPlusIcon />

@@ -22,7 +22,7 @@ export const Route = createRootRoute({
     }
 
     return (
-      <div className="relative min-h-screen bg-background">
+      <div className="relative h-svh overflow-hidden bg-background">
         <Outlet />
         {import.meta.env.DEV && <TanStackRouterDevtools position="bottom-right" />}
         <NoisyBackground className="pointer-events-none z-50" opacity={0.15} />
