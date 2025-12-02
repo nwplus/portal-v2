@@ -113,7 +113,7 @@ function RouteComponent() {
     <div className="h-svh w-full bg-bg-pane-container p-0 md:p-4">
       <GradientBackground
         gradientPosition={gradientPosition}
-        className="scrollbar-hidden relative flex h-full w-full flex-col overflow-hidden rounded-none p-4 shadow-none md:rounded-xl md:shadow-sm"
+        className="scrollbar-hidden relative flex h-full w-full flex-col overflow-hidden rounded-none p-4 pb-0 shadow-none md:rounded-xl md:pb-4 md:shadow-sm"
       >
         <ApplicationSchemaMetaContext.Provider value={meta}>
           <FormProvider {...formMethods}>
