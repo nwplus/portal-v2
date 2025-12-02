@@ -7,7 +7,7 @@ export const Route = createFileRoute("/")({
 
 function RouteComponent() {
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-full">
       <SelectPortal />
     </div>
   );
