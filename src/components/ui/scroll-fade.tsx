@@ -1,4 +1,3 @@
-import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
@@ -10,11 +9,8 @@ interface ScrollFadeProps {
 export function ScrollFade({ children, className }: ScrollFadeProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showBottomFade, setShowBottomFade] = useState(false);
-  const isMobile = useIsMobile();
 
   useEffect(() => {
-    if (isMobile) return;
-
     const el = scrollRef.current;
     if (!el) return;
 
@@ -53,7 +49,7 @@ export function ScrollFade({ children, className }: ScrollFadeProps) {
       window.removeEventListener("resize", scheduleUpdate);
       observer.disconnect();
     };
-  }, [isMobile]);
+  }, []);
 
   return (
     <div
