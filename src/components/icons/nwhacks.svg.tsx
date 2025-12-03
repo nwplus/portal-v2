@@ -1,5 +1,11 @@
 export const NwHacksIcon = () => (
-  <svg viewBox="0 0 39 45" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <svg
+    viewBox="0 0 39 45"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    width="100%"
+    height="100%"
+  >
     <title>nwHacks</title>
     <path
       fillRule="evenodd"
