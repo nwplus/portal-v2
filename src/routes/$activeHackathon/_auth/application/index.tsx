@@ -49,7 +49,7 @@ function RouteComponent() {
   return (
     <div className="flex h-full flex-col">
       <Navbar variant="index" />
-      <div className="scrollbar-hidden flex min-h-0 flex-1 flex-col overflow-y-auto px-6 pt-2 md:grid md:grid-cols-2 md:items-center md:gap-0 md:overflow-visible md:px-0 md:pt-0 md:pb-[15vh]">
+      <div className="scrollbar-hidden flex min-h-0 flex-1 flex-col overflow-y-auto px-6 pt-2 pb-6 md:grid md:grid-cols-2 md:items-center md:gap-0 md:overflow-visible md:px-0 md:pt-0 md:pb-[15vh]">
         <div className="flex w-full items-center justify-start md:w-[90%] md:justify-center">
           <div className="flex flex-col items-start gap-4 md:gap-10">
             <div className="flex aspect-square size-7 items-center justify-center rounded-lg md:size-16">
