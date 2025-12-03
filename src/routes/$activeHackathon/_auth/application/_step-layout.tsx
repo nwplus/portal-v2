@@ -73,7 +73,7 @@ function RouteComponent() {
         </div>
       )}
       <div className="flex min-h-0 flex-1" onWheel={handleWheel}>
-        <div className="flex flex-1 gap-[max(3rem,10%)] px-6 py-2">
+        <div className="flex flex-1 gap-[max(3rem,10%)] px-6 pt-4 pb-6 md:py-2">
           {!isMobile && <ProgressBar step={step} />}
           <div className="flex min-h-0 flex-1 flex-col justify-between gap-10 overflow-hidden">
             <Outlet />

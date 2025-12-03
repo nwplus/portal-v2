@@ -13,6 +13,7 @@ interface ApplicationNavbarProps {
 export function Navbar({ saving = false, variant }: ApplicationNavbarProps) {
   const { activeHackathon } = useHackathon();
   const LogoIcon = getHackathonIcon(activeHackathon);
+  const user = useAuthStore((s) => s.user);
   const dirty = useApplicantStore((s) => s.dirty);
   const lastLocalSaveAt = useApplicantStore((s) => s.lastLocalSaveAt);
   const logout = useAuthStore((s) => s.logout);
@@ -37,7 +38,7 @@ export function Navbar({ saving = false, variant }: ApplicationNavbarProps) {
 
   if (variant === "index") {
     return (
-      <nav className="mx-auto mb-6 flex w-full items-center">
+      <nav className="mx-auto mb-2 flex w-full items-center md:mb-6">
         <div className="flex-1">
           <Button
             variant="ghost"
@@ -48,7 +49,7 @@ export function Navbar({ saving = false, variant }: ApplicationNavbarProps) {
           </Button>
         </div>
 
-        <div className="flex-1 text-right">
+        <div className="flex-1 flex-row items-center justify-end text-right">
           <Button
             variant="ghost"
             onClick={handleLogout}
