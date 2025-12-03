@@ -13,7 +13,6 @@ interface ApplicationNavbarProps {
 export function Navbar({ saving = false, variant }: ApplicationNavbarProps) {
   const { activeHackathon } = useHackathon();
   const LogoIcon = getHackathonIcon(activeHackathon);
-  const user = useAuthStore((s) => s.user);
   const dirty = useApplicantStore((s) => s.dirty);
   const lastLocalSaveAt = useApplicantStore((s) => s.lastLocalSaveAt);
   const logout = useAuthStore((s) => s.logout);
