@@ -5,8 +5,13 @@ import ReactDOM from "react-dom/client";
 // Import the generated route tree
 import { routeTree } from "./routeTree.gen";
 
+import { useAuthStore } from "./lib/stores/auth-store.ts";
 import "./styles.css";
-import reportWebVitals from "./reportWebVitals.ts";
+import NotFound from "./components/errors/not-found.tsx";
+import { usePortalStore } from "./lib/stores/portal-store.ts";
+
+useAuthStore.getState().initAuthListener();
+usePortalStore.getState().subscribeToPortal();
 
 // Create a new router instance
 const router = createRouter({
@@ -16,12 +21,16 @@ const router = createRouter({
   scrollRestoration: true,
   defaultStructuralSharing: true,
   defaultPreloadStaleTime: 0,
+  defaultNotFoundComponent: NotFound,
 });
 
 // Register the router instance for type safety
 declare module "@tanstack/react-router" {
   interface Register {
     router: typeof router;
+  }
+  interface StaticDataRouteOption {
+    hideSidebar?: boolean;
   }
 }
 
@@ -35,8 +44,3 @@ if (rootElement && !rootElement.innerHTML) {
     </StrictMode>,
   );
 }
-
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();

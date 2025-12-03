@@ -7,14 +7,14 @@
     "nwplus-ubc": {
       "hosting": {
         "nwplus-ubc": [
-          "nwplus-portal-v2"
+          "nwplus-ubc"
         ]
       }
     },
     "nwplus-ubc-dev": {
       "hosting": {
         "nwplus-ubc-dev": [
-          "dev-nwplus-portal-v2"
+          "dev-nwplus-portal"
         ]
       }
     }

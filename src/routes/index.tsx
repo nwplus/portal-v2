@@ -1,9 +1,14 @@
+import { SelectPortal } from "@/components/layout/select-portal";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
-  component: App,
+  component: RouteComponent,
 });
 
-function App() {
-  return <p>Hello world</p>;
+function RouteComponent() {
+  return (
+    <div className="flex h-full">
+      <SelectPortal />
+    </div>
+  );
 }

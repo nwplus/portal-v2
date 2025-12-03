@@ -1,0 +1,116 @@
+import { AppSidebarLayout } from "@/components/layout/app-sidebar";
+import { HackathonStylesheet } from "@/components/layout/hackathon-stylesheet";
+import { VALID_HACKATHONS } from "@/lib/constants";
+import { useAuthStore } from "@/lib/stores/auth-store";
+import { usePortalStore } from "@/lib/stores/portal-store";
+import type { HackathonInfoItem, HackathonName } from "@/lib/types";
+import { fetchHackathonInfo } from "@/services/latest-hackathons";
+import {
+  Outlet,
+  createFileRoute,
+  notFound,
+  redirect,
+  useRouterState,
+} from "@tanstack/react-router";
+
+// Combined context made available to descendants of /$activeHackathon
+type HackathonRouteContext = {
+  activeHackathon: HackathonName;
+} & HackathonInfoItem;
+
+export const Route = createFileRoute("/$activeHackathon")({
+  /**
+   * Validates the `activeHackathon` URL segment, runs before beforeLoad
+   *
+   * @param p - route params containing `activeHackathon`
+   * @returns an object with the validated, lowercased `activeHackathon` slug
+   * @throws when `activeHackathon` is not a valid value (handled by `onError`)
+   */
+  parseParams: (p) => {
+    return {
+      activeHackathon: VALID_HACKATHONS.parse(p.activeHackathon.toLowerCase()),
+    };
+  },
+  /**
+   * Expose the validated `activeHackathon` to all descendants via route context
+   */
+  context: ({ params }) => {
+    return {
+      activeHackathon: params.activeHackathon,
+    } satisfies Pick<HackathonRouteContext, "activeHackathon">;
+  },
+  /**
+   * Converts parameter-parse failures into a 404 response
+   *
+   * @param error - error raised during route processing
+   * @throws `notFound()` if the `activeHackathon` is not valid
+   */
+  onError: (error) => {
+    if (error?.routerCode === "PARSE_PARAMS") throw notFound();
+  },
+  /**
+   * Provide hackathon info via route context for descendants to use in components and loaders
+   *
+   * how context is built
+   * - `context()` exposes activeHackathon (from params)
+   * - `beforeLoad()` returns the current activeHackathon's info (dbCollectionName, display names, year)
+   * - Tanstack Router merges both into the route context for all descendants
+   *
+   * to avoid redundant fetches, if the previous `beforeLoad` result's `dbCollectionName` starts with the current `activeHackathon` slug,
+   * we reuse it, otherwise we fetch again
+   *
+   * @param params - route params containing activeHackathon
+   * @param matches - route matches containing the previous `beforeLoad` result
+   * @returns the current activeHackathon's info (dbCollectionName, display names, year)
+   */
+  beforeLoad: async ({ params, matches, location }) => {
+    const activeHackathon = params.activeHackathon;
+
+    const selfMatch = matches.find((m) => m.routeId === "/$activeHackathon");
+    const prev = selfMatch?.context as HackathonInfoItem | undefined;
+
+    let hackathonInfo: Omit<HackathonRouteContext, "activeHackathon">;
+    if (prev?.dbCollectionName?.toLowerCase().startsWith(activeHackathon)) {
+      hackathonInfo = prev;
+    } else {
+      const data = await fetchHackathonInfo(activeHackathon);
+      if (!data) throw notFound();
+      hackathonInfo = data;
+    }
+
+    const { applicationsOpen } = usePortalStore.getState();
+    const { isAdmin } = useAuthStore.getState();
+    const isApplicationsOpen = applicationsOpen?.[activeHackathon] ?? false;
+    const isOnApplicationPage = location.pathname.includes("/application");
+    const isOnLoginPage = location.pathname.includes("/login");
+
+    if (isApplicationsOpen && !isOnApplicationPage && !isOnLoginPage && !isAdmin) {
+      throw redirect({
+        to: "/$activeHackathon/application",
+        params: { activeHackathon },
+      });
+    }
+
+    return hackathonInfo;
+  },
+  component: RouteComponent,
+});
+
+function RouteComponent() {
+  const hideSidebar = useRouterState({
+    select: (state) => state.matches.some((match) => match.staticData?.hideSidebar === true),
+  });
+
+  const routeContent = (
+    <>
+      <HackathonStylesheet />
+      <Outlet />
+    </>
+  );
+
+  if (hideSidebar) {
+    return <div className="h-dvh">{routeContent}</div>;
+  }
+
+  return <AppSidebarLayout>{routeContent}</AppSidebarLayout>;
+}

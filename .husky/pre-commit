@@ -1,1 +1,4 @@
-pnpm check:staged
+if ! pnpm lint; then
+  echo "To apply the suggested fixes, run the command: pnpm lint"
+  exit 1
+fi
