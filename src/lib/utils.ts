@@ -1,4 +1,10 @@
-import { CmdFIcon, HackCampIcon, NwHacksIcon, NwHacksSidebarIcon } from "@/components/icons";
+import {
+  CmdFIcon,
+  HackCampIcon,
+  NwHacksColouredIcon,
+  NwHacksIcon,
+  NwHacksSidebarIcon,
+} from "@/components/icons";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { useAuthStore } from "./stores/auth-store";
@@ -124,6 +130,14 @@ export const getHackathonIcon = (hackathonId: string): React.ComponentType => {
 export const getSidebarHackathonIcon = (hackathonId: string): React.ComponentType => {
   const lowerName = hackathonId.toLowerCase();
   if (lowerName.includes("nwhacks")) return NwHacksSidebarIcon;
+  if (lowerName.includes("cmd-f")) return CmdFIcon; // TODO: replace during reskin
+  if (lowerName.includes("hackcamp")) return HackCampIcon; // TODO: replace during reskin
+  return NwHacksIcon;
+};
+
+export const getColouredHackathonIcon = (hackathonId: string): React.ComponentType => {
+  const lowerName = hackathonId.toLowerCase();
+  if (lowerName.includes("nwhacks")) return NwHacksColouredIcon;
   if (lowerName.includes("cmd-f")) return CmdFIcon; // TODO: replace during reskin
   if (lowerName.includes("hackcamp")) return HackCampIcon; // TODO: replace during reskin
   return NwHacksIcon;

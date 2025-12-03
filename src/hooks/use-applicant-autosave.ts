@@ -2,7 +2,7 @@ import { useApplicantStore } from "@/lib/stores/applicant-store";
 import { createOrMergeApplicant } from "@/services/applicants";
 import { useEffect, useState } from "react";
 
-const AUTOSAVE_INTERVAL = 15_000;
+const AUTOSAVE_INTERVAL = 5_000;
 
 /**
  * Self-scheduling autosave for the local applicant draft
@@ -36,7 +36,8 @@ export function useApplicantAutosave(dbCollectionName: string, uid: string | und
         !dirty ||
         !applicantDraft ||
         applicantDraft._id !== uid ||
-        !!applicantDraft.submission?.submitted
+        !!applicantDraft.submission?.submitted ||
+        applicantDraft.status?.applicationStatus !== "inProgress"
       ) {
         schedule();
         return;

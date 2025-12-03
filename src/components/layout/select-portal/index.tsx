@@ -41,8 +41,8 @@ export function SelectPortal() {
   const titleGradientStyle = usePortalTextGradientStyle();
 
   return (
-    <div className="relative min-h-screen w-full overflow-x-hidden">
-      <div className="absolute top-0 left-0 z-10 flex w-full justify-between p-6">
+    <div className="relative h-full w-full overflow-y-auto overflow-x-hidden">
+      <div className="absolute top-0 left-0 z-10 flex w-full justify-between p-[clamp(1rem,4vw,1.5rem)]">
         <div className="opacity-50">
           <NwPlusIcon />
         </div>
@@ -63,20 +63,20 @@ export function SelectPortal() {
           })}
         </div>
       </div>
-      <div className="absolute top-0 w-full pt-24 md:pt-30">
-        <PageHeader className="select-none text-center font-mono font-semibold tracking-tight">
+      <div className="absolute top-[clamp(1.5rem,4vw,2.5rem)] w-full pt-[clamp(3rem,8vw,7.5rem)]">
+        <PageHeader className="z-101 select-none text-center font-mono font-semibold tracking-tight">
           select a <span style={titleGradientStyle}>portal</span>
         </PageHeader>
       </div>
-      <div className="flex h-full w-full flex-col justify-center overflow-hidden px-0 md:px-6">
-        <div className="flex w-full flex-col gap-3 md:flex-row">
+      <div className="select-portal flex h-full w-full flex-col justify-center overflow-hidden px-0 pt-[clamp(2rem,5vw,5rem)] md:px-6 md:pt-0">
+        <div className="portals flex w-full flex-col gap-[clamp(3rem,6vh,4rem)] sm:gap-[clamp(1.5rem,4vw,2.5rem)] md:flex-row md:gap-3">
           {portals?.map((h) => (
             <PortalEntrance {...h} key={h.hackathon} />
           ))}
         </div>
       </div>
       {!!user && (
-        <div className="absolute bottom-10 z-100 flex w-full select-none flex-col items-center opacity-50">
+        <div className="absolute bottom-[clamp(1.5rem,4vw,2.5rem)] z-100 flex w-full select-none flex-col items-center text-xs opacity-50 sm:text-lg">
           <div>Signed in as {user?.email}</div>
           <div className="flex gap-1">
             <div>Not you?</div>

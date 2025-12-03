@@ -3,7 +3,7 @@ import { HackCampPortal } from "@/components/visual/hackcamp-portal";
 import { nwHacksPortal } from "@/components/visual/nwhacks-portal";
 import { cn } from "@/lib/utils";
 import { SubHeader } from "../../typography";
-import { buttonVariants } from "../../ui/button";
+import { Button } from "../../ui/button";
 // import { Lumination } from "../../visual/lumination";
 
 type PortalEntranceProps = {
@@ -42,13 +42,14 @@ export function PortalEntrance({
     <div
       className={cn(
         "group relative z-100 flex w-full flex-col items-center transition-all md:order-0",
-        !isUpNext && "order-10 h-[100px] md:h-auto",
+        !isUpNext && "order-10 h-[clamp(4rem,12vw,6rem)] md:h-auto",
       )}
     >
       <div
         className={cn(
           "md:-translate-x-1/2 md:-translate-y-1/2 absolute inset-0 top-1/2 left-1/2 z-0 h-full w-full overflow-visible opacity-70 md:scale-100",
-          isUpNext && "-translate-x-[80%] -translate-y-1/2 scale-80",
+          isUpNext && "-translate-x-1/2 -translate-y-1/2 scale-80",
+          !isUpNext && "hidden md:block",
           !isUpNext && index === 2 && "-translate-x-[80%] -translate-y-[30%] scale-60",
           !isUpNext && index !== 2 && "-translate-x-[10%] -translate-y-[50%] scale-50",
         )}
@@ -74,7 +75,7 @@ export function PortalEntrance({
       /> */}
       <div
         className={cn(
-          "relative flex flex-col items-center gap-8",
+          "relative flex flex-col items-center gap-[clamp(1rem,3vw,1.5rem)]",
           !isUpNext && "w-full flex-row md:w-auto md:flex-col",
         )}
       >
@@ -84,33 +85,34 @@ export function PortalEntrance({
             !isUpNext && "scale-60 opacity-80 md:scale-100 md:opacity-100",
           )}
         >
-          <div className="flex aspect-square h-[80px] scale-90 items-center justify-center">
+          <div className="mb-[clamp(0.75rem,3vw,1.5rem)] flex aspect-square h-[clamp(2.5rem,8vw,4.5rem)] scale-90 items-center justify-center">
             <LogoComponent />
           </div>
-          <SubHeader className="font-semibold text-3xl">{hackathon}</SubHeader>
-          <div className="font-medium text-lg">{dates}</div>
+          <SubHeader className="font-semibold text-[4vh] sm:text-4xl md:text-3xl">
+            {hackathon}
+          </SubHeader>
+          <div className="text-center font-medium text-[2.5vh] sm:text-lg">{dates}</div>
         </div>
 
         <div className="flex w-full select-none flex-col items-center">
-          <div className="pb-0 md:pb-2">
+          <div className="pb-2 text-[2vh] sm:text-lg md:pb-2">
             {isUpNext ? "Applications open!" : isPassed ? "Portal closed" : "Opening soon"}
           </div>
-          {isUpNext ? (
-            <a href={href} className={buttonVariants({ variant: "ethereal" })}>
-              Enter portal
-            </a>
-          ) : (
-            <></>
+          {isUpNext && (
+            <Button variant="ethereal" className="z-101" asChild>
+              <a href={href}>Enter portal</a>
+            </Button>
           )}
           {website && (
-            <a
-              href={website}
-              target="_blank"
-              rel="noreferrer noopener"
-              className={cn(buttonVariants({ variant: "link" }), "pb-0 opacity-70")}
+            <Button
+              variant="link"
+              className="z-101 pb-0 text-[1.75vh] opacity-70 sm:text-sm"
+              asChild
             >
-              Visit website
-            </a>
+              <a href={website} target="_blank" rel="noreferrer noopener">
+                Visit website
+              </a>
+            </Button>
           )}
         </div>
       </div>

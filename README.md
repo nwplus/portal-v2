@@ -57,10 +57,6 @@ When adding a new component from shadcn or another component library, replace al
 This project uses [Biome](https://biomejs.dev/) for linting and formatting. The following scripts are available:
 
 ```bash
-pnpm format             # formats code styles
-pnpm format:imports     # organizes imports only
-pnpm lint               # performs lint checks
-pnpm check              # performs formatting + lint checks (read-only)
 pnpm check:write        # applies safe formatting and lint fixes
 ```
 
