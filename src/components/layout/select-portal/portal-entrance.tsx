@@ -54,7 +54,7 @@ export function PortalEntrance({
           !isUpNext && index !== 2 && "-translate-x-[10%] -translate-y-[50%] scale-50",
         )}
       >
-        <div className="group relative flex h-full w-full scale-110 items-center justify-center transition-all duration-700 group-hover:scale-120 group-hover:brightness-125 ">
+        <div className="group relative flex h-full w-full scale-110 items-center justify-center transition-all duration-700 group-hover:scale-130 group-hover:brightness-125 ">
           <PortalComponent />
         </div>
       </div>
