@@ -58,6 +58,7 @@ export function MajorQuestion({ question }: QuestionFieldProps) {
             return (
               <div className="space-y-2">
                 <Dropdown
+                  placeholder="Select an option"
                   items={MAJOR_KEYS as ApplicantMajor[]}
                   value={selectedKey}
                   onValueChange={(value) => {
