@@ -14,8 +14,9 @@ import type { WheelEvent } from "react";
 export const Route = createFileRoute("/$activeHackathon/_auth/application/_step-layout")({
   beforeLoad: async ({ params }) => {
     const activeHackathon = params.activeHackathon;
+    const isAdmin = useAuthStore.getState().isAdmin;
     const applicationsOpen = usePortalStore.getState().applicationsOpen;
-    if (applicationsOpen?.[activeHackathon] === false) {
+    if (applicationsOpen?.[activeHackathon] === false && !isAdmin) {
       throw redirect({
         to: "/$activeHackathon/application",
         params: { activeHackathon },
