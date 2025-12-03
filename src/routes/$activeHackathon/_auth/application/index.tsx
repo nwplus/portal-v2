@@ -19,6 +19,7 @@ export const Route = createFileRoute("/$activeHackathon/_auth/application/")({
 function RouteComponent() {
   const { activeHackathon } = useHackathon();
   const { displayNameFull } = useHackathonInfo();
+  const applicationsOpen = usePortalStore((state) => state.applicationsOpen);
   const hackathonWeekend = usePortalStore((state) => state.hackathonWeekend);
   const hackathonStart = usePortalStore((state) => state.hackathonStart);
   const hackathonStartDate = hackathonStart ? new Date(hackathonStart[activeHackathon]) : null;
@@ -130,7 +131,7 @@ function RouteComponent() {
             <StatusBlurb />
           </div>
           {showFaqs && <ApplicationFaqs />}
-          {applicationStatus === "inProgress" && (
+          {applicationStatus === "inProgress" && applicationsOpen?.[activeHackathon] === true && (
             <Button variant="primary" asChild>
               <Link to="/$activeHackathon/application/basic-info" params={{ activeHackathon }}>
                 {hasStartedApplication ? "Continue application →" : "Get started →"}

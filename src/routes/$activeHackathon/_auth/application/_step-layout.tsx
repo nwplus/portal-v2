@@ -7,10 +7,22 @@ import { useHackathonInfo } from "@/hooks/use-hackathon-info";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useApplicantStore } from "@/lib/stores/applicant-store";
 import { useAuthStore } from "@/lib/stores/auth-store";
-import { Navigate, Outlet, createFileRoute, useLocation } from "@tanstack/react-router";
+import { usePortalStore } from "@/lib/stores/portal-store";
+import { Navigate, Outlet, createFileRoute, redirect, useLocation } from "@tanstack/react-router";
 import type { WheelEvent } from "react";
 
 export const Route = createFileRoute("/$activeHackathon/_auth/application/_step-layout")({
+  beforeLoad: async ({ params }) => {
+    const activeHackathon = params.activeHackathon;
+    const isAdmin = useAuthStore.getState().isAdmin;
+    const applicationsOpen = usePortalStore.getState().applicationsOpen;
+    if (applicationsOpen?.[activeHackathon] === false && !isAdmin) {
+      throw redirect({
+        to: "/$activeHackathon/application",
+        params: { activeHackathon },
+      });
+    }
+  },
   component: RouteComponent,
 });
 
