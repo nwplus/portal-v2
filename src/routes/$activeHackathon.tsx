@@ -109,7 +109,7 @@ function RouteComponent() {
   );
 
   if (hideSidebar) {
-    return <div className="h-dvh md:h-screen">{routeContent}</div>;
+    return <div className="h-screen">{routeContent}</div>;
   }
 
   return <AppSidebarLayout>{routeContent}</AppSidebarLayout>;
