@@ -22,6 +22,7 @@ import type {
 import { useApplicantStore } from "@/lib/stores/applicant-store";
 import { useApplicationQuestionStore } from "@/lib/stores/application-question-store";
 import { useAuthStore } from "@/lib/stores/auth-store";
+import { usePortalStore } from "@/lib/stores/portal-store";
 import { submitApplicantDraft } from "@/services/applicants";
 
 function fireSideCannons(colors?: string[]) {
@@ -288,6 +289,7 @@ function RouteComponent() {
   const portalTheme = usePortalTheme();
   const applicantDraft = useApplicantStore((state) => state.applicantDraft);
   const user = useAuthStore((state) => state.user);
+  const applicationsOpen = usePortalStore((state) => state.applicationsOpen);
   const form = useFormContext<ApplicationFormValues>();
   const router = useRouter();
 
@@ -307,6 +309,11 @@ function RouteComponent() {
 
       if (!uid || !draft) {
         setSubmitError("Unable to submit. Please refresh and try again.");
+        return;
+      }
+
+      if (applicationsOpen?.[activeHackathon] === false) {
+        setSubmitError("Applications are are now closed.");
         return;
       }
 
