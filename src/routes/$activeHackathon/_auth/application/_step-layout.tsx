@@ -81,7 +81,7 @@ function RouteComponent() {
         </div>
         {!isMobile && (
           <div className="flex min-h-0 flex-1 items-center justify-center">
-            <PolaroidStack step={step} className="aspect-[1236/1553] max-h-[80%] max-w-[70%]" />
+            <PolaroidStack step={step} className="aspect-[1236/1553] max-h-[60%] max-w-[70%]" />
           </div>
         )}
       </div>

@@ -13,6 +13,7 @@ interface DropdownProps<T = string> {
   createOtherOption?: boolean; // if true, allows the user to create a custom option
   createOtherItem?: (input: string) => T;
   onCommit?: () => void;
+  placeholder?: string;
   /**
    * wiring hooks for form libraries like React Hook Form.
    */
@@ -27,6 +28,7 @@ export function Dropdown<T = string>({
   items,
   value,
   onValueChange,
+  placeholder,
   itemToString = (item) => String(item),
   itemToKey = (item) => String(item),
   createOtherOption = false,
@@ -172,7 +174,7 @@ export function Dropdown<T = string>({
         ) : null}
         <div className="relative w-full">
           <Combobox.Input
-            placeholder="Start typing or select an option"
+            placeholder={placeholder ?? "Start typing or select an option"}
             id={id}
             name={name}
             aria-invalid={invalid || undefined}

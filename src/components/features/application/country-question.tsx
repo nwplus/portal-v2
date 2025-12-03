@@ -51,7 +51,6 @@ export function CountryQuestion({ question }: QuestionFieldProps) {
                 field.onChange(value ?? "");
                 void trigger(countryPath);
               }}
-              createOtherOption
               onCommit={() => void trigger(countryPath)}
               name={field.name}
               invalid={isInvalid}

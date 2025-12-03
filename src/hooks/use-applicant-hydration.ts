@@ -29,6 +29,22 @@ export function useApplicantHydration(params: Params) {
       return;
     }
 
+    // avoid overwriting a recently submitted application with stale loader data
+    const currentDraft = useApplicantStore.getState().applicantDraft;
+    const currentDbCollection = useApplicantStore.getState().dbCollectionName;
+    const isCurrentUserSameHackathon =
+      currentDraft?._id === uid && currentDbCollection === dbCollectionName;
+    const isCurrentlySubmitted =
+      currentDraft?.submission?.submitted === true ||
+      currentDraft?.status?.applicationStatus === "applied";
+    const loaderShowsNotSubmitted =
+      applicant?.submission?.submitted !== true &&
+      applicant?.status?.applicationStatus !== "applied";
+
+    if (isCurrentUserSameHackathon && isCurrentlySubmitted && loaderShowsNotSubmitted) {
+      return;
+    }
+
     resetApplicant();
 
     if (applicant) {
