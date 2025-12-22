@@ -11,7 +11,7 @@ import { usePortalStore } from "@/lib/stores/portal-store";
 
 export function ApplicationFaqs() {
   const { activeHackathon } = useHackathon();
-  const { displayNameShort, displayNameFull } = useHackathonInfo();
+  const { displayNameFull } = useHackathonInfo();
   const sendAcceptancesBy = usePortalStore((state) => state.sendAcceptancesBy?.[activeHackathon]);
   const hackathonWeekend = usePortalStore((state) => state.hackathonWeekend?.[activeHackathon]);
   const hackathonMonth = hackathonWeekend
