@@ -42,11 +42,8 @@ export function ApplicationFaqs() {
             <AccordionTrigger>I still have questions, who can I reach out to?</AccordionTrigger>
             <AccordionContent>
               Please reach out to{" "}
-              <a
-                href={`mailto:${displayNameShort.toLowerCase()}@nwplus.io`}
-                className="offset-4 underline"
-              >
-                {displayNameShort.toLowerCase()}@nwplus.io
+              <a href={`mailto:${activeHackathon}@nwplus.io`} className="offset-4 underline">
+                {activeHackathon}@nwplus.io
               </a>{" "}
               and we will be happy to help you out!
             </AccordionContent>
