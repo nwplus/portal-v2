@@ -12,7 +12,8 @@ type PortalEntranceProps = {
   href: string;
   dates: string;
   isUpNext: boolean;
-  isPassed: boolean;
+  applicationOpen: boolean;
+  applicationDeadline?: string;
   website: string;
   gradients?: string[];
   index?: number;
@@ -24,19 +25,43 @@ const HACKATHON_TO_GRADIENT: Record<string, React.ComponentType> = {
   nwHacks: nwHacksPortal,
 };
 
+// example deadline format: February 22nd, 2025 at 11:59 PM (Pacific Time)
+const getApplicationStatusText = (applicationOpen: boolean, applicationDeadline?: string) => {
+  if (!applicationDeadline) return "Applications opening soon!";
+
+  const cleanedDeadline = applicationDeadline
+    .replace(/(\d+)(st|nd|rd|th)/, "$1")
+    .replace(/\s*\(.*\)$/, "")
+    .replace(" at ", " ");
+  const deadlineDate = new Date(cleanedDeadline);
+  const isDeadlinePassed = new Date() > deadlineDate;
+
+  if (isDeadlinePassed) return "Applications closed";
+  if (!applicationOpen) return "Applications opening soon!";
+
+  const formattedDate = deadlineDate.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+  return `Applications close on ${formattedDate}!`;
+};
+
 export function PortalEntrance({
   logo,
   hackathon,
   href,
   dates,
   isUpNext,
-  isPassed,
+  applicationOpen,
+  applicationDeadline,
   website,
   // gradients,
   index,
 }: PortalEntranceProps) {
   const LogoComponent = logo;
   const PortalComponent = HACKATHON_TO_GRADIENT[hackathon];
+  const statusText = getApplicationStatusText(applicationOpen, applicationDeadline);
 
   return (
     <div
@@ -95,9 +120,7 @@ export function PortalEntrance({
         </div>
 
         <div className="flex w-full select-none flex-col items-center">
-          <div className="pb-2 text-[2vh] sm:text-lg md:pb-2">
-            {isUpNext ? "Applications open!" : isPassed ? "Portal closed" : "Opening soon"}
-          </div>
+          <div className="pb-2 text-[2vh] sm:text-lg md:pb-2">{statusText}</div>
           {isUpNext && (
             <Button variant="ethereal" className="z-101" asChild>
               <a href={href}>Enter portal</a>
