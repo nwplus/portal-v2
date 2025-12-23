@@ -84,6 +84,8 @@ function RouteComponent() {
   }
 
   const handleConfirmRsvp = async () => {
+    setSubmitError(null);
+
     if (!rsvpOpen) {
       setSubmitError(
         `The RSVP deadline has passed. We appreciate your enthusiasm and hope to see you next time! Please reach out to ${activeHackathon}@nwplus.io if you have any questions.`,

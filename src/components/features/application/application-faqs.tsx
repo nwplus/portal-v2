@@ -13,9 +13,9 @@ export function ApplicationFaqs() {
   const { activeHackathon } = useHackathon();
   const { displayNameFull } = useHackathonInfo();
   const sendAcceptancesBy = usePortalStore((state) => state.sendAcceptancesBy?.[activeHackathon]);
-  const hackathonWeekend = usePortalStore((state) => state.hackathonWeekend?.[activeHackathon]);
-  const hackathonMonth = hackathonWeekend
-    ? new Date(hackathonWeekend).toLocaleDateString("en-US", { month: "long", year: "numeric" })
+  const hackathonStart = usePortalStore((state) => state.hackathonStart?.[activeHackathon]);
+  const hackathonMonth = hackathonStart
+    ? new Date(hackathonStart).toLocaleDateString("en-US", { month: "long", year: "numeric" })
     : null;
   return (
     <>
