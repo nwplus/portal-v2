@@ -93,15 +93,17 @@ export const Route = createFileRoute("/$activeHackathon")({
         });
       }
 
-      // TODO: move this to a store or cache
-      const applicant = await fetchApplicant(hackathonInfo.dbCollectionName, user?.uid ?? "");
-      const applicationStatus = applicant?.status?.applicationStatus;
+      if (user) {
+        // TODO: move this to a store or cache
+        const applicant = await fetchApplicant(hackathonInfo.dbCollectionName, user.uid);
+        const applicationStatus = applicant?.status?.applicationStatus;
 
-      if (applicationStatus !== "acceptedAndAttending") {
-        throw redirect({
-          to: "/$activeHackathon/application",
-          params: { activeHackathon },
-        });
+        if (applicationStatus !== "acceptedAndAttending") {
+          throw redirect({
+            to: "/$activeHackathon/application",
+            params: { activeHackathon },
+          });
+        }
       }
     }
 
