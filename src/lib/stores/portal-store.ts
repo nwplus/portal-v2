@@ -21,6 +21,7 @@ type PortalStore = {
   hackingStart?: HackathonsInfoMap;
   judgingOpen?: HackathonsFlagMap;
   judgingReleased?: HackathonsFlagMap;
+  location?: HackathonsInfoMap;
   offWaitlistNotify?: HackathonsInfoMap;
   portalLive?: HackathonsFlagMap;
   rsvpBy?: HackathonsInfoMap;

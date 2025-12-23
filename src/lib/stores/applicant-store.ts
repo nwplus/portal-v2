@@ -1,15 +1,16 @@
 import { HACKER_APPLICATION_TEMPLATE } from "@/lib/constants";
+import type { ApplicantDraft } from "@/lib/firebase/types/applicants";
 import type { DeepPartial } from "@/lib/types";
+import { deepMerge } from "@/lib/utils";
 import { create } from "zustand";
-import type { ApplicantDraft } from "../firebase/types/applicants";
-import { deepMerge } from "../utils";
 
 type ApplicantStore = {
   applicantDraft: ApplicantDraft | null;
+  dbCollectionName: string | null; // tracks which hackathon the current draft was hydrated for
   dirty: boolean; // indicates that the applicant draft has unsaved changes
   lastLocalSaveAt?: number;
 
-  setApplicant: (draft: ApplicantDraft) => void;
+  setApplicant: (draft: ApplicantDraft, dbCollectionName: string) => void;
   patchApplicant: (partial: DeepPartial<ApplicantDraft>) => void;
   setDirty: (dirty: boolean) => void;
   markSubmitted: () => void;
@@ -19,11 +20,12 @@ type ApplicantStore = {
 
 export const useApplicantStore = create<ApplicantStore>((set, get) => ({
   applicantDraft: null,
+  dbCollectionName: null,
   dirty: false,
   lastLocalSaveAt: undefined,
 
-  setApplicant: (draft) => {
-    set({ applicantDraft: draft, dirty: false });
+  setApplicant: (draft, dbCollectionName) => {
+    set({ applicantDraft: draft, dbCollectionName, dirty: false });
   },
   patchApplicant: (partial) => {
     const prev = get().applicantDraft ?? HACKER_APPLICATION_TEMPLATE;
@@ -43,6 +45,6 @@ export const useApplicantStore = create<ApplicantStore>((set, get) => ({
     set({ lastLocalSaveAt: timestamp });
   },
   reset: () => {
-    set({ applicantDraft: null, dirty: false, lastLocalSaveAt: undefined });
+    set({ applicantDraft: null, dbCollectionName: null, dirty: false, lastLocalSaveAt: undefined });
   },
 }));

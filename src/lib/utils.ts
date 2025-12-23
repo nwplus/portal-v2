@@ -1,7 +1,14 @@
-import { CmdFIcon, HackCampIcon, NwHacksIcon, NwHacksSidebarIcon } from "@/components/icons";
+import {
+  CmdFIcon,
+  HackCampIcon,
+  NwHacksColouredIcon,
+  NwHacksIcon,
+  NwHacksSidebarIcon,
+} from "@/components/icons";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { useAuthStore } from "./stores/auth-store";
+import { usePortalStore } from "./stores/portal-store";
 import type { DeepPartial } from "./types";
 
 export function cn(...inputs: ClassValue[]) {
@@ -39,6 +46,28 @@ export const loadAuth = (): Promise<void> => {
     });
 
     if (!useAuthStore.getState().loading) cleanup();
+  });
+};
+
+// same as loadAuth
+export const loadPortalStore = (): Promise<void> => {
+  if (!usePortalStore.getState().loading) return Promise.resolve();
+
+  return new Promise<void>((resolve) => {
+    let unsub: () => void = () => {};
+    const cleanup = () => {
+      clearTimeout(timer);
+      unsub();
+      resolve();
+    };
+
+    const timer = setTimeout(cleanup, 60_000);
+
+    unsub = usePortalStore.subscribe((state) => {
+      if (!state.loading) cleanup();
+    });
+
+    if (!usePortalStore.getState().loading) cleanup();
   });
 };
 
@@ -101,6 +130,14 @@ export const getHackathonIcon = (hackathonId: string): React.ComponentType => {
 export const getSidebarHackathonIcon = (hackathonId: string): React.ComponentType => {
   const lowerName = hackathonId.toLowerCase();
   if (lowerName.includes("nwhacks")) return NwHacksSidebarIcon;
+  if (lowerName.includes("cmd-f")) return CmdFIcon; // TODO: replace during reskin
+  if (lowerName.includes("hackcamp")) return HackCampIcon; // TODO: replace during reskin
+  return NwHacksIcon;
+};
+
+export const getColouredHackathonIcon = (hackathonId: string): React.ComponentType => {
+  const lowerName = hackathonId.toLowerCase();
+  if (lowerName.includes("nwhacks")) return NwHacksColouredIcon;
   if (lowerName.includes("cmd-f")) return CmdFIcon; // TODO: replace during reskin
   if (lowerName.includes("hackcamp")) return HackCampIcon; // TODO: replace during reskin
   return NwHacksIcon;

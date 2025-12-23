@@ -1,9 +1,17 @@
 import { AppSidebarLayout } from "@/components/layout/app-sidebar";
 import { HackathonStylesheet } from "@/components/layout/hackathon-stylesheet";
 import { VALID_HACKATHONS } from "@/lib/constants";
+import { useAuthStore } from "@/lib/stores/auth-store";
+import { usePortalStore } from "@/lib/stores/portal-store";
 import type { HackathonInfoItem, HackathonName } from "@/lib/types";
 import { fetchHackathonInfo } from "@/services/latest-hackathons";
-import { Outlet, createFileRoute, notFound, useRouterState } from "@tanstack/react-router";
+import {
+  Outlet,
+  createFileRoute,
+  notFound,
+  redirect,
+  useRouterState,
+} from "@tanstack/react-router";
 
 // Combined context made available to descendants of /$activeHackathon
 type HackathonRouteContext = {
@@ -55,19 +63,35 @@ export const Route = createFileRoute("/$activeHackathon")({
    * @param matches - route matches containing the previous `beforeLoad` result
    * @returns the current activeHackathon's info (dbCollectionName, display names, year)
    */
-  beforeLoad: async ({ params, matches }) => {
+  beforeLoad: async ({ params, matches, location }) => {
     const activeHackathon = params.activeHackathon;
 
     const selfMatch = matches.find((m) => m.routeId === "/$activeHackathon");
     const prev = selfMatch?.context as HackathonInfoItem | undefined;
 
+    let hackathonInfo: Omit<HackathonRouteContext, "activeHackathon">;
     if (prev?.dbCollectionName?.toLowerCase().startsWith(activeHackathon)) {
-      return prev satisfies Omit<HackathonRouteContext, "activeHackathon">;
+      hackathonInfo = prev;
+    } else {
+      const data = await fetchHackathonInfo(activeHackathon);
+      if (!data) throw notFound();
+      hackathonInfo = data;
     }
 
-    const data = await fetchHackathonInfo(activeHackathon);
-    if (!data) throw notFound();
-    return data satisfies Omit<HackathonRouteContext, "activeHackathon">;
+    const { applicationsOpen } = usePortalStore.getState();
+    const { isAdmin } = useAuthStore.getState();
+    const isApplicationsOpen = applicationsOpen?.[activeHackathon] ?? false;
+    const isOnApplicationPage = location.pathname.includes("/application");
+    const isOnLoginPage = location.pathname.includes("/login");
+
+    if (isApplicationsOpen && !isOnApplicationPage && !isOnLoginPage && !isAdmin) {
+      throw redirect({
+        to: "/$activeHackathon/application",
+        params: { activeHackathon },
+      });
+    }
+
+    return hackathonInfo;
   },
   component: RouteComponent,
 });
@@ -85,7 +109,7 @@ function RouteComponent() {
   );
 
   if (hideSidebar) {
-    return routeContent;
+    return <div className="h-dvh">{routeContent}</div>;
   }
 
   return <AppSidebarLayout>{routeContent}</AppSidebarLayout>;

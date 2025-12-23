@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&family=Geist:wght@100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&family=Geist:wght@100..900&family=Freehand&display=swap");
 
 @import "tailwindcss";
 
@@ -22,6 +22,7 @@ code {
   --font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu",
     "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
   --font-mono: "Geist Mono", source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+  --font-cursive: "Freehand", cursive;
   --radius: 0.625rem;
 
   /* from figma */
@@ -83,17 +84,18 @@ code {
 
   --color-bg-main: var(--background-main);
   --color-bg-pane-container: var(--background-pane-container);
-  --color-bg-translucent-card: var(--background-translucent-card);
+  --color-bg-translucent-card: var(--background-translucent-card); /* not used, since tailwind doesn't support gradients -> use css variable instead */
   --color-bg-selected-accent: var(--background-selected-accent);
   --color-bg-text-field: var(--background-text-field);
   --color-bg-dropdown: var(--background-dropdown);
   --color-bg-dropdown-selected: var(--background-dropdown-selected);
 
-  --color-bg-progress-bar-complete: var(--progress-bar-complete);
-  --color-bg-progress-bar-incomplete: var(--progress-bar-incomplete);
-  --color-bg-tag-active: var(--tag-active);
+  --color-tag-active: var(--tag-active);
   --color-tag-success: var(--tag-success);
   --color-tag-disabled: var(--tag-disabled);
+
+  --color-bg-progress-bar-complete: var(--progress-bar-complete); /* not used, since tailwind doesn't support gradients -> use css variable instead */
+  --color-bg-progress-bar-incomplete: var(--progress-bar-incomplete);
 
   --color-bg-button-primary: var(--background-button-primary);
   --color-bg-button-secondary: var(--background-button-secondary);
@@ -104,6 +106,7 @@ code {
 
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
+  --font-cursive: var(--font-cursive);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -117,6 +120,16 @@ code {
   }
 }
 
+@media (max-width: 375px) {
+  .select-portal .portals {
+    gap: 2.5rem;
+  }
+
+  .select-portal .logo-wrap {
+    margin-bottom: 0.1rem;
+  }
+}
+
 *::selection {
   background: #ffffff20;
 }
@@ -125,4 +138,31 @@ code {
 }
 *::-webkit-selection {
   background: #ffffff20;
+}
+
+/* Hide scrollbars but keep scrolling */
+.scrollbar-hidden {
+  scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+textarea:-webkit-autofill:active,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus,
+select:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px var(--color-bg-text-field) inset !important;
+  -webkit-text-fill-color: var(--text-primary) !important;
+  transition: background-color 5000s ease-in-out 0s;
+  caret-color: var(--text-primary);
 }

@@ -1,0 +1,242 @@
+import type { QuestionFieldProps } from "@/components/features/application/question-field";
+import { Button } from "@/components/ui/button";
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { buildFieldPath } from "@/lib/application/form-mapping";
+import { getValueAtPath } from "@/lib/application/object-path";
+import type { ApplicationFormValues } from "@/lib/application/types";
+import { normalizeUrl } from "@/lib/application/utils";
+import { useAuthStore } from "@/lib/stores/auth-store";
+import { uploadResumeToStorage } from "@/services/applicants";
+import type * as React from "react";
+import { useRef, useState } from "react";
+import { useFormContext } from "react-hook-form";
+import type { FieldPath } from "react-hook-form";
+
+export function PortfolioQuestion({ question }: QuestionFieldProps) {
+  const form = useFormContext<ApplicationFormValues>();
+  const { register, watch, formState, setValue, setError, clearErrors } = form;
+
+  const user = useAuthStore((state) => state.user);
+  const userId = user?.uid ?? null;
+  const [uploadingResume, setUploadingResume] = useState(false);
+  const [resumeFileName, setResumeFileName] = useState<string | null>(null);
+  const resumeFileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const label = question.title ?? "Untitled";
+  const description = question.description;
+
+  const resumePath = buildFieldPath("Skills", "resume");
+  const linkedinPath = buildFieldPath("Skills", "linkedin");
+  const githubPath = buildFieldPath("Skills", "github");
+  const portfolioPath = buildFieldPath("Skills", "portfolio");
+
+  const resumeId = resumePath ? resumePath.replace(".", "-") : undefined;
+  const linkedinId = linkedinPath ? linkedinPath.replace(".", "-") : undefined;
+  const githubId = githubPath ? githubPath.replace(".", "-") : undefined;
+  const portfolioId = portfolioPath ? portfolioPath.replace(".", "-") : undefined;
+
+  const resumeError =
+    resumePath && formState.errors
+      ? (getValueAtPath(formState.errors, resumePath) as { message?: string } | undefined)
+      : undefined;
+  const linkedinError =
+    linkedinPath && formState.errors
+      ? (getValueAtPath(formState.errors, linkedinPath) as { message?: string } | undefined)
+      : undefined;
+  const githubError =
+    githubPath && formState.errors
+      ? (getValueAtPath(formState.errors, githubPath) as { message?: string } | undefined)
+      : undefined;
+  const portfolioError =
+    portfolioPath && formState.errors
+      ? (getValueAtPath(formState.errors, portfolioPath) as { message?: string } | undefined)
+      : undefined;
+
+  const currentResumeUrl =
+    resumePath != null ? watch(resumePath as FieldPath<ApplicationFormValues>) : undefined;
+
+  const isAnyInvalid = Boolean(resumeError || linkedinError || githubError || portfolioError);
+
+  const handleResumeFileChange: React.ChangeEventHandler<HTMLInputElement> = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file || !resumePath) {
+      return;
+    }
+
+    const allowedExtensions = [".pdf", ".doc", ".docx", ".png", ".jpg"];
+    const lowerName = file.name.toLowerCase();
+    const hasAllowedExtension = allowedExtensions.some((ext) => lowerName.endsWith(ext));
+    const maxBytes = 3 * 1024 * 1024;
+
+    if (!hasAllowedExtension) {
+      setError(resumePath as FieldPath<ApplicationFormValues>, {
+        type: "manual",
+        message: "Accepted types: .pdf, .doc, .docx, .png, .jpg",
+      });
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > maxBytes) {
+      setError(resumePath as FieldPath<ApplicationFormValues>, {
+        type: "manual",
+        message: "File must be 3MB or smaller",
+      });
+      event.target.value = "";
+      return;
+    }
+
+    if (!userId) {
+      setError(resumePath as FieldPath<ApplicationFormValues>, {
+        type: "manual",
+        message: "You must be signed in to upload a resume",
+      });
+      event.target.value = "";
+      return;
+    }
+
+    setUploadingResume(true);
+    clearErrors(resumePath as FieldPath<ApplicationFormValues>);
+
+    try {
+      const url = await uploadResumeToStorage(userId, file);
+      if (!url) {
+        setError(resumePath as FieldPath<ApplicationFormValues>, {
+          type: "manual",
+          message: "Upload failed, please try again",
+        });
+        return;
+      }
+
+      setResumeFileName(file.name);
+      setValue(resumePath as FieldPath<ApplicationFormValues>, url, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    } catch {
+      setError(resumePath as FieldPath<ApplicationFormValues>, {
+        type: "manual",
+        message: "Upload failed, please try again",
+      });
+    } finally {
+      setUploadingResume(false);
+      event.target.value = "";
+    }
+  };
+
+  return (
+    <Field data-invalid={isAnyInvalid}>
+      <FieldLabel>{label}</FieldLabel>
+      {description ? <FieldDescription>{description}</FieldDescription> : null}
+      <FieldContent>
+        <div className="space-y-4">
+          {resumePath ? (
+            <div className="space-y-1">
+              <div className="flex items-center justify-between gap-2">
+                <FieldLabel htmlFor={resumeId} className="font-normal text-sm" isRequired>
+                  Resume
+                </FieldLabel>
+                <div className="flex items-center gap-2">
+                  <span className="hidden text-text-secondary text-xs md:block">
+                    {resumeFileName
+                      ? `${resumeFileName} uploaded`
+                      : currentResumeUrl
+                        ? "Resume uploaded"
+                        : "No file uploaded"}
+                  </span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => resumeFileInputRef.current?.click()}
+                    disabled={uploadingResume || !userId}
+                    aria-invalid={Boolean(resumeError)}
+                  >
+                    {uploadingResume ? "Uploading…" : "Upload"}
+                  </Button>
+                </div>
+              </div>
+              <p className="text-text-secondary text-xs">
+                Accepted formats: pdf, doc, docx, png, jpg (max 3MB)
+              </p>
+              <span className="text-text-secondary text-xs md:hidden">
+                {resumeFileName
+                  ? `${resumeFileName} uploaded`
+                  : currentResumeUrl
+                    ? "Resume uploaded"
+                    : "No file uploaded"}
+              </span>
+              <input
+                ref={resumeFileInputRef}
+                id={resumeId}
+                type="file"
+                accept=".pdf,.doc,.docx,.png,.jpg"
+                className="hidden"
+                onChange={handleResumeFileChange}
+              />
+              <FieldError errors={resumeError ? [resumeError] : undefined} />
+            </div>
+          ) : null}
+
+          {linkedinPath ? (
+            <div className="space-y-1">
+              <FieldLabel htmlFor={linkedinId} className="font-normal text-sm">
+                LinkedIn
+              </FieldLabel>
+              <Input
+                id={linkedinId}
+                placeholder="https://linkedin.com/in/your-profile"
+                aria-invalid={Boolean(linkedinError)}
+                {...register(linkedinPath as FieldPath<ApplicationFormValues>, {
+                  setValueAs: (value) => normalizeUrl(value),
+                })}
+              />
+              <FieldError errors={linkedinError ? [linkedinError] : undefined} />
+            </div>
+          ) : null}
+
+          {githubPath ? (
+            <div className="space-y-1">
+              <FieldLabel htmlFor={githubId} className="font-normal text-sm">
+                GitHub
+              </FieldLabel>
+              <Input
+                id={githubId}
+                placeholder="https://github.com/your-username"
+                aria-invalid={Boolean(githubError)}
+                {...register(githubPath as FieldPath<ApplicationFormValues>, {
+                  setValueAs: (value) => normalizeUrl(value),
+                })}
+              />
+              <FieldError errors={githubError ? [githubError] : undefined} />
+            </div>
+          ) : null}
+
+          {portfolioPath ? (
+            <div className="space-y-1">
+              <FieldLabel htmlFor={portfolioId} className="font-normal text-sm">
+                Portfolio
+              </FieldLabel>
+              <Input
+                id={portfolioId}
+                placeholder="https://your-portfolio.com"
+                aria-invalid={Boolean(portfolioError)}
+                {...register(portfolioPath as FieldPath<ApplicationFormValues>, {
+                  setValueAs: (value) => normalizeUrl(value),
+                })}
+              />
+              <FieldError errors={portfolioError ? [portfolioError] : undefined} />
+            </div>
+          ) : null}
+        </div>
+      </FieldContent>
+    </Field>
+  );
+}

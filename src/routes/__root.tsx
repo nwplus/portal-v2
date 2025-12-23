@@ -1,10 +1,14 @@
 import { NoisyBackground } from "@/components/visual/noisy-background";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { usePortalStore } from "@/lib/stores/portal-store";
+import { loadPortalStore } from "@/lib/utils";
 import { Outlet, createRootRoute } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
 export const Route = createRootRoute({
+  beforeLoad: async () => {
+    await loadPortalStore();
+  },
   component: () => {
     const authLoading = useAuthStore((state) => state.loading);
     const portalLoading = usePortalStore((state) => state.loading);
@@ -18,7 +22,7 @@ export const Route = createRootRoute({
     }
 
     return (
-      <div className="relative min-h-screen bg-background">
+      <div className="relative h-dvh overflow-hidden bg-background">
         <Outlet />
         {import.meta.env.DEV && <TanStackRouterDevtools position="bottom-right" />}
         <NoisyBackground className="pointer-events-none z-50" opacity={0.15} />

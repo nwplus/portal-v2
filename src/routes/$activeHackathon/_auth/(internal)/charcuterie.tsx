@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dropdown } from "@/components/ui/dropdown";
 import { Input } from "@/components/ui/input";
+import { Tag } from "@/components/ui/tag";
+import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
@@ -130,6 +132,57 @@ function RouteComponent() {
           </div>
         </section>
 
+        {/* Textareas Section */}
+        <section className="space-y-8">
+          <h2 className="mb-1 font-semibold text-2xl">Textareas</h2>
+
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="space-y-2">
+              <label htmlFor="textarea-default" className="font-medium text-sm text-text-primary">
+                Default
+              </label>
+              <Textarea id="textarea-default" placeholder="Enter your message..." />
+              <p className="text-sm text-text-secondary">
+                Standard textarea with placeholder text.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="textarea-disabled" className="font-medium text-sm text-text-primary">
+                Disabled
+              </label>
+              <Textarea id="textarea-disabled" placeholder="Cannot edit" disabled />
+              <p className="text-sm text-text-secondary">
+                Use for read-only or unavailable fields.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="textarea-error" className="font-medium text-sm text-text-primary">
+                Error
+              </label>
+              <Textarea
+                id="textarea-error"
+                placeholder="Tell us about yourself"
+                defaultValue="Too short"
+                aria-invalid="true"
+              />
+              <p className="text-sm text-text-error">Please provide at least 50 characters.</p>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="textarea-filled" className="font-medium text-sm text-text-primary">
+                With Content
+              </label>
+              <Textarea
+                id="textarea-filled"
+                defaultValue="This is a textarea with some pre-filled content. It auto-sizes based on content with field-sizing-content."
+              />
+              <p className="text-sm text-text-secondary">Textarea with existing content.</p>
+            </div>
+          </div>
+        </section>
+
         {/* Tooltips Section */}
         <section className="space-y-8">
           <h2 className="mb-1 font-semibold text-2xl">Tooltips</h2>
@@ -195,13 +248,26 @@ function RouteComponent() {
           </div>
         </section>
 
+        {/* Tags Section */}
+        <section className="space-y-8">
+          <h2 className="mb-1 font-semibold text-2xl">Tags</h2>
+
+          <div className="flex flex-wrap items-center gap-4">
+            <Tag>Active</Tag>
+            <Tag variant="disabled">Disabled</Tag>
+            <Tag variant="success">Success</Tag>
+          </div>
+        </section>
+
         {/* Dropdown Section */}
-        <section className="space-y-8 pb-96">
+        <section className="space-y-8">
           <h2 className="mb-1 font-semibold text-2xl">Dropdown</h2>
 
           <div className="grid gap-6 md:grid-cols-2">
             <DropdownExample />
             <DropdownErrorExample />
+            <DropdownCreatableExample />
+            <DropdownCreatableObjectExample />
           </div>
         </section>
       </div>
@@ -271,6 +337,60 @@ function DropdownErrorExample() {
       {!hasError && (
         <p className="text-sm text-text-secondary">Error state clears when a selection is made.</p>
       )}
+    </div>
+  );
+}
+
+function DropdownCreatableExample() {
+  const [value, setValue] = useState<string | null>(null);
+
+  return (
+    <div className="space-y-2">
+      <Dropdown
+        label="Favorite country (creatable)"
+        items={["Canada", "United States", "Mexico", "United Kingdom", "France", "Germany"]}
+        value={value}
+        onValueChange={setValue}
+        createOtherOption
+      />
+      <p className="text-sm text-text-secondary">
+        Type a country name and press Enter or blur to save custom values.
+      </p>
+    </div>
+  );
+}
+
+type LanguageOption = { id: string; name: string };
+
+function DropdownCreatableObjectExample() {
+  const [value, setValue] = useState<LanguageOption | null>(null);
+
+  const items: LanguageOption[] = [
+    { id: "ts", name: "TypeScript" },
+    { id: "js", name: "JavaScript" },
+    { id: "py", name: "Python" },
+    { id: "rb", name: "Ruby" },
+    { id: "go", name: "Go" },
+  ];
+
+  return (
+    <div className="space-y-2">
+      <Dropdown
+        label="Favorite language (creatable object)"
+        items={items}
+        value={value}
+        onValueChange={setValue}
+        itemToKey={(item) => item.id}
+        itemToString={(item) => item.name}
+        createOtherOption
+        createOtherItem={(input) => ({
+          id: "otherLanguage",
+          name: input,
+        })}
+      />
+      <p className="text-sm text-text-secondary">
+        Uses <code>createOtherItem</code> to turn free text into typed objects.
+      </p>
     </div>
   );
 }

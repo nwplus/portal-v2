@@ -1,8 +1,9 @@
 import { cn } from "@/lib/utils";
+import type { ReactNode } from "react";
 
 interface GradientBackgroundProps {
   gradientPosition: "bottomMiddle" | "bottomRight" | "topMiddle" | "topLeft";
-  children: React.ReactNode;
+  children: ReactNode;
   className?: string;
 }
 

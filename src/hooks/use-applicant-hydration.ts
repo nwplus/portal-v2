@@ -29,6 +29,22 @@ export function useApplicantHydration(params: Params) {
       return;
     }
 
+    // avoid overwriting a recently submitted application with stale loader data
+    const currentDraft = useApplicantStore.getState().applicantDraft;
+    const currentDbCollection = useApplicantStore.getState().dbCollectionName;
+    const isCurrentUserSameHackathon =
+      currentDraft?._id === uid && currentDbCollection === dbCollectionName;
+    const isCurrentlySubmitted =
+      currentDraft?.submission?.submitted === true ||
+      currentDraft?.status?.applicationStatus === "applied";
+    const loaderShowsNotSubmitted =
+      applicant?.submission?.submitted !== true &&
+      applicant?.status?.applicationStatus !== "applied";
+
+    if (isCurrentUserSameHackathon && isCurrentlySubmitted && loaderShowsNotSubmitted) {
+      return;
+    }
+
     resetApplicant();
 
     if (applicant) {
@@ -36,12 +52,12 @@ export function useApplicantHydration(params: Params) {
       const normalizedApplicant: ApplicantDraft = {
         ...applicant,
         submission: {
-          submitted: applicant.submission?.submitted ?? false,
           ...(applicant.submission ?? {}),
+          submitted: applicant.submission?.submitted ?? false,
         },
       };
 
-      setApplicant(normalizedApplicant);
+      setApplicant(normalizedApplicant, dbCollectionName);
       return;
     }
 
@@ -64,7 +80,7 @@ export function useApplicantHydration(params: Params) {
       try {
         await createOrMergeApplicant(dbCollectionName, uid, draft);
         if (!cancelled) {
-          setApplicant(draft);
+          setApplicant(draft, dbCollectionName);
         }
       } catch (error) {
         console.error("Applicant hydration failed", error);
