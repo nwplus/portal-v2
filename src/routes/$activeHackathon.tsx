@@ -4,6 +4,7 @@ import { VALID_HACKATHONS } from "@/lib/constants";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { usePortalStore } from "@/lib/stores/portal-store";
 import type { HackathonInfoItem, HackathonName } from "@/lib/types";
+import { fetchApplicant } from "@/services/applicants";
 import { fetchHackathonInfo } from "@/services/latest-hackathons";
 import {
   Outlet,
@@ -78,17 +79,30 @@ export const Route = createFileRoute("/$activeHackathon")({
       hackathonInfo = data;
     }
 
-    const { applicationsOpen } = usePortalStore.getState();
-    const { isAdmin } = useAuthStore.getState();
-    const isApplicationsOpen = applicationsOpen?.[activeHackathon] ?? false;
+    const { portalLive } = usePortalStore.getState();
+    const { isAdmin, user } = useAuthStore.getState();
+    const isPortalLive = portalLive?.[activeHackathon] ?? false;
     const isOnApplicationPage = location.pathname.includes("/application");
     const isOnLoginPage = location.pathname.includes("/login");
 
-    if (isApplicationsOpen && !isOnApplicationPage && !isOnLoginPage && !isAdmin) {
-      throw redirect({
-        to: "/$activeHackathon/application",
-        params: { activeHackathon },
-      });
+    if (!isOnApplicationPage && !isOnLoginPage && !isAdmin) {
+      if (!isPortalLive) {
+        throw redirect({
+          to: "/$activeHackathon/application",
+          params: { activeHackathon },
+        });
+      }
+
+      // TODO: move this to a store or cache
+      const applicant = await fetchApplicant(hackathonInfo.dbCollectionName, user?.uid ?? "");
+      const applicationStatus = applicant?.status?.applicationStatus;
+
+      if (applicationStatus !== "acceptedAndAttending") {
+        throw redirect({
+          to: "/$activeHackathon/application",
+          params: { activeHackathon },
+        });
+      }
     }
 
     return hackathonInfo;
