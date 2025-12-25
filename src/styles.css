@@ -149,6 +149,13 @@ code {
   display: none; /* Chrome, Safari, Edge */
 }
 
+code {
+  font-size: 0.8rem;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.2rem;
+  border-radius: 0.2rem;
+}
+
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,

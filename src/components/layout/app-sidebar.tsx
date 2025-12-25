@@ -247,7 +247,7 @@ export function AppSidebarLayout({ children }: PropsWithChildren) {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset>{children}</SidebarInset>
+      <SidebarInset className="overflow-auto">{children}</SidebarInset>
     </SidebarProvider>
   );
 }

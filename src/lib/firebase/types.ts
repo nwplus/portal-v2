@@ -64,3 +64,13 @@ export type HackathonPortalThemeEntry = {
   backgroundGradients?: Partial<Record<BackgroundGradientPosition, string>>;
 };
 export type HackathonPortalTheme = Record<string, HackathonPortalThemeEntry>;
+
+export interface FAQ {
+  hackathonIDs: string[];
+  question?: string;
+  lastModified?: string;
+  lastModifiedBy?: string;
+  answer?: string;
+  // `Rewards` is a new; we may not have any FAQs for this category (yet)
+  category?: "General" | "Teams & Projects" | "Logistics" | "Rewards";
+}
