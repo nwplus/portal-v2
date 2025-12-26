@@ -11,7 +11,6 @@ import { collection, getDocs, query, where } from "firebase/firestore";
  */
 export async function fetchFaqs(hackathonId: string): Promise<(FAQ & { _id: string })[]> {
   const ref = collection(db, "FAQ");
-  console.log(hackathonId);
   const q = query(ref, where("hackathonIDs", "array-contains", hackathonId));
 
   const querySnapshot = await getDocs(q);
