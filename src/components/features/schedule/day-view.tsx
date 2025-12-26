@@ -239,12 +239,12 @@ export function DayView({ dayLabel, events }: DayViewProps) {
               className="-left-16 md:-left-24 absolute right-0 z-20"
               style={{ top: currentTop, pointerEvents: "none" }}
             >
-              <div className="flex items-center gap-2">
-                <div className="shrink-0 rounded-md border border-line-accent bg-bg-translucent-card px-2 py-1 font-medium text-line-accent text-xs backdrop-blur-md">
+              <div className="flex items-center gap-0 md:gap-2">
+                <div className="shrink-0 rounded-md border border-line-accent bg-bg-translucent-card px-1.5 py-1 font-medium text-line-accent text-xs backdrop-blur-md md:px-2">
                   {formatTime(displayNow)}
                 </div>
                 <div className="flex w-full items-center">
-                  <div className="h-1.5 w-1.5 rounded-full bg-line-accent shadow-sm" />
+                  <div className="hidden h-1.5 w-1.5 rounded-full bg-line-accent shadow-sm md:block" />
                   <div className="h-px flex-1 border-line-accent border-t" />
                 </div>
               </div>
