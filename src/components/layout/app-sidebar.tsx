@@ -20,7 +20,7 @@ import { useHackathon } from "@/hooks/use-hackathon";
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { getSidebarHackathonIcon } from "@/lib/utils";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import {
   Calendar,
   ForkKnife,
@@ -102,21 +102,13 @@ const INTERNAL_MENU_ITEMS: MenuItem[] = [
 export function AppSidebar() {
   const { activeHackathon } = useHackathon();
   const { displayNameShort, hackathonYear } = useHackathonInfo();
-  const LogoComponent = getSidebarHackathonIcon(activeHackathon);
-
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isAdmin = useAuthStore((state) => state.isAdmin);
-  const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   const signInWithGoogle = useAuthStore((state) => state.signInWithGoogle);
-
+  const user = useAuthStore((state) => state.user);
   const { isMobile } = useSidebar();
-  const navigate = useNavigate();
-
-  const handleLogout = async () => {
-    await logout();
-    navigate({ to: "/$activeHackathon", params: { activeHackathon } });
-  };
+  const LogoComponent = getSidebarHackathonIcon(activeHackathon);
 
   return (
     <Sidebar collapsible="icon" variant="inset">
@@ -227,7 +219,7 @@ export function AppSidebar() {
                 <TooltipTrigger asChild>
                   <SidebarMenuAction
                     className="static size-8 group-data-[collapsible=icon]:flex"
-                    onClick={handleLogout}
+                    onClick={() => logout()}
                   >
                     <LogOut />
                   </SidebarMenuAction>
