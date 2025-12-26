@@ -5,29 +5,9 @@ import { useHackathon } from "@/hooks/use-hackathon";
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { getSidebarHackathonIcon } from "@/lib/utils";
-import { loadAuth } from "@/lib/utils";
-import { fetchApplicant } from "@/services/applicants";
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/$activeHackathon/")({
-  beforeLoad: async ({ context, params }) => {
-    await loadAuth();
-    const { isAuthenticated, user } = useAuthStore.getState();
-    const { dbCollectionName } = context;
-
-    if (isAuthenticated && user?.uid && dbCollectionName) {
-      const applicant = await fetchApplicant(dbCollectionName, user.uid);
-
-      if (!applicant || !applicant.submission?.submitted) {
-        throw redirect({
-          to: "/$activeHackathon/application",
-          params: {
-            activeHackathon: params.activeHackathon,
-          },
-        });
-      }
-    }
-  },
   component: RouteComponent,
 });
 
