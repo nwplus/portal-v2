@@ -50,4 +50,3 @@ function RouteComponent() {
     </GradientBackground>
   );
 }
-

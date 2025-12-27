@@ -174,10 +174,10 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupLabel>Information</SidebarGroupLabel>
           <SidebarGroupContent>
-              <SidebarMenu>
-                {INFORMATION_MENU_ITEMS.filter(
-                  (item) => !(item.label === "Hacker package" && !isAuthenticated),
-                ).map(({ label, to, icon: Icon }) => (
+            <SidebarMenu>
+              {INFORMATION_MENU_ITEMS.filter(
+                (item) => !(item.label === "Hacker package" && !isAuthenticated),
+              ).map(({ label, to, icon: Icon }) => (
                 <SidebarMenuItem key={to}>
                   <SidebarMenuButton asChild tooltip={label}>
                     <Link
