@@ -2,7 +2,6 @@ import { cn } from "@/lib/utils";
 
 /**
  * Background noise created with css filter, mix blend, and svg feTurbulence.
- * Parent should have a `relative` property for this component to fill up.
  */
 export function NoisyBackground({
   className,
@@ -14,7 +13,7 @@ export function NoisyBackground({
   return (
     <div
       className={cn(
-        "pointer-events-none absolute top-0 left-0 z-0 h-full w-full select-none overflow-hidden object-cover",
+        "pointer-events-none fixed top-0 left-0 z-0 h-full w-full select-none overflow-hidden object-cover",
         className,
       )}
     >
