@@ -1,8 +1,8 @@
 import { GradientBackground } from "@/components/layout/gradient-background";
 import { useHackathon } from "@/hooks/use-hackathon";
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
-import { useAuthStore } from "@/lib/stores/auth-store";
-import { getSidebarHackathonIcon } from "@/lib/utils";
+import { useHackerStore } from "@/lib/stores/hacker-store";
+import { getFullName, getSidebarHackathonIcon } from "@/lib/utils";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/$activeHackathon/_auth/(account)/my-ticket")({
@@ -11,9 +11,11 @@ export const Route = createFileRoute("/$activeHackathon/_auth/(account)/my-ticke
 
 function RouteComponent() {
   const { activeHackathon } = useHackathon();
-  const { displayNameShort, hackathonYear } = useHackathonInfo();
-  const user = useAuthStore((state) => state.user);
+  const { displayNameFull } = useHackathonInfo();
+  const hacker = useHackerStore((state) => state.hacker);
   const HackathonIcon = getSidebarHackathonIcon(activeHackathon);
+
+  if (!hacker) return null;
 
   return (
     <GradientBackground
@@ -25,12 +27,10 @@ function RouteComponent() {
           <HackathonIcon />
         </div>
         <div className="flex flex-col gap-4">
-          <h1 className="font-bold text-4xl text-text-primary">
-            {displayNameShort} {hackathonYear}
-          </h1>
+          <h1 className="font-bold text-4xl text-text-primary">{displayNameFull}</h1>
           <div className="flex flex-col gap-2">
-            <p className="font-semibold text-2xl text-text-primary">{user?.displayName}</p>
-            <p className="text-lg text-text-secondary">{user?.email}</p>
+            <p className="font-semibold text-2xl text-text-primary">{getFullName(hacker)}</p>
+            <p className="text-lg text-text-secondary">{hacker.basicInfo.email}</p>
           </div>
         </div>
 
