@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { validatePronouns, validateSocialUsername, validateWebsite } from "@/lib/application/utils";
 import type { Social, TagCategory } from "@/lib/firebase/types/socials";
 import { createOrMergeSocial } from "@/services/socials";
 import { Github, Globe, Instagram, Linkedin } from "lucide-react";
@@ -22,8 +23,30 @@ const PROFILE_PICTURES = [
   "/assets/profiles/tears-nugget.svg",
 ] as const;
 
+const NUGGET_TAG_COLORS = [
+  "#6B7280", // default-nugget
+  "#9f3738", // nugget-strawberry
+  "#5d8a15", // hacker-nugget
+  "#148578", // martin-nugget
+  "#7d3cc7", // furry-nugget
+  "#9d2db8", // ramen-nugget
+  "#b8440b", // nugget-lebron
+  "#6841c5", // jacked-nugget
+  "#0a6c85", // crafting-nugget
+  "#05649a", // hawaii-nugget
+  "#b82872", // fairy-nugget
+  "#b8860f", // everything-is-ok-nugget
+  "#3d38b0", // tears-nugget
+] as const;
+
 const SELECTABLE_PICTURES = PROFILE_PICTURES.slice(1); // default profile pic is not selectable
 const DEFAULT_PROFILE_INDEX = 0;
+const MAX_BIO_WORDS = 20;
+const MAX_PRONOUNS_LENGTH = 15;
+
+const getTagBackgroundColor = (profileIndex: number): string => {
+  return NUGGET_TAG_COLORS[profileIndex] || NUGGET_TAG_COLORS[DEFAULT_PROFILE_INDEX];
+};
 
 type ProfileMode = "view" | "edit" | "select-picture";
 
@@ -54,6 +77,15 @@ export function MyProfile({
   const [editPronouns, setEditPronouns] = useState("");
   const [editProfilePictureIndex, setEditProfilePictureIndex] = useState(DEFAULT_PROFILE_INDEX);
   const [editTagsToHide, setEditTagsToHide] = useState<TagCategory[]>([]);
+
+  const [errors, setErrors] = useState({
+    pronouns: "",
+    linkedin: "",
+    github: "",
+    website: "",
+    instagram: "",
+    devpost: "",
+  });
 
   const pronouns = socialProfile?.pronouns;
   const bio = socialProfile?.bio;
@@ -130,6 +162,7 @@ export function MyProfile({
       : null,
   ].filter((social): social is NonNullable<typeof social> => social !== null);
 
+  // Tags are populated from hackathon-specific application data
   const allTags: Array<{ text: string; category: TagCategory }> = [];
   if (socialProfile?.school) allTags.push({ text: socialProfile.school, category: "school" });
   if (socialProfile?.areaOfStudy)
@@ -153,16 +186,41 @@ export function MyProfile({
     setEditDevpost(devpost || "");
     setEditProfilePictureIndex(profilePictureIndex);
     setEditTagsToHide(socialProfile?.tagsToHide || []);
+    setErrors({ pronouns: "", linkedin: "", github: "", website: "", instagram: "", devpost: "" });
     setProfileMode("edit");
   };
 
   const bioWordCount = editBio.trim().split(/\s+/).filter(Boolean).length;
-  const maxBioWords = 20;
 
   const handleSave = async () => {
-    // TODO: Refactor to user-friendly alert/modal
-    if (bioWordCount > maxBioWords) {
-      alert(`Bio must be ${maxBioWords} words or less. Current count: ${bioWordCount}`);
+    if (bioWordCount > MAX_BIO_WORDS) {
+      return;
+    }
+
+    const pronounsError = validatePronouns(editPronouns, MAX_PRONOUNS_LENGTH);
+    const linkedinError = validateSocialUsername(editLinkedin, "LinkedIn");
+    const githubError = validateSocialUsername(editGithub, "GitHub");
+    const instagramError = validateSocialUsername(editInstagram, "Instagram");
+    const devpostError = validateSocialUsername(editDevpost, "Devpost");
+    const websiteError = validateWebsite(editWebsite);
+
+    setErrors({
+      pronouns: pronounsError || "",
+      linkedin: linkedinError || "",
+      github: githubError || "",
+      website: websiteError || "",
+      instagram: instagramError || "",
+      devpost: devpostError || "",
+    });
+
+    if (
+      pronounsError ||
+      linkedinError ||
+      githubError ||
+      instagramError ||
+      devpostError ||
+      websiteError
+    ) {
       return;
     }
 
@@ -263,7 +321,8 @@ export function MyProfile({
                 visibleTags.map((tag, index) => (
                   <span
                     key={`${tag.text}-${index}`}
-                    className="rounded bg-bg-button-primary px-3 py-1 font-medium text-sm text-text-primary"
+                    className="rounded px-3 py-1 font-medium text-sm text-text-primary"
+                    style={{ backgroundColor: getTagBackgroundColor(profilePictureIndex) }}
                   >
                     {tag.text}
                   </span>
@@ -337,7 +396,11 @@ export function MyProfile({
                 variant="secondary"
                 size="sm"
                 onClick={handleSave}
-                disabled={isSaving || bioWordCount > maxBioWords}
+                disabled={
+                  isSaving ||
+                  bioWordCount > MAX_BIO_WORDS ||
+                  editPronouns.length > MAX_PRONOUNS_LENGTH
+                }
               >
                 {isSaving ? "Saving..." : "Save"}
               </Button>
@@ -359,6 +422,18 @@ export function MyProfile({
               onChange={(e) => setEditPronouns(e.target.value)}
               className="text-base"
             />
+            <div className="mt-1 flex items-center justify-between text-xs">
+              {errors.pronouns && <span className="text-text-error">{errors.pronouns}</span>}
+              <span
+                className={
+                  editPronouns.length > MAX_PRONOUNS_LENGTH
+                    ? "text-text-error"
+                    : "text-text-secondary"
+                }
+              >
+                {editPronouns.length}/{MAX_PRONOUNS_LENGTH} characters
+              </span>
+            </div>
           </div>
 
           <div>
@@ -373,11 +448,11 @@ export function MyProfile({
             />
             <div className="mt-1 flex items-center justify-between text-xs">
               <span
-                className={bioWordCount > maxBioWords ? "text-text-error" : "text-text-secondary"}
+                className={bioWordCount > MAX_BIO_WORDS ? "text-text-error" : "text-text-secondary"}
               >
                 {bioWordCount} words
               </span>
-              <span className="text-text-secondary">Max {maxBioWords} words</span>
+              <span className="text-text-secondary">Max {MAX_BIO_WORDS} words</span>
             </div>
           </div>
 
@@ -391,6 +466,7 @@ export function MyProfile({
               {allTags.length > 0 ? (
                 allTags.map((tag, index) => {
                   const isHidden = editTagsToHide.includes(tag.category);
+                  const tagColor = getTagBackgroundColor(editProfilePictureIndex);
                   return (
                     <button
                       type="button"
@@ -404,9 +480,12 @@ export function MyProfile({
                       }}
                       className={`rounded px-3 py-1.5 font-medium text-sm transition-opacity ${
                         isHidden
-                          ? "bg-bg-button-primary/30 text-text-secondary line-through opacity-50"
-                          : "bg-bg-button-primary text-text-primary"
+                          ? "text-text-secondary line-through opacity-50"
+                          : "text-text-primary"
                       }`}
+                      style={{
+                        backgroundColor: isHidden ? `${tagColor}30` : tagColor,
+                      }}
                     >
                       {tag.text}
                     </button>
@@ -423,57 +502,82 @@ export function MyProfile({
           <div>
             <h4 className="mb-4 font-medium text-base text-text-primary">Socials</h4>
             <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <Linkedin className="size-6 shrink-0 text-text-secondary" />
-                <Input
-                  type="text"
-                  placeholder="@username"
-                  value={editLinkedin}
-                  onChange={(e) => setEditLinkedin(e.target.value)}
-                  className="text-base"
-                />
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex size-6 shrink-0 items-center justify-center rounded-full border border-text-secondary text-text-secondary">
-                  <span className="font-bold text-xs">D</span>
+              <div>
+                <div className="flex items-center gap-3">
+                  <Linkedin className="size-6 shrink-0 text-text-secondary" />
+                  <Input
+                    type="text"
+                    placeholder="@username"
+                    value={editLinkedin}
+                    onChange={(e) => setEditLinkedin(e.target.value)}
+                    className="text-base"
+                  />
                 </div>
-                <Input
-                  type="text"
-                  placeholder="@username"
-                  value={editDevpost}
-                  onChange={(e) => setEditDevpost(e.target.value)}
-                  className="text-base"
-                />
+                {errors.linkedin && (
+                  <p className="mt-1 ml-9 text-text-error text-xs">{errors.linkedin}</p>
+                )}
               </div>
-              <div className="flex items-center gap-3">
-                <Globe className="size-6 shrink-0 text-text-secondary" />
-                <Input
-                  type="url"
-                  placeholder="www.example.com"
-                  value={editWebsite}
-                  onChange={(e) => setEditWebsite(e.target.value)}
-                  className="text-base"
-                />
+              <div>
+                <div className="flex items-center gap-3">
+                  <div className="flex size-6 shrink-0 items-center justify-center rounded-full border border-text-secondary text-text-secondary">
+                    <span className="font-bold text-xs">D</span>
+                  </div>
+                  <Input
+                    type="text"
+                    placeholder="@username"
+                    value={editDevpost}
+                    onChange={(e) => setEditDevpost(e.target.value)}
+                    className="text-base"
+                  />
+                </div>
+                {errors.devpost && (
+                  <p className="mt-1 ml-9 text-text-error text-xs">{errors.devpost}</p>
+                )}
               </div>
-              <div className="flex items-center gap-3">
-                <Instagram className="size-6 shrink-0 text-text-secondary" />
-                <Input
-                  type="text"
-                  placeholder="@username"
-                  value={editInstagram}
-                  onChange={(e) => setEditInstagram(e.target.value)}
-                  className="text-base"
-                />
+              <div>
+                <div className="flex items-center gap-3">
+                  <Globe className="size-6 shrink-0 text-text-secondary" />
+                  <Input
+                    type="url"
+                    placeholder="www.example.com"
+                    value={editWebsite}
+                    onChange={(e) => setEditWebsite(e.target.value)}
+                    className="text-base"
+                  />
+                </div>
+                {errors.website && (
+                  <p className="mt-1 ml-9 text-text-error text-xs">{errors.website}</p>
+                )}
               </div>
-              <div className="flex items-center gap-3">
-                <Github className="size-6 shrink-0 text-text-secondary" />
-                <Input
-                  type="text"
-                  placeholder="@username"
-                  value={editGithub}
-                  onChange={(e) => setEditGithub(e.target.value)}
-                  className="text-base"
-                />
+              <div>
+                <div className="flex items-center gap-3">
+                  <Instagram className="size-6 shrink-0 text-text-secondary" />
+                  <Input
+                    type="text"
+                    placeholder="@username"
+                    value={editInstagram}
+                    onChange={(e) => setEditInstagram(e.target.value)}
+                    className="text-base"
+                  />
+                </div>
+                {errors.instagram && (
+                  <p className="mt-1 ml-9 text-text-error text-xs">{errors.instagram}</p>
+                )}
+              </div>
+              <div>
+                <div className="flex items-center gap-3">
+                  <Github className="size-6 shrink-0 text-text-secondary" />
+                  <Input
+                    type="text"
+                    placeholder="@username"
+                    value={editGithub}
+                    onChange={(e) => setEditGithub(e.target.value)}
+                    className="text-base"
+                  />
+                </div>
+                {errors.github && (
+                  <p className="mt-1 ml-9 text-text-error text-xs">{errors.github}</p>
+                )}
               </div>
             </div>
           </div>

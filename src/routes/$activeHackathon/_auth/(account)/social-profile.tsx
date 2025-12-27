@@ -39,13 +39,16 @@ function RouteComponent() {
         const loadedApplicant = applicant ? null : await fetchApplicant(dbCollectionName, uid);
 
         if (loadedApplicant && !applicant) {
-          setApplicant({
-            ...loadedApplicant,
-            submission: {
-              submitted: loadedApplicant.submission?.submitted ?? false,
-              ...(loadedApplicant.submission ?? {}),
+          setApplicant(
+            {
+              ...loadedApplicant,
+              submission: {
+                submitted: loadedApplicant.submission?.submitted ?? false,
+                ...(loadedApplicant.submission ?? {}),
+              },
             },
-          });
+            dbCollectionName,
+          );
         }
 
         const applicantForSocial = loadedApplicant || (applicant as Applicant | null);
