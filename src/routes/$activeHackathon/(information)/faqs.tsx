@@ -31,7 +31,7 @@ function RouteComponent() {
         <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
           <div className="flex flex-col gap-4">
             <h1 className="text-3xl">Frequently asked questions</h1>
-            <p className="text-sm">Can't find what you're looking or?</p>
+            <p className="text-sm">Can't find what you're looking for?</p>
             <p className="pb-2 text-sm">
               Ask <code>#ask-organizers</code> in Discord, find us at the Help Desk, or ask any
               organizer wearing an nwPlus sweater during the hackathon!
