@@ -2,9 +2,9 @@ import { AppSidebarLayout } from "@/components/layout/app-sidebar";
 import { HackathonStylesheet } from "@/components/layout/hackathon-stylesheet";
 import { VALID_HACKATHONS } from "@/lib/constants";
 import { useAuthStore } from "@/lib/stores/auth-store";
+import { useHackerStore } from "@/lib/stores/hacker-store";
 import { usePortalStore } from "@/lib/stores/portal-store";
 import type { HackathonInfoItem, HackathonName } from "@/lib/types";
-import { fetchApplicant } from "@/services/applicants";
 import { fetchHackathonInfo } from "@/services/latest-hackathons";
 import {
   Outlet,
@@ -94,8 +94,9 @@ export const Route = createFileRoute("/$activeHackathon")({
       }
 
       if (user) {
-        // TODO: move this to a store or cache
-        const applicant = await fetchApplicant(hackathonInfo.dbCollectionName, user.uid);
+        const applicant = await useHackerStore
+          .getState()
+          .getOrFetch(hackathonInfo.dbCollectionName, user.uid);
         const applicationStatus = applicant?.status?.applicationStatus;
 
         if (applicationStatus !== "acceptedAndAttending") {
