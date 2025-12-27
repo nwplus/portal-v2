@@ -1,13 +1,23 @@
+import { usePortalTheme } from "@/hooks/use-portal-theme";
 import { cn } from "@/lib/utils";
 import { Link, useCanGoBack, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { NwHacksColouredIcon } from "../icons";
 import { Button, buttonVariants } from "../ui/button";
 
+/**
+ * NOTE: Icon and assets may need to be replaced on each reskin:
+ *  - `public/assets/not-found`
+ *  - `src/components/nwhacks-coloured.svg.tsx`
+ */
+
 export default function NotFound() {
   const router = useRouter();
   const canGoBack = useCanGoBack(); // true when user navigates here, false when user directly enters a bad URL
   const [cursorRatio, setCursorRatio] = useState({ x: 0, y: 0 });
+
+  const portalTheme = usePortalTheme();
+  const gradientStyle = portalTheme.nwhacks?.backgroundGradients?.bottomMiddle;
 
   useEffect(() => {
     let rafId = 0;
@@ -38,16 +48,8 @@ export default function NotFound() {
   const trainOffset = getParallaxOffset(4, 12);
 
   return (
-    <div
-      // hard-coded gradient value instead of using `GradientBackground`;
-      //    GradientBackground takes values from HackathonStylesheet, which is
-      //    only mounted on paths under $activeHackathon.
-      className="relative h-screen overflow-hidden"
-      style={{
-        background:
-          "radial-gradient(123.65% 105.8% at 50% 105.8%, #A94F17 0%, #69393C 9.62%, #251529 27.89%, #0A0E14 38.94%, #0A070A 96.74%)",
-      }}
-    >
+    <div className="gradient-bg relative h-screen overflow-hidden">
+      <style>{`.gradient-bg { ${gradientStyle} }`}</style>
       <div className="relative flex h-full items-center justify-center pb-20">
         <div className="relative">
           <div
