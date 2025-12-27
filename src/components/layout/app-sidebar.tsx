@@ -1,3 +1,4 @@
+import { GoogleIcon } from "@/components/icons";
 import {
   Sidebar,
   SidebarContent,
@@ -19,10 +20,11 @@ import { useHackathon } from "@/hooks/use-hackathon";
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { getSidebarHackathonIcon } from "@/lib/utils";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import {
   Calendar,
   ForkKnife,
+  Home,
   Info,
   LogOut,
   Map as MapIcon,
@@ -34,6 +36,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import type { PropsWithChildren } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Button } from "../ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 type MenuItem = {
@@ -97,9 +100,16 @@ export function AppSidebar() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isAdmin = useAuthStore((state) => state.isAdmin);
   const logout = useAuthStore((state) => state.logout);
+  const signInWithGoogle = useAuthStore((state) => state.signInWithGoogle);
   const user = useAuthStore((state) => state.user);
   const { isMobile } = useSidebar();
   const LogoComponent = getSidebarHackathonIcon(activeHackathon);
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate({ to: "/$activeHackathon", params: { activeHackathon } });
+  };
 
   return (
     <Sidebar collapsible="icon" variant="inset">
@@ -141,17 +151,40 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
+        {!isAuthenticated && (
+          <SidebarGroup>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Home">
+                  <Link
+                    to="/$activeHackathon"
+                    params={{ activeHackathon }}
+                    activeProps={{ "data-active": true }}
+                    activeOptions={{ exact: true }}
+                  >
+                    <Home />
+                    <span>Home</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
+        )}
+
         <SidebarGroup>
           <SidebarGroupLabel>Information</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {INFORMATION_MENU_ITEMS.map(({ label, to, icon: Icon }) => (
+              {INFORMATION_MENU_ITEMS.filter(
+                (item) => !(item.label === "Hacker package" && !isAuthenticated),
+              ).map(({ label, to, icon: Icon }) => (
                 <SidebarMenuItem key={to}>
                   <SidebarMenuButton asChild tooltip={label}>
                     <Link
                       to={to}
                       params={{ activeHackathon }}
                       activeProps={{ "data-active": true }}
+                      activeOptions={{ exact: to === "/$activeHackathon" }}
                     >
                       <Icon />
                       <span>{label}</span>
@@ -209,7 +242,7 @@ export function AppSidebar() {
                 <TooltipTrigger asChild>
                   <SidebarMenuAction
                     className="static size-8 group-data-[collapsible=icon]:flex"
-                    onClick={() => logout()}
+                    onClick={handleLogout}
                   >
                     <LogOut />
                   </SidebarMenuAction>
@@ -223,20 +256,19 @@ export function AppSidebar() {
         </SidebarFooter>
       ) : (
         <SidebarFooter>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                {/* TODO: update styles */}
-                <Link
-                  to="/$activeHackathon/login"
-                  params={{ activeHackathon }}
-                  search={{ redirect: location.pathname }}
-                >
-                  Login
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
+          <div className="flex flex-col gap-3 px-2 pb-2">
+            <p className="text-text-secondary text-xs group-data-[collapsible=icon]:hidden">
+              If you are a hacker, sign in to view your account.
+            </p>
+            <Button
+              variant="login"
+              className="w-full justify-start gap-2 group-data-[collapsible=icon]:justify-center"
+              onClick={() => signInWithGoogle()}
+            >
+              <GoogleIcon />
+              <span className="group-data-[collapsible=icon]:hidden">Log in with Google</span>
+            </Button>
+          </div>
         </SidebarFooter>
       )}
     </Sidebar>
