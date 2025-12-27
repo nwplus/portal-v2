@@ -486,7 +486,7 @@ export function MyProfile({
                             : [...prev, tag.category],
                         );
                       }}
-                      className={`rounded px-3 py-1.5 font-medium text-sm transition-opacity ${
+                      className={`rounded-lg px-3 py-1.5 font-medium text-sm transition-opacity ${
                         isHidden
                           ? "text-text-secondary line-through opacity-50"
                           : "text-text-primary"
