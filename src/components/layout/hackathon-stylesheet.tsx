@@ -4,7 +4,7 @@ import { usePortalTheme } from "@/hooks/use-portal-theme";
 export const HackathonStylesheet = () => {
   const { activeHackathon } = useHackathon();
   const portalTheme = usePortalTheme();
-  const s = portalTheme[activeHackathon];
+  const s = portalTheme?.[activeHackathon];
 
   const bottomMiddleGradient = s?.backgroundGradients?.bottomMiddle;
   const bottomRightGradient = s?.backgroundGradients?.bottomRight;

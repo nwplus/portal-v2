@@ -1,5 +1,4 @@
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
-import confetti from "canvas-confetti";
 import { httpsCallable } from "firebase/functions";
 import { Fragment, type ReactNode, useState } from "react";
 import { useFormContext } from "react-hook-form";
@@ -10,7 +9,6 @@ import { Field, FieldContent, FieldLabel, FieldSet } from "@/components/ui/field
 import { ScrollFade } from "@/components/ui/scroll-fade";
 import { useHackathon } from "@/hooks/use-hackathon";
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
-import { usePortalTheme } from "@/hooks/use-portal-theme";
 import { formatAnswerForReview } from "@/lib/application/review-format";
 import type { ApplicationFormValues } from "@/lib/application/types";
 import { functions } from "@/lib/firebase/client";
@@ -23,30 +21,8 @@ import { useApplicantStore } from "@/lib/stores/applicant-store";
 import { useApplicationQuestionStore } from "@/lib/stores/application-question-store";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { usePortalStore } from "@/lib/stores/portal-store";
+import { fireSideCannons } from "@/lib/utils";
 import { submitApplicantDraft } from "@/services/applicants";
-
-function fireSideCannons(colors?: string[]) {
-  const DURATION_MS = 1500;
-  const end = Date.now() + DURATION_MS;
-
-  const frame = () => {
-    if (Date.now() > end) return;
-
-    const baseConfig = {
-      particleCount: 2,
-      spread: 55,
-      startVelocity: 60,
-      ...(colors && { colors }),
-    };
-
-    confetti({ ...baseConfig, angle: 60, origin: { x: 0, y: 0.5 } });
-    confetti({ ...baseConfig, angle: 120, origin: { x: 1, y: 0.5 } });
-
-    requestAnimationFrame(frame);
-  };
-
-  frame();
-}
 
 interface ReviewFieldProps {
   label: string;
@@ -286,7 +262,6 @@ export const Route = createFileRoute("/$activeHackathon/_auth/application/_step-
 function RouteComponent() {
   const { activeHackathon } = useHackathon();
   const { dbCollectionName, displayNameFull } = useHackathonInfo();
-  const portalTheme = usePortalTheme();
   const applicantDraft = useApplicantStore((state) => state.applicantDraft);
   const user = useAuthStore((state) => state.user);
   const applicationsOpen = usePortalStore((state) => state.applicationsOpen);
@@ -297,7 +272,6 @@ function RouteComponent() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 
-  const confettiColors = portalTheme?.[activeHackathon]?.portalGradient;
   const hasValidationErrors = hasAttemptedSubmit && Object.keys(form.formState.errors).length > 0;
 
   const handleSubmitApplication = () => {
@@ -335,7 +309,7 @@ function RouteComponent() {
           hackathonName: displayNameFull,
         });
 
-        fireSideCannons(confettiColors);
+        fireSideCannons(activeHackathon);
 
         await router.navigate({
           to: "/$activeHackathon/application",
