@@ -290,7 +290,7 @@ export function MyProfile({
 
   if (profileMode === "view") {
     return (
-      <div className="relative min-h-[500px] rounded-lg border border-border-subtle bg-[#292929]/30 py-10 px-6 md:p-12 backdrop-blur-md">
+      <div className="relative min-h-[500px] rounded-lg border border-border-subtle bg-[#292929]/30 px-6 py-10 backdrop-blur-md md:p-12">
         <Button
           variant="secondary"
           size="sm"
@@ -364,13 +364,18 @@ export function MyProfile({
 
   if (profileMode === "edit") {
     return (
-      <div className="min-h-[500px] rounded-lg border border-border-subtle bg-[#292929]/30 px-6 py-10 md:p-12 backdrop-blur-md">
+      <div className="min-h-[500px] rounded-lg border border-border-subtle bg-[#292929]/30 px-6 py-10 backdrop-blur-md md:p-12">
         <div className="space-y-6">
           <div className="flex justify-between">
             <div className="flex items-center gap-12">
-              <Avatar 
-              onClick={() => {if (window.innerWidth < 768) {setProfileMode("select-picture")}}}
-              className="size-30 md:size-36 cursor-pointer md:cursor-default">
+              <Avatar
+                onClick={() => {
+                  if (window.innerWidth < 768) {
+                    setProfileMode("select-picture");
+                  }
+                }}
+                className="size-30 cursor-pointer md:size-36 md:cursor-default"
+              >
                 <AvatarImage src={PROFILE_PICTURES[editProfilePictureIndex]} />
                 <AvatarFallback className="text-2xl">
                   {displayName.charAt(0).toUpperCase()}
@@ -386,7 +391,7 @@ export function MyProfile({
               </Button>
             </div>
 
-            <div className="absolute right-6 top-6 flex gap-2">
+            <div className="absolute top-6 right-6 flex gap-2">
               <Button
                 variant="ghost"
                 size="sm"
@@ -591,7 +596,7 @@ export function MyProfile({
 
   // select-picture mode
   return (
-    <div className="mx-auto min-h-[500px] max-w-2xl rounded-lg border border-border-subtle bg-[#292929]/30 px-6 py-10 md:p-12 backdrop-blur-md">
+    <div className="mx-auto min-h-[500px] max-w-2xl rounded-lg border border-border-subtle bg-[#292929]/30 px-6 py-10 backdrop-blur-md md:p-12">
       <div className="flex justify-center">
         <div className="grid grid-cols-3 place-items-center gap-8">
           {SELECTABLE_PICTURES.map((picture, index) => {
@@ -601,7 +606,7 @@ export function MyProfile({
                 key={actualIndex}
                 type="button"
                 onClick={() => setEditProfilePictureIndex(actualIndex)}
-                className={`group relative size-24 md:size-36 overflow-hidden rounded-full transition-all hover:scale-105 ${
+                className={`group relative size-24 overflow-hidden rounded-full transition-all hover:scale-105 md:size-36 ${
                   editProfilePictureIndex === actualIndex
                     ? "ring-4 ring-border-active"
                     : "hover:ring-2 hover:ring-border-subtle"
