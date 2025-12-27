@@ -290,18 +290,18 @@ export function MyProfile({
 
   if (profileMode === "view") {
     return (
-      <div className="relative min-h-[500px] rounded-lg border border-border-subtle bg-[#292929]/30 p-12 backdrop-blur-md">
+      <div className="relative min-h-[500px] rounded-lg border border-border-subtle bg-[#292929]/30 py-10 px-6 md:p-12 backdrop-blur-md">
         <Button
           variant="secondary"
           size="sm"
           className="absolute top-4 right-4"
           onClick={handleOpenEdit}
         >
-          Edit Profile
+          Edit <span className="hidden md:inline">Profile</span>
         </Button>
 
         <div className="flex flex-col items-center text-center md:items-start md:text-left">
-          <Avatar className="mb-4 size-36">
+          <Avatar className="mb-4 size-30 md:size-36">
             <AvatarImage src={profilePicture ?? undefined} referrerPolicy="no-referrer" />
             <AvatarFallback className="text-2xl">
               {displayName.charAt(0).toUpperCase()}
@@ -364,11 +364,13 @@ export function MyProfile({
 
   if (profileMode === "edit") {
     return (
-      <div className="min-h-[500px] rounded-lg border border-border-subtle bg-[#292929]/30 p-12 backdrop-blur-md">
+      <div className="min-h-[500px] rounded-lg border border-border-subtle bg-[#292929]/30 px-6 py-10 md:p-12 backdrop-blur-md">
         <div className="space-y-6">
           <div className="flex justify-between">
             <div className="flex items-center gap-12">
-              <Avatar className="size-36">
+              <Avatar 
+              onClick={() => {if (window.innerWidth < 768) {setProfileMode("select-picture")}}}
+              className="size-30 md:size-36 cursor-pointer md:cursor-default">
                 <AvatarImage src={PROFILE_PICTURES[editProfilePictureIndex]} />
                 <AvatarFallback className="text-2xl">
                   {displayName.charAt(0).toUpperCase()}
@@ -377,13 +379,14 @@ export function MyProfile({
               <Button
                 variant="secondary"
                 size="default"
+                className="hidden md:block"
                 onClick={() => setProfileMode("select-picture")}
               >
                 Choose profile photo
               </Button>
             </div>
 
-            <div className="-mt-3 flex items-start gap-2">
+            <div className="absolute right-6 top-6 flex gap-2">
               <Button
                 variant="ghost"
                 size="sm"
@@ -588,7 +591,7 @@ export function MyProfile({
 
   // select-picture mode
   return (
-    <div className="mx-auto min-h-[500px] max-w-2xl rounded-lg border border-border-subtle bg-[#292929]/30 p-12 backdrop-blur-md">
+    <div className="mx-auto min-h-[500px] max-w-2xl rounded-lg border border-border-subtle bg-[#292929]/30 px-6 py-10 md:p-12 backdrop-blur-md">
       <div className="flex justify-center">
         <div className="grid grid-cols-3 place-items-center gap-8">
           {SELECTABLE_PICTURES.map((picture, index) => {
@@ -598,7 +601,7 @@ export function MyProfile({
                 key={actualIndex}
                 type="button"
                 onClick={() => setEditProfilePictureIndex(actualIndex)}
-                className={`group relative size-36 overflow-hidden rounded-full transition-all hover:scale-105 ${
+                className={`group relative size-24 md:size-36 overflow-hidden rounded-full transition-all hover:scale-105 ${
                   editProfilePictureIndex === actualIndex
                     ? "ring-4 ring-border-active"
                     : "hover:ring-2 hover:ring-border-subtle"

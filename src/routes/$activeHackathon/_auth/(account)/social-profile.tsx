@@ -66,7 +66,10 @@ function RouteComponent() {
 
   if (isLoading) {
     return (
-      <GradientBackground gradientPosition="bottomMiddle">
+      <GradientBackground
+        gradientPosition="bottomMiddle"
+        className="max-h-screen overflow-y-scroll"
+      >
         <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
           <Spinner className="size-8 text-white" />
         </div>
@@ -75,7 +78,7 @@ function RouteComponent() {
   }
 
   return (
-    <GradientBackground gradientPosition="bottomMiddle">
+    <GradientBackground gradientPosition="bottomMiddle" className="max-h-screen overflow-y-scroll">
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-6">
         <div className="w-full max-w-3xl">
           <div className="mb-6 flex justify-center">
