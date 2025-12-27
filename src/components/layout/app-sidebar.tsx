@@ -20,7 +20,7 @@ import { useHackathon } from "@/hooks/use-hackathon";
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { getSidebarHackathonIcon } from "@/lib/utils";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import {
   Calendar,
   ForkKnife,
@@ -65,11 +65,6 @@ const ACCOUNT_MENU_ITEMS: MenuItem[] = [
 
 const INFORMATION_MENU_ITEMS: MenuItem[] = [
   {
-    label: "Home",
-    to: "/$activeHackathon",
-    icon: Home,
-  },
-  {
     label: "Hacker package",
     to: "/$activeHackathon/hacker-package",
     icon: PackageOpen,
@@ -109,6 +104,12 @@ export function AppSidebar() {
   const user = useAuthStore((state) => state.user);
   const { isMobile } = useSidebar();
   const LogoComponent = getSidebarHackathonIcon(activeHackathon);
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate({ to: "/$activeHackathon", params: { activeHackathon } });
+  };
 
   return (
     <Sidebar collapsible="icon" variant="inset">
@@ -150,11 +151,33 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
+        {!isAuthenticated && (
+          <SidebarGroup>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Home">
+                  <Link
+                    to="/$activeHackathon"
+                    params={{ activeHackathon }}
+                    activeProps={{ "data-active": true }}
+                    activeOptions={{ exact: true }}
+                  >
+                    <Home />
+                    <span>Home</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
+        )}
+
         <SidebarGroup>
           <SidebarGroupLabel>Information</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
-              {INFORMATION_MENU_ITEMS.map(({ label, to, icon: Icon }) => (
+              <SidebarMenu>
+                {INFORMATION_MENU_ITEMS.filter(
+                  (item) => !(item.label === "Hacker package" && !isAuthenticated),
+                ).map(({ label, to, icon: Icon }) => (
                 <SidebarMenuItem key={to}>
                   <SidebarMenuButton asChild tooltip={label}>
                     <Link
@@ -219,7 +242,7 @@ export function AppSidebar() {
                 <TooltipTrigger asChild>
                   <SidebarMenuAction
                     className="static size-8 group-data-[collapsible=icon]:flex"
-                    onClick={() => logout()}
+                    onClick={handleLogout}
                   >
                     <LogOut />
                   </SidebarMenuAction>
