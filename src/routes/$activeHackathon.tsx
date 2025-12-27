@@ -85,6 +85,10 @@ export const Route = createFileRoute("/$activeHackathon")({
     const isOnApplicationPage = location.pathname.includes("/application");
     const isOnLoginPage = location.pathname.includes("/login");
 
+    if (isAdmin && user) {
+      await useHackerStore.getState().getOrFetch(hackathonInfo.dbCollectionName, user.uid);
+    }
+
     if (!isOnApplicationPage && !isOnLoginPage && !isAdmin) {
       if (!isPortalLive) {
         throw redirect({
