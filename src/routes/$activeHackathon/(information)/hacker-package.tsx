@@ -16,10 +16,12 @@ function RouteComponent() {
 
   return (
     <GradientBackground gradientPosition="bottomMiddle">
-      <div className="flex h-full w-full items-center justify-center">
+      <div className="flex h-full w-full md:items-center md:justify-center">
         {iframeSrc ? (
-          <div className="h-[90%] w-[90%] overflow-hidden rounded-xl">
-            <iframe src={iframeSrc} className="h-full w-full" title="Hacker Package" />
+          <div className="h-full w-full pt-12 pr-4 pb-2 pl-4 md:h-[90%] md:w-[90%] md:p-0">
+            <div className="h-full w-full overflow-hidden rounded-xl">
+              <iframe src={iframeSrc} className="h-full w-full" title="Hacker Package" />
+            </div>
           </div>
         ) : (
           <p className="text-text-primary">Hacker package is not available yet</p>

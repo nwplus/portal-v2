@@ -247,7 +247,11 @@ export function AppSidebarLayout({ children }: PropsWithChildren) {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset>{children}</SidebarInset>
+      <SidebarInset>
+        {/* mobile trigger */}
+        <SidebarTrigger className="absolute top-4 left-4 z-50 size-6 md:hidden" />
+        {children}
+      </SidebarInset>
     </SidebarProvider>
   );
 }
