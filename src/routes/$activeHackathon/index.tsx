@@ -5,9 +5,21 @@ import { useHackathon } from "@/hooks/use-hackathon";
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { getColouredHackathonIcon } from "@/lib/utils";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { loadAuth } from "@/lib/utils";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/$activeHackathon/")({
+  beforeLoad: async ({ params }) => {
+    await loadAuth();
+    const { isAuthenticated } = useAuthStore.getState();
+
+    if (isAuthenticated) {
+      throw redirect({
+        to: "/$activeHackathon/my-ticket",
+        params: { activeHackathon: params.activeHackathon },
+      });
+    }
+  },
   component: RouteComponent,
 });
 
@@ -22,42 +34,14 @@ export const Route = createFileRoute("/$activeHackathon/")({
 function RouteComponent() {
   const { activeHackathon } = useHackathon();
   const { displayNameShort, hackathonYear } = useHackathonInfo();
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const signInWithGoogle = useAuthStore((state) => state.signInWithGoogle);
   const navigate = useNavigate();
   const HackathonIcon = getColouredHackathonIcon(activeHackathon);
 
   const handleSignIn = async () => {
-    if (!isAuthenticated) {
-      await signInWithGoogle();
-    }
+    await signInWithGoogle();
     navigate({ to: "/$activeHackathon/my-ticket", params: { activeHackathon } });
   };
-
-  if (isAuthenticated) {
-    return (
-      <GradientBackground
-        gradientPosition="bottomMiddle"
-        className="flex items-center justify-center p-4"
-      >
-        <div className="flex max-w-md flex-col items-center gap-6 text-center md:gap-8">
-          <div className="scale-[1.5] md:scale-[2]">
-            <HackathonIcon />
-          </div>
-          <div className="flex flex-col gap-3 md:gap-4">
-            <h1 className="font-bold text-3xl text-text-primary md:text-4xl">
-              Welcome to
-              <br />
-              {displayNameShort} {hackathonYear}
-            </h1>
-            <p className="text-base text-text-secondary md:text-lg">
-              You are signed in. Check out your account in the sidebar.
-            </p>
-          </div>
-        </div>
-      </GradientBackground>
-    );
-  }
 
   return (
     <GradientBackground
