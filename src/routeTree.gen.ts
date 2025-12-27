@@ -19,6 +19,7 @@ import { Route as ActiveHackathonAuthImport } from './routes/$activeHackathon/_a
 import { Route as ActiveHackathonAuthApplicationImport } from './routes/$activeHackathon/_auth/application'
 import { Route as ActiveHackathoninformationVenueMapImport } from './routes/$activeHackathon/(information)/venue-map'
 import { Route as ActiveHackathoninformationScheduleImport } from './routes/$activeHackathon/(information)/schedule'
+import { Route as ActiveHackathoninformationHomeImport } from './routes/$activeHackathon/(information)/home'
 import { Route as ActiveHackathoninformationHackerPackageImport } from './routes/$activeHackathon/(information)/hacker-package'
 import { Route as ActiveHackathoninformationFaqsImport } from './routes/$activeHackathon/(information)/faqs'
 import { Route as ActiveHackathonAuthApplicationIndexImport } from './routes/$activeHackathon/_auth/application/index'
@@ -82,6 +83,13 @@ const ActiveHackathoninformationScheduleRoute =
   ActiveHackathoninformationScheduleImport.update({
     id: '/(information)/schedule',
     path: '/schedule',
+    getParentRoute: () => ActiveHackathonRoute,
+  } as any)
+
+const ActiveHackathoninformationHomeRoute =
+  ActiveHackathoninformationHomeImport.update({
+    id: '/(information)/home',
+    path: '/home',
     getParentRoute: () => ActiveHackathonRoute,
   } as any)
 
@@ -226,6 +234,13 @@ declare module '@tanstack/react-router' {
       path: '/hacker-package'
       fullPath: '/$activeHackathon/hacker-package'
       preLoaderRoute: typeof ActiveHackathoninformationHackerPackageImport
+      parentRoute: typeof ActiveHackathonImport
+    }
+    '/$activeHackathon/(information)/home': {
+      id: '/$activeHackathon/(information)/home'
+      path: '/home'
+      fullPath: '/$activeHackathon/home'
+      preLoaderRoute: typeof ActiveHackathoninformationHomeImport
       parentRoute: typeof ActiveHackathonImport
     }
     '/$activeHackathon/(information)/schedule': {
@@ -406,6 +421,7 @@ interface ActiveHackathonRouteChildren {
   ActiveHackathonIndexRoute: typeof ActiveHackathonIndexRoute
   ActiveHackathoninformationFaqsRoute: typeof ActiveHackathoninformationFaqsRoute
   ActiveHackathoninformationHackerPackageRoute: typeof ActiveHackathoninformationHackerPackageRoute
+  ActiveHackathoninformationHomeRoute: typeof ActiveHackathoninformationHomeRoute
   ActiveHackathoninformationScheduleRoute: typeof ActiveHackathoninformationScheduleRoute
   ActiveHackathoninformationVenueMapRoute: typeof ActiveHackathoninformationVenueMapRoute
 }
@@ -417,6 +433,7 @@ const ActiveHackathonRouteChildren: ActiveHackathonRouteChildren = {
   ActiveHackathoninformationFaqsRoute: ActiveHackathoninformationFaqsRoute,
   ActiveHackathoninformationHackerPackageRoute:
     ActiveHackathoninformationHackerPackageRoute,
+  ActiveHackathoninformationHomeRoute: ActiveHackathoninformationHomeRoute,
   ActiveHackathoninformationScheduleRoute:
     ActiveHackathoninformationScheduleRoute,
   ActiveHackathoninformationVenueMapRoute:
@@ -434,6 +451,7 @@ export interface FileRoutesByFullPath {
   '/$activeHackathon/': typeof ActiveHackathonIndexRoute
   '/$activeHackathon/faqs': typeof ActiveHackathoninformationFaqsRoute
   '/$activeHackathon/hacker-package': typeof ActiveHackathoninformationHackerPackageRoute
+  '/$activeHackathon/home': typeof ActiveHackathoninformationHomeRoute
   '/$activeHackathon/schedule': typeof ActiveHackathoninformationScheduleRoute
   '/$activeHackathon/venue-map': typeof ActiveHackathoninformationVenueMapRoute
   '/$activeHackathon/application': typeof ActiveHackathonAuthApplicationStepLayoutRouteWithChildren
@@ -455,6 +473,7 @@ export interface FileRoutesByTo {
   '/$activeHackathon/login': typeof ActiveHackathonLoginRoute
   '/$activeHackathon/faqs': typeof ActiveHackathoninformationFaqsRoute
   '/$activeHackathon/hacker-package': typeof ActiveHackathoninformationHackerPackageRoute
+  '/$activeHackathon/home': typeof ActiveHackathoninformationHomeRoute
   '/$activeHackathon/schedule': typeof ActiveHackathoninformationScheduleRoute
   '/$activeHackathon/venue-map': typeof ActiveHackathoninformationVenueMapRoute
   '/$activeHackathon/my-ticket': typeof ActiveHackathonAuthaccountMyTicketRoute
@@ -478,6 +497,7 @@ export interface FileRoutesById {
   '/$activeHackathon/': typeof ActiveHackathonIndexRoute
   '/$activeHackathon/(information)/faqs': typeof ActiveHackathoninformationFaqsRoute
   '/$activeHackathon/(information)/hacker-package': typeof ActiveHackathoninformationHackerPackageRoute
+  '/$activeHackathon/(information)/home': typeof ActiveHackathoninformationHomeRoute
   '/$activeHackathon/(information)/schedule': typeof ActiveHackathoninformationScheduleRoute
   '/$activeHackathon/(information)/venue-map': typeof ActiveHackathoninformationVenueMapRoute
   '/$activeHackathon/_auth/application': typeof ActiveHackathonAuthApplicationRouteWithChildren
@@ -503,6 +523,7 @@ export interface FileRouteTypes {
     | '/$activeHackathon/'
     | '/$activeHackathon/faqs'
     | '/$activeHackathon/hacker-package'
+    | '/$activeHackathon/home'
     | '/$activeHackathon/schedule'
     | '/$activeHackathon/venue-map'
     | '/$activeHackathon/application'
@@ -523,6 +544,7 @@ export interface FileRouteTypes {
     | '/$activeHackathon/login'
     | '/$activeHackathon/faqs'
     | '/$activeHackathon/hacker-package'
+    | '/$activeHackathon/home'
     | '/$activeHackathon/schedule'
     | '/$activeHackathon/venue-map'
     | '/$activeHackathon/my-ticket'
@@ -544,6 +566,7 @@ export interface FileRouteTypes {
     | '/$activeHackathon/'
     | '/$activeHackathon/(information)/faqs'
     | '/$activeHackathon/(information)/hacker-package'
+    | '/$activeHackathon/(information)/home'
     | '/$activeHackathon/(information)/schedule'
     | '/$activeHackathon/(information)/venue-map'
     | '/$activeHackathon/_auth/application'
@@ -596,6 +619,7 @@ export const routeTree = rootRoute
         "/$activeHackathon/",
         "/$activeHackathon/(information)/faqs",
         "/$activeHackathon/(information)/hacker-package",
+        "/$activeHackathon/(information)/home",
         "/$activeHackathon/(information)/schedule",
         "/$activeHackathon/(information)/venue-map"
       ]
@@ -625,6 +649,10 @@ export const routeTree = rootRoute
     },
     "/$activeHackathon/(information)/hacker-package": {
       "filePath": "$activeHackathon/(information)/hacker-package.tsx",
+      "parent": "/$activeHackathon"
+    },
+    "/$activeHackathon/(information)/home": {
+      "filePath": "$activeHackathon/(information)/home.tsx",
       "parent": "/$activeHackathon"
     },
     "/$activeHackathon/(information)/schedule": {

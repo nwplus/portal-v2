@@ -2,6 +2,7 @@ import { type User, onAuthStateChanged, signInWithPopup, signOut } from "firebas
 import { create } from "zustand";
 import { checkAdminClaim, googleProvider } from "../firebase/auth";
 import { auth } from "../firebase/client";
+import { useHackerStore } from "./hacker-store";
 
 type AuthStore = {
   user: User | null;
@@ -16,7 +17,7 @@ type AuthStore = {
   clearError: () => void;
 };
 
-export const useAuthStore = create<AuthStore>((set) => ({
+export const useAuthStore = create<AuthStore>((set, get) => ({
   user: null,
   isAuthenticated: false,
   isAdmin: false,
@@ -25,6 +26,11 @@ export const useAuthStore = create<AuthStore>((set) => ({
 
   initAuthListener: () => {
     onAuthStateChanged(auth, async (user) => {
+      const previousUid = get().user?.uid;
+      if (!user || (previousUid && user.uid !== previousUid)) {
+        useHackerStore.getState().reset();
+      }
+
       try {
         const isAdmin = user ? await checkAdminClaim(user) : false;
         set({
@@ -62,6 +68,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
     try {
       set({ loading: true, error: null });
       await signOut(auth);
+      useHackerStore.getState().reset();
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : "Logout failed",

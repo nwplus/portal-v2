@@ -1,5 +1,5 @@
 export const NwHacksColouredIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 65 87">
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 65 87" className="h-8 w-auto">
     <path
       fill="url(#a)"
       fillRule="evenodd"

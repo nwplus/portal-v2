@@ -15,6 +15,8 @@ const buttonVariants = cva(
           "border border-[1px] border-border-subtle bg-bg-button-secondary text-text-primary hover:bg-bg-button-secondary/80 hover:ring-[1.5px] hover:ring-border-subtle hover:ring-inset disabled:text-text-secondary",
         tertiary:
           "border border-button-tertiary text-button-tertiary shadow-xs hover:border-button-tertiary/80 hover:text-button-tertiary/80 disabled:border-button-tertiary/30 disabled:text-text-secondary",
+        login:
+          "border border-button-tertiary bg-bg-button-tertiary text-text-accent shadow-xs hover:bg-bg-button-tertiary/90 disabled:opacity-50",
         error:
           "border border-border-danger text-text-error hover:border-border-danger/80 hover:text-text-error/80 focus-visible:ring-border-danger/60",
         ghost: "text-text-primary hover:text-text-primary/80 disabled:text-text-secondary",
