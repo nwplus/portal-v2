@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 export function Container({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
-      className={cn("mx-auto w-full px-6 py-16 md:max-w-3xl md:px-0 lg:max-w-5xl", className)}
+      className={cn("mx-auto w-full px-6 py-16 md:max-w-3xl md:px-4 lg:max-w-5xl", className)}
       {...props}
     />
   );
