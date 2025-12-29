@@ -15,45 +15,12 @@ import { Github, Globe, Instagram, Linkedin } from "lucide-react";
 import { useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
-
-const PROFILE_PICTURES = [
-  "/assets/profiles/default-nugget.svg",
-  "/assets/profiles/nugget-strawberry.svg",
-  "/assets/profiles/hacker-nugget.svg",
-  "/assets/profiles/martin-nugget.svg",
-  "/assets/profiles/furry-nugget.svg",
-  "/assets/profiles/ramen-nugget.svg",
-  "/assets/profiles/nugget-lebron.svg",
-  "/assets/profiles/jacked-nugget.svg",
-  "/assets/profiles/crafting-nugget.svg",
-  "/assets/profiles/hawaii-nugget.svg",
-  "/assets/profiles/fairy-nugget.svg",
-  "/assets/profiles/everything-is-ok-nugget.svg",
-  "/assets/profiles/tears-nugget.svg",
-] as const;
-
-const NUGGET_TAG_COLORS = [
-  "#6B7280", // default-nugget
-  "#9f3738", // nugget-strawberry
-  "#5d8a15", // hacker-nugget
-  "#148578", // martin-nugget
-  "#7d3cc7", // furry-nugget
-  "#9d2db8", // ramen-nugget
-  "#b8440b", // nugget-lebron
-  "#6841c5", // jacked-nugget
-  "#0a6c85", // crafting-nugget
-  "#05649a", // hawaii-nugget
-  "#b82872", // fairy-nugget
-  "#b8860f", // everything-is-ok-nugget
-  "#3d38b0", // tears-nugget
-] as const;
-
-const SELECTABLE_PICTURES = PROFILE_PICTURES.slice(1); // default profile pic should not be selectable
-const DEFAULT_PROFILE_INDEX = 0;
-
-const getTagBackgroundColor = (profileIndex: number): string => {
-  return NUGGET_TAG_COLORS[profileIndex] || NUGGET_TAG_COLORS[DEFAULT_PROFILE_INDEX];
-};
+import {
+  DEFAULT_PROFILE_INDEX,
+  SELECTABLE_PICTURES,
+  getProfilePicture,
+  getTagBackgroundColor,
+} from "./constants";
 
 type ProfileMode = "view" | "edit" | "select-picture";
 
@@ -65,6 +32,10 @@ interface MyProfileProps {
   displayName: string;
 }
 
+/**
+ * User social profile with modes to view and edit profile information.
+ * The single component holds all viewsto avoid additional prop drilling shared form state.
+ */
 export function MyProfile({
   socialProfile,
   onProfileUpdate,
@@ -102,7 +73,7 @@ export function MyProfile({
   const pronouns = socialProfile?.pronouns;
   const bio = socialProfile?.bio;
   const profilePictureIndex = socialProfile?.profilePictureIndex ?? DEFAULT_PROFILE_INDEX;
-  const profilePicture = PROFILE_PICTURES[profilePictureIndex];
+  const profilePicture = getProfilePicture(profilePictureIndex);
 
   const linkedin = socialProfile?.socialLinks?.linkedin;
   const github = socialProfile?.socialLinks?.github;
@@ -406,7 +377,7 @@ export function MyProfile({
               }}
               className="size-30 cursor-pointer md:size-36 md:cursor-default"
             >
-              <AvatarImage src={PROFILE_PICTURES[watchedProfilePictureIndex]} />
+              <AvatarImage src={getProfilePicture(watchedProfilePictureIndex)} />
               <AvatarFallback className="text-2xl">
                 {displayName.charAt(0).toUpperCase()}
               </AvatarFallback>

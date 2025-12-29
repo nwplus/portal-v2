@@ -118,7 +118,9 @@ function RouteComponent() {
             />
           )}
 
-          {activeTab === "recently-viewed" && <RecentlyViewed />}
+          {activeTab === "recently-viewed" && (
+            <RecentlyViewed socialProfile={socialProfile} onProfileUpdate={setSocialProfile} />
+          )}
         </div>
       </div>
     </GradientBackground>
