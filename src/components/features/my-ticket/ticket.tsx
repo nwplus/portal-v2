@@ -21,7 +21,7 @@ export function HackerTicket({
       <Ticket>
         <div className="flex h-full items-center">
           <img
-            className="hidden md:block"
+            className="hidden h-full md:block"
             draggable={false}
             src="/assets/ticket/ticket-decal.svg"
           />

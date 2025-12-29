@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 import { useIsMobile } from "@/hooks/use-mobile";
 
 type TicketProps = {
@@ -18,19 +20,39 @@ export function Ticket({
   children,
 }: TicketProps) {
   const isMobile = useIsMobile();
+  const [viewportWidth, setViewportWidth] = useState<number | null>(null);
   const maskId = "ticket-mask";
+  const desktopAspectRatio = 1 / 3;
 
-  const svgWidth = isMobile ? height : width;
-  const svgHeight = isMobile ? height + height * 0.7 : height;
+  useEffect(() => {
+    const handleResize = () => setViewportWidth(window.innerWidth);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const horizontalPadding = isMobile ? 0 : 16;
+  const availableWidth =
+    viewportWidth !== null ? Math.max(viewportWidth - horizontalPadding * 10, 0) : width;
+  const svgWidth = isMobile ? height : Math.min(width, availableWidth);
+  const svgHeight = isMobile ? height + height * 0.7 : svgWidth * desktopAspectRatio;
   const foldY = isMobile ? height : undefined;
 
   return (
-    <div style={{ width: svgWidth, height: svgHeight }}>
+    <div
+      style={{
+        width: "100%",
+        maxWidth: isMobile ? "none" : width,
+        paddingInline: horizontalPadding,
+        boxSizing: "border-box",
+        height: svgHeight,
+      }}
+    >
       <svg
+        className="mx-auto block"
         width={svgWidth}
         height={svgHeight}
         viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-        style={{ display: "block" }}
       >
         <defs>
           <mask id={maskId}>
@@ -43,11 +65,17 @@ export function Ticket({
                 <circle cx={svgWidth} cy={foldY} r={notchRadius} fill="black" />
               </>
             ) : (
-              <>
-                {/* Horizontal layout: notches on top and bottom at foldX */}
-                <circle cx={foldX} cy={0} r={notchRadius} fill="black" />
-                <circle cx={foldX} cy={svgHeight} r={notchRadius} fill="black" />
-              </>
+              (() => {
+                const foldXRatio = foldX / width;
+                const scaledFoldX = foldXRatio * svgWidth;
+                return (
+                  <>
+                    {/* Horizontal layout: notches on top and bottom at foldX */}
+                    <circle cx={scaledFoldX} cy={0} r={notchRadius} fill="black" />
+                    <circle cx={scaledFoldX} cy={svgHeight} r={notchRadius} fill="black" />
+                  </>
+                );
+              })()
             )}
           </mask>
         </defs>
@@ -72,9 +100,9 @@ export function Ticket({
           />
         ) : (
           <line
-            x1={foldX}
+            x1={(foldX / width) * svgWidth}
             y1={notchRadius}
-            x2={foldX}
+            x2={(foldX / width) * svgWidth}
             y2={svgHeight - notchRadius}
             stroke="rgba(0,0,0,1)"
             strokeDasharray="6 6"
@@ -83,16 +111,7 @@ export function Ticket({
 
         {/* Content slot */}
         <foreignObject x={0} y={0} width={svgWidth} height={svgHeight} mask={`url(#${maskId})`}>
-          <div
-            style={{
-              width: "100%",
-              height: "100%",
-              position: "relative",
-              display: "flex",
-            }}
-          >
-            {children}
-          </div>
+          <div className="relative flex h-full w-full">{children}</div>
         </foreignObject>
         <defs>
           {/* Horizontal gradient (desktop) */}

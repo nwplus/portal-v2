@@ -85,7 +85,7 @@ export function Message({
   return (
     <div className="mx-auto flex flex-col items-center gap-2 pt-4">
       <div className="text-4xl">{emoji}</div>
-      <div className="text-4xl">{message}</div>
+      <div className="px-5 text-center text-4xl leading-12 md:px-0">{message}</div>
     </div>
   );
 }
