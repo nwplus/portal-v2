@@ -1,7 +1,22 @@
 import { db } from "@/lib/firebase/client";
 import type { Applicant, ApplicantMajor } from "@/lib/firebase/types/applicants";
-import type { Social, SocialDraft } from "@/lib/firebase/types/socials";
-import { type DocumentData, type DocumentReference, doc, getDoc, setDoc } from "firebase/firestore";
+import type {
+  HackathonsAttended,
+  RecentlyViewedProfile,
+  Social,
+  SocialDraft,
+} from "@/lib/firebase/types/socials";
+import {
+  type DocumentData,
+  type DocumentReference,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+} from "firebase/firestore";
+
+const MAX_RECENTLY_VIEWED = 10;
 
 /**
  * Utility to get a typed reference to the social document for a given user
@@ -144,8 +159,21 @@ export async function fetchOrCreateSocial(
   const existing = await fetchSocial(uid);
 
   if (existing) {
+    // TODO: update hackathonsAttended if not already set
+    if (!existing.hackathonsAttended) {
+      const hackathonsAttended = await fetchUserHackathonsAttended(uid);
+      await createOrMergeSocial(uid, email, {
+        _id: uid,
+        email,
+        hackathonsAttended,
+      });
+      return { ...existing, hackathonsAttended };
+    }
     return existing;
   }
+
+  // TODO: fetch hackathons attended for new profile
+  const hackathonsAttended = await fetchUserHackathonsAttended(uid);
 
   const newSocial: Social = {
     _id: uid,
@@ -161,6 +189,7 @@ export async function fetchOrCreateSocial(
       github: applicant?.skills?.github,
       website: applicant?.skills?.portfolio,
     },
+    hackathonsAttended,
   };
 
   await createOrMergeSocial(uid, email, newSocial);
@@ -218,4 +247,143 @@ export async function createOrMergeSocial(
   const cleanedPayload = removeUndefinedFields(payload);
 
   await setDoc(ref, cleanedPayload, { merge: true });
+}
+
+/**
+ * Fetches which hackathons a user has been accepted to
+ * Checks all hackathon collections for accepted application status
+ *
+ * @param uid - firebase auth user id
+ * @returns object indicating which hackathons the user has been accepted to
+ */
+export async function fetchUserHackathonsAttended(uid: string): Promise<HackathonsAttended> {
+  const hackathonsAttended: HackathonsAttended = {
+    hackcamp: false,
+    nwhacks: false,
+    "cmd-f": false,
+  };
+
+  try {
+    // Get all hackathon collection names
+    const hackathonsSnap = await getDocs(collection(db, "Hackathons"));
+    const hackathonIds = hackathonsSnap.docs.map((d) => d.id);
+
+    // Check each hackathon for accepted status
+    for (const hackathonId of hackathonIds) {
+      const applicantRef = doc(db, "Hackathons", hackathonId, "Applicants", uid);
+      const applicantSnap = await getDoc(applicantRef);
+
+      if (applicantSnap.exists()) {
+        const applicant = applicantSnap.data() as Applicant;
+        const status = applicant.status?.applicationStatus;
+
+        if (status && status === "acceptedAndAttending") {
+          // Determine which hackathon type this is
+          const lowerCaseId = hackathonId.toLowerCase();
+          if (lowerCaseId.startsWith("hackcamp")) {
+            hackathonsAttended.hackcamp = true;
+          } else if (lowerCaseId.startsWith("nwhacks")) {
+            hackathonsAttended.nwhacks = true;
+          } else if (lowerCaseId.startsWith("cmd-f") || lowerCaseId.startsWith("cmdf")) {
+            hackathonsAttended["cmd-f"] = true;
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error fetching hackathons attended:", error);
+  }
+
+  return hackathonsAttended;
+}
+
+/**
+ * Adds a profile to the viewer's recently viewed list, following LRU logic
+ * - If the profile already exists, moves it to the front
+ * - If at capacity (10), removes the oldest entry
+ * - Respects target user's hideRecentlyViewed setting
+ *
+ * @param viewerUid - UID of the user viewing the profile
+ * @param viewerEmail - email of the user viewing the profile
+ * @param targetUid - UID of the profile being viewed
+ * @returns Promise that resolves when the update is complete
+ */
+export async function addToRecentlyViewed(
+  viewerUid: string,
+  viewerEmail: string,
+  targetUid: string,
+  targetName?: string,
+): Promise<void> {
+  if (viewerUid === targetUid) return;
+
+  try {
+    const targetSocial = await fetchSocial(targetUid);
+    if (targetSocial?.hideRecentlyViewed) {
+      return;
+    }
+
+    // Get current viewer's social profile
+    const viewerSocial = await fetchSocial(viewerUid);
+    const currentList: RecentlyViewedProfile[] = viewerSocial?.recentlyViewedProfiles ?? [];
+
+    // if present remove existing entry
+    const filteredList = currentList.filter((entry) => entry.profileId !== targetUid);
+
+    const newEntry: RecentlyViewedProfile = {
+      name: targetName || targetSocial?.preferredName || "Unknown",
+      profileId: targetUid,
+      viewedAt: Date.now(),
+    };
+
+    const updatedList = [newEntry, ...filteredList].slice(0, MAX_RECENTLY_VIEWED);
+
+    await createOrMergeSocial(viewerUid, viewerEmail, {
+      _id: viewerUid,
+      email: viewerEmail,
+      recentlyViewedProfiles: updatedList,
+    });
+  } catch (error) {
+    console.error("Error adding to recently viewed:", error);
+  }
+}
+
+/**
+ * Removes a profile from the viewer's recently viewed list
+ *
+ * @param viewerUid - UID of the user whose list to update
+ * @param viewerEmail - email of the user
+ * @param targetProfileId - profileId of the profile to remove
+ * @returns Promise that resolves when the update is complete
+ */
+export async function removeFromRecentlyViewed(
+  viewerUid: string,
+  viewerEmail: string,
+  targetProfileId: string,
+): Promise<void> {
+  try {
+    const viewerSocial = await fetchSocial(viewerUid);
+    const currentList: RecentlyViewedProfile[] = viewerSocial?.recentlyViewedProfiles ?? [];
+
+    const updatedList = currentList.filter((entry) => entry.profileId !== targetProfileId);
+
+    await createOrMergeSocial(viewerUid, viewerEmail, {
+      _id: viewerUid,
+      email: viewerEmail,
+      recentlyViewedProfiles: updatedList,
+    });
+  } catch (error) {
+    console.error("Error removing from recently viewed:", error);
+  }
+}
+
+/**
+ * Fetches multiple social profiles by their UIDs
+ * Used to display recently viewed profiles with their info
+ *
+ * @param uids - array of user IDs to fetch
+ * @returns array of social profiles (null for missing profiles)
+ */
+export async function fetchSocialsByUids(uids: string[]): Promise<(Social | null)[]> {
+  const promises = uids.map((uid) => fetchSocial(uid));
+  return Promise.all(promises);
 }
