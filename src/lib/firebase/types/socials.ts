@@ -4,6 +4,26 @@
 export type TagCategory = "school" | "areaOfStudy" | "year" | "role";
 
 /**
+ * Entry in the recently viewed profiles list
+ * Stored as an LRU cache with max 10 entries
+ */
+export interface RecentlyViewedProfile {
+  name: string;
+  profileId: string;
+  viewedAt: number; // timestamp in ms
+}
+
+/**
+ * Tracks which hackathons a user has attended
+ * Determined automatically from hackathon attendance status
+ */
+export interface HackathonsAttended {
+  hackcamp: boolean;
+  nwhacks: boolean;
+  "cmd-f": boolean;
+}
+
+/**
  * Social profile - global across all hackathons
  * Users manually fill out their profile information
  * Path: Socials/{uid}
@@ -28,6 +48,8 @@ export interface Social {
     linkedin?: string;
     website?: string;
   };
+  recentlyViewedProfiles?: RecentlyViewedProfile[];
+  hackathonsAttended?: HackathonsAttended;
 }
 
 /**
