@@ -159,7 +159,6 @@ export async function fetchOrCreateSocial(
   const existing = await fetchSocial(uid);
 
   if (existing) {
-    // TODO: update hackathonsAttended if not already set
     if (!existing.hackathonsAttended) {
       const hackathonsAttended = await fetchUserHackathonsAttended(uid);
       await createOrMergeSocial(uid, email, {
@@ -172,7 +171,6 @@ export async function fetchOrCreateSocial(
     return existing;
   }
 
-  // TODO: fetch hackathons attended for new profile
   const hackathonsAttended = await fetchUserHackathonsAttended(uid);
 
   const newSocial: Social = {
