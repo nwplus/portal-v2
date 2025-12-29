@@ -76,7 +76,10 @@ export const socialProfileSchema = z.object({
 
   bio: z
     .string()
-    .refine((val) => !val || countWords(val) <= MAX_BIO_WORDS, `Must be at most ${MAX_BIO_WORDS} words`)
+    .refine(
+      (val) => !val || countWords(val) <= MAX_BIO_WORDS,
+      `Must be at most ${MAX_BIO_WORDS} words`,
+    )
     .optional()
     .or(z.literal("")),
 
@@ -118,19 +121,21 @@ export type SocialProfileFormValues = z.infer<typeof socialProfileSchema>;
 /**
  * Derives form default values from an existing Social profile
  */
-export function deriveDefaultValues(profile: {
-  pronouns?: string;
-  bio?: string;
-  profilePictureIndex?: number;
-  tagsToHide?: Array<"school" | "areaOfStudy" | "year" | "role">;
-  socialLinks?: {
-    linkedin?: string;
-    github?: string;
-    website?: string;
-    instagram?: string;
-    devpost?: string;
-  };
-} | null): SocialProfileFormValues {
+export function deriveDefaultValues(
+  profile: {
+    pronouns?: string;
+    bio?: string;
+    profilePictureIndex?: number;
+    tagsToHide?: Array<"school" | "areaOfStudy" | "year" | "role">;
+    socialLinks?: {
+      linkedin?: string;
+      github?: string;
+      website?: string;
+      instagram?: string;
+      devpost?: string;
+    };
+  } | null,
+): SocialProfileFormValues {
   return {
     pronouns: profile?.pronouns ?? "",
     bio: profile?.bio ?? "",
@@ -145,4 +150,3 @@ export function deriveDefaultValues(profile: {
     },
   };
 }
-

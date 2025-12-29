@@ -423,14 +423,24 @@ export function MyProfile({
           </div>
 
           <div className="absolute top-6 right-6 flex gap-2">
-            <Button type="button" variant="ghost" size="sm" onClick={handleCancel} disabled={isSaving}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleCancel}
+              disabled={isSaving}
+            >
               Cancel
             </Button>
             <Button
               type="submit"
               variant="secondary"
               size="sm"
-              disabled={isSaving || bioWordCount > MAX_BIO_WORDS || watchedPronouns.length > MAX_PRONOUNS_LENGTH}
+              disabled={
+                isSaving ||
+                bioWordCount > MAX_BIO_WORDS ||
+                watchedPronouns.length > MAX_PRONOUNS_LENGTH
+              }
             >
               {isSaving ? "Saving..." : "Save"}
             </Button>
@@ -455,7 +465,9 @@ export function MyProfile({
             {errors.pronouns && <span className="text-text-error">{errors.pronouns.message}</span>}
             <span
               className={
-                watchedPronouns.length > MAX_PRONOUNS_LENGTH ? "text-text-error" : "text-text-secondary"
+                watchedPronouns.length > MAX_PRONOUNS_LENGTH
+                  ? "text-text-error"
+                  : "text-text-secondary"
               }
             >
               {watchedPronouns.length}/{MAX_PRONOUNS_LENGTH} characters
@@ -472,7 +484,9 @@ export function MyProfile({
             className="w-full resize-none rounded-md border border-border-subtle bg-bg-text-field px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:border-border-active focus:outline-none"
           />
           <div className="mt-1 flex items-center justify-between text-xs">
-            <span className={bioWordCount > MAX_BIO_WORDS ? "text-text-error" : "text-text-secondary"}>
+            <span
+              className={bioWordCount > MAX_BIO_WORDS ? "text-text-error" : "text-text-secondary"}
+            >
               {bioWordCount} words
             </span>
             <span className="text-text-secondary">Max {MAX_BIO_WORDS} words</span>
@@ -523,13 +537,15 @@ export function MyProfile({
                 <Linkedin className="size-6 shrink-0 text-text-secondary" />
                 <Input
                   type="text"
-                  placeholder="@username"
+                  placeholder="username"
                   {...register("socialLinks.linkedin")}
                   className="text-base"
                 />
               </div>
               {errors.socialLinks?.linkedin && (
-                <p className="mt-1 ml-9 text-text-error text-xs">{errors.socialLinks.linkedin.message}</p>
+                <p className="mt-1 ml-9 text-text-error text-xs">
+                  {errors.socialLinks.linkedin.message}
+                </p>
               )}
             </div>
 
@@ -540,13 +556,15 @@ export function MyProfile({
                 </div>
                 <Input
                   type="text"
-                  placeholder="@username"
+                  placeholder="username"
                   {...register("socialLinks.devpost")}
                   className="text-base"
                 />
               </div>
               {errors.socialLinks?.devpost && (
-                <p className="mt-1 ml-9 text-text-error text-xs">{errors.socialLinks.devpost.message}</p>
+                <p className="mt-1 ml-9 text-text-error text-xs">
+                  {errors.socialLinks.devpost.message}
+                </p>
               )}
             </div>
 
@@ -561,7 +579,9 @@ export function MyProfile({
                 />
               </div>
               {errors.socialLinks?.website && (
-                <p className="mt-1 ml-9 text-text-error text-xs">{errors.socialLinks.website.message}</p>
+                <p className="mt-1 ml-9 text-text-error text-xs">
+                  {errors.socialLinks.website.message}
+                </p>
               )}
             </div>
 
@@ -576,7 +596,9 @@ export function MyProfile({
                 />
               </div>
               {errors.socialLinks?.instagram && (
-                <p className="mt-1 ml-9 text-text-error text-xs">{errors.socialLinks.instagram.message}</p>
+                <p className="mt-1 ml-9 text-text-error text-xs">
+                  {errors.socialLinks.instagram.message}
+                </p>
               )}
             </div>
 
@@ -585,13 +607,15 @@ export function MyProfile({
                 <Github className="size-6 shrink-0 text-text-secondary" />
                 <Input
                   type="text"
-                  placeholder="@username"
+                  placeholder="username"
                   {...register("socialLinks.github")}
                   className="text-base"
                 />
               </div>
               {errors.socialLinks?.github && (
-                <p className="mt-1 ml-9 text-text-error text-xs">{errors.socialLinks.github.message}</p>
+                <p className="mt-1 ml-9 text-text-error text-xs">
+                  {errors.socialLinks.github.message}
+                </p>
               )}
             </div>
           </div>
