@@ -1,11 +1,20 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { validatePronouns, validateSocialUsername, validateWebsite } from "@/lib/application/utils";
 import type { Social, TagCategory } from "@/lib/firebase/types/socials";
+import {
+  MAX_BIO_WORDS,
+  MAX_PRONOUNS_LENGTH,
+  type SocialProfileFormValues,
+  deriveDefaultValues,
+  socialProfileSchema,
+} from "@/lib/social-profile/schema";
 import { createOrMergeSocial } from "@/services/socials";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Github, Globe, Instagram, Linkedin } from "lucide-react";
 import { useState } from "react";
+import type { Resolver } from "react-hook-form";
+import { useForm } from "react-hook-form";
 
 const PROFILE_PICTURES = [
   "/assets/profiles/default-nugget.svg",
@@ -39,10 +48,8 @@ const NUGGET_TAG_COLORS = [
   "#3d38b0", // tears-nugget
 ] as const;
 
-const SELECTABLE_PICTURES = PROFILE_PICTURES.slice(1); // default profile pic is not selectable
+const SELECTABLE_PICTURES = PROFILE_PICTURES.slice(1); // default profile pic should not be selectable
 const DEFAULT_PROFILE_INDEX = 0;
-const MAX_BIO_WORDS = 20;
-const MAX_PRONOUNS_LENGTH = 15;
 
 const getTagBackgroundColor = (profileIndex: number): string => {
   return NUGGET_TAG_COLORS[profileIndex] || NUGGET_TAG_COLORS[DEFAULT_PROFILE_INDEX];
@@ -68,25 +75,30 @@ export function MyProfile({
   const [profileMode, setProfileMode] = useState<ProfileMode>("view");
   const [isSaving, setIsSaving] = useState(false);
 
-  const [editBio, setEditBio] = useState("");
-  const [editLinkedin, setEditLinkedin] = useState("");
-  const [editGithub, setEditGithub] = useState("");
-  const [editWebsite, setEditWebsite] = useState("");
-  const [editInstagram, setEditInstagram] = useState("");
-  const [editDevpost, setEditDevpost] = useState("");
-  const [editPronouns, setEditPronouns] = useState("");
-  const [editProfilePictureIndex, setEditProfilePictureIndex] = useState(DEFAULT_PROFILE_INDEX);
-  const [editTagsToHide, setEditTagsToHide] = useState<TagCategory[]>([]);
-
-  const [errors, setErrors] = useState({
-    pronouns: "",
-    linkedin: "",
-    github: "",
-    website: "",
-    instagram: "",
-    devpost: "",
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+    formState: { errors },
+  } = useForm<SocialProfileFormValues>({
+    // biome-ignore lint/suspicious/noExplicitAny: resolver's generics do not align cleanly with our schema type, but runtime shapes match SocialProfileFormValues
+    resolver: zodResolver(socialProfileSchema as any) as Resolver<SocialProfileFormValues>,
+    mode: "onBlur",
+    reValidateMode: "onChange",
+    defaultValues: deriveDefaultValues(socialProfile),
   });
 
+  // Watch form values for UI updates
+  const watchedBio = watch("bio") ?? "";
+  const watchedPronouns = watch("pronouns") ?? "";
+  const watchedProfilePictureIndex = watch("profilePictureIndex");
+  const watchedTagsToHide = watch("tagsToHide");
+
+  const bioWordCount = watchedBio.trim().split(/\s+/).filter(Boolean).length;
+
+  // Deriving display values from profile data
   const pronouns = socialProfile?.pronouns;
   const bio = socialProfile?.bio;
   const profilePictureIndex = socialProfile?.profilePictureIndex ?? DEFAULT_PROFILE_INDEX;
@@ -162,7 +174,7 @@ export function MyProfile({
       : null,
   ].filter((social): social is NonNullable<typeof social> => social !== null);
 
-  // Tags are populated from hackathon-specific application data
+  // Tags are populated from the current hackathon's application data
   const allTags: Array<{ text: string; category: TagCategory }> = [];
   if (socialProfile?.school) allTags.push({ text: socialProfile.school, category: "school" });
   if (socialProfile?.areaOfStudy)
@@ -177,53 +189,16 @@ export function MyProfile({
   const visibleTags = allTags.filter((tag) => !hiddenCategories.has(tag.category));
 
   const handleOpenEdit = () => {
-    setEditBio(bio || "");
-    setEditPronouns(pronouns || "");
-    setEditLinkedin(linkedin || "");
-    setEditGithub(github || "");
-    setEditWebsite(website || "");
-    setEditInstagram(instagram || "");
-    setEditDevpost(devpost || "");
-    setEditProfilePictureIndex(profilePictureIndex);
-    setEditTagsToHide(socialProfile?.tagsToHide || []);
-    setErrors({ pronouns: "", linkedin: "", github: "", website: "", instagram: "", devpost: "" });
+    reset(deriveDefaultValues(socialProfile));
     setProfileMode("edit");
   };
 
-  const bioWordCount = editBio.trim().split(/\s+/).filter(Boolean).length;
+  const handleCancel = () => {
+    reset(deriveDefaultValues(socialProfile));
+    setProfileMode("view");
+  };
 
-  const handleSave = async () => {
-    if (bioWordCount > MAX_BIO_WORDS) {
-      return;
-    }
-
-    const pronounsError = validatePronouns(editPronouns, MAX_PRONOUNS_LENGTH);
-    const linkedinError = validateSocialUsername(editLinkedin, "LinkedIn");
-    const githubError = validateSocialUsername(editGithub, "GitHub");
-    const instagramError = validateSocialUsername(editInstagram, "Instagram");
-    const devpostError = validateSocialUsername(editDevpost, "Devpost");
-    const websiteError = validateWebsite(editWebsite);
-
-    setErrors({
-      pronouns: pronounsError || "",
-      linkedin: linkedinError || "",
-      github: githubError || "",
-      website: websiteError || "",
-      instagram: instagramError || "",
-      devpost: devpostError || "",
-    });
-
-    if (
-      pronounsError ||
-      linkedinError ||
-      githubError ||
-      instagramError ||
-      devpostError ||
-      websiteError
-    ) {
-      return;
-    }
-
+  const onSubmit = async (data: SocialProfileFormValues) => {
     try {
       setIsSaving(true);
 
@@ -231,21 +206,21 @@ export function MyProfile({
         _id: uid,
         email,
         preferredName: socialProfile?.preferredName,
-        pronouns: editPronouns.trim() || undefined,
-        bio: editBio.trim() || undefined,
-        profilePictureIndex: editProfilePictureIndex,
+        pronouns: data.pronouns?.trim() || undefined,
+        bio: data.bio?.trim() || undefined,
+        profilePictureIndex: data.profilePictureIndex,
         areaOfStudy: socialProfile?.areaOfStudy,
         school: socialProfile?.school,
         year: socialProfile?.year,
         role: socialProfile?.role,
         hideRecentlyViewed: socialProfile?.hideRecentlyViewed ?? false,
-        tagsToHide: editTagsToHide.length > 0 ? editTagsToHide : undefined,
+        tagsToHide: data.tagsToHide.length > 0 ? data.tagsToHide : undefined,
         socialLinks: {
-          linkedin: editLinkedin.trim() || undefined,
-          github: editGithub.trim() || undefined,
-          website: editWebsite.trim() || undefined,
-          instagram: editInstagram.trim() || undefined,
-          devpost: editDevpost.trim() || undefined,
+          linkedin: data.socialLinks.linkedin?.trim() || undefined,
+          github: data.socialLinks.github?.trim() || undefined,
+          website: data.socialLinks.website?.trim() || undefined,
+          instagram: data.socialLinks.instagram?.trim() || undefined,
+          devpost: data.socialLinks.devpost?.trim() || undefined,
         },
       };
 
@@ -288,6 +263,16 @@ export function MyProfile({
     }
   };
 
+  const toggleTagVisibility = (category: TagCategory) => {
+    const current = watchedTagsToHide;
+    const isHidden = current.includes(category);
+    setValue(
+      "tagsToHide",
+      isHidden ? current.filter((cat) => cat !== category) : [...current, category],
+    );
+  };
+
+  // View: display user's profile information
   if (profileMode === "view") {
     return (
       <div className="relative min-h-[500px] rounded-lg border border-border-subtle bg-[#292929]/30 px-6 py-10 backdrop-blur-md md:p-12">
@@ -362,275 +347,256 @@ export function MyProfile({
     );
   }
 
-  if (profileMode === "edit") {
+  // Select picture view: allow user to select a new profile picture
+  if (profileMode === "select-picture") {
     return (
-      <div className="min-h-[500px] rounded-lg border border-border-subtle bg-[#292929]/30 px-6 py-10 backdrop-blur-md md:p-12">
-        <div className="space-y-6">
-          <div className="flex justify-between">
-            <div className="flex items-center gap-12">
-              <Avatar
-                onClick={() => {
-                  if (window.innerWidth < 768) {
-                    setProfileMode("select-picture");
-                  }
-                }}
-                className="size-30 cursor-pointer md:size-36 md:cursor-default"
-              >
-                <AvatarImage src={PROFILE_PICTURES[editProfilePictureIndex]} />
-                <AvatarFallback className="text-2xl">
-                  {displayName.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <Button
-                variant="secondary"
-                size="default"
-                className="hidden md:block"
-                onClick={() => setProfileMode("select-picture")}
-              >
-                Choose profile photo
-              </Button>
-            </div>
-
-            <div className="absolute top-6 right-6 flex gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setProfileMode("view")}
-                disabled={isSaving}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleSave}
-                disabled={
-                  isSaving ||
-                  bioWordCount > MAX_BIO_WORDS ||
-                  editPronouns.length > MAX_PRONOUNS_LENGTH
-                }
-              >
-                {isSaving ? "Saving..." : "Save"}
-              </Button>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="font-medium text-3xl text-text-primary">
-              {displayName} {pronouns && <span className="text-text-secondary">({pronouns})</span>}
-            </h3>
-          </div>
-
-          <div>
-            <h4 className="mb-2 font-medium text-md text-text-primary">Pronouns</h4>
-            <Input
-              type="text"
-              placeholder="e.g. she/her, he/him, they/them"
-              value={editPronouns}
-              onChange={(e) => setEditPronouns(e.target.value)}
-              className="text-base"
-            />
-            <div className="mt-1 flex items-center justify-between text-xs">
-              {errors.pronouns && <span className="text-text-error">{errors.pronouns}</span>}
-              <span
-                className={
-                  editPronouns.length > MAX_PRONOUNS_LENGTH
-                    ? "text-text-error"
-                    : "text-text-secondary"
-                }
-              >
-                {editPronouns.length}/{MAX_PRONOUNS_LENGTH} characters
-              </span>
-            </div>
-          </div>
-
-          <div>
-            <h4 className="mb-2 font-medium text-md text-text-primary">Bio</h4>
-            <textarea
-              id="bio"
-              placeholder="Tell us about yourself..."
-              value={editBio}
-              onChange={(e) => setEditBio(e.target.value)}
-              rows={1}
-              className="w-full resize-none rounded-md border border-border-subtle bg-bg-text-field px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:border-border-active focus:outline-none"
-            />
-            <div className="mt-1 flex items-center justify-between text-xs">
-              <span
-                className={bioWordCount > MAX_BIO_WORDS ? "text-text-error" : "text-text-secondary"}
-              >
-                {bioWordCount} words
-              </span>
-              <span className="text-text-secondary">Max {MAX_BIO_WORDS} words</span>
-            </div>
-          </div>
-
-          <div>
-            <h4 className="mb-3 font-medium text-md text-text-primary">Tags</h4>
-            <p className="mb-3 text-text-secondary text-xs">
-              Auto-generated from your application. Click any tag to hide/show its category on your
-              profile.
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {allTags.length > 0 ? (
-                allTags.map((tag, index) => {
-                  const isHidden = editTagsToHide.includes(tag.category);
-                  const tagColor = getTagBackgroundColor(editProfilePictureIndex);
-                  return (
-                    <button
-                      type="button"
-                      key={`${tag.text}-${index}`}
-                      onClick={() => {
-                        setEditTagsToHide((prev) =>
-                          isHidden
-                            ? prev.filter((cat) => cat !== tag.category)
-                            : [...prev, tag.category],
-                        );
-                      }}
-                      className={`rounded-lg px-3 py-1.5 font-medium text-sm transition-opacity ${
-                        isHidden
-                          ? "text-text-secondary line-through opacity-50"
-                          : "text-text-primary"
-                      }`}
-                      style={{
-                        backgroundColor: isHidden ? `${tagColor}30` : tagColor,
-                      }}
-                    >
-                      {tag.text}
-                    </button>
-                  );
-                })
-              ) : (
-                <span className="text-sm text-text-secondary">
-                  No tags available. Complete your application to generate tags.
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <h4 className="mb-4 font-medium text-base text-text-primary">Socials</h4>
-            <div className="space-y-3">
-              <div>
-                <div className="flex items-center gap-3">
-                  <Linkedin className="size-6 shrink-0 text-text-secondary" />
-                  <Input
-                    type="text"
-                    placeholder="@username"
-                    value={editLinkedin}
-                    onChange={(e) => setEditLinkedin(e.target.value)}
-                    className="text-base"
+      <div className="mx-auto min-h-[500px] max-w-2xl rounded-lg border border-border-subtle bg-[#292929]/30 px-6 py-10 backdrop-blur-md md:p-12">
+        <div className="flex justify-center">
+          <div className="grid grid-cols-3 place-items-center gap-8">
+            {SELECTABLE_PICTURES.map((picture, index) => {
+              const actualIndex = index + 1;
+              return (
+                <button
+                  key={actualIndex}
+                  type="button"
+                  onClick={() => setValue("profilePictureIndex", actualIndex)}
+                  className={`group relative size-24 overflow-hidden rounded-full transition-all hover:scale-105 md:size-36 ${
+                    watchedProfilePictureIndex === actualIndex
+                      ? "ring-4 ring-border-active"
+                      : "hover:ring-2 hover:ring-border-subtle"
+                  }`}
+                >
+                  <img
+                    src={picture}
+                    alt={`Profile ${actualIndex}`}
+                    className="size-full object-cover"
                   />
-                </div>
-                {errors.linkedin && (
-                  <p className="mt-1 ml-9 text-text-error text-xs">{errors.linkedin}</p>
-                )}
-              </div>
-              <div>
-                <div className="flex items-center gap-3">
-                  <div className="flex size-6 shrink-0 items-center justify-center rounded-full border border-text-secondary text-text-secondary">
-                    <span className="font-bold text-xs">D</span>
-                  </div>
-                  <Input
-                    type="text"
-                    placeholder="@username"
-                    value={editDevpost}
-                    onChange={(e) => setEditDevpost(e.target.value)}
-                    className="text-base"
-                  />
-                </div>
-                {errors.devpost && (
-                  <p className="mt-1 ml-9 text-text-error text-xs">{errors.devpost}</p>
-                )}
-              </div>
-              <div>
-                <div className="flex items-center gap-3">
-                  <Globe className="size-6 shrink-0 text-text-secondary" />
-                  <Input
-                    type="url"
-                    placeholder="www.example.com"
-                    value={editWebsite}
-                    onChange={(e) => setEditWebsite(e.target.value)}
-                    className="text-base"
-                  />
-                </div>
-                {errors.website && (
-                  <p className="mt-1 ml-9 text-text-error text-xs">{errors.website}</p>
-                )}
-              </div>
-              <div>
-                <div className="flex items-center gap-3">
-                  <Instagram className="size-6 shrink-0 text-text-secondary" />
-                  <Input
-                    type="text"
-                    placeholder="@username"
-                    value={editInstagram}
-                    onChange={(e) => setEditInstagram(e.target.value)}
-                    className="text-base"
-                  />
-                </div>
-                {errors.instagram && (
-                  <p className="mt-1 ml-9 text-text-error text-xs">{errors.instagram}</p>
-                )}
-              </div>
-              <div>
-                <div className="flex items-center gap-3">
-                  <Github className="size-6 shrink-0 text-text-secondary" />
-                  <Input
-                    type="text"
-                    placeholder="@username"
-                    value={editGithub}
-                    onChange={(e) => setEditGithub(e.target.value)}
-                    className="text-base"
-                  />
-                </div>
-                {errors.github && (
-                  <p className="mt-1 ml-9 text-text-error text-xs">{errors.github}</p>
-                )}
-              </div>
-            </div>
+                </button>
+              );
+            })}
           </div>
+        </div>
+
+        <div className="mt-6 flex justify-center gap-3">
+          <Button variant="ghost" onClick={() => setProfileMode("edit")}>
+            Cancel
+          </Button>
+          <Button variant="secondary" onClick={() => setProfileMode("edit")}>
+            Save
+          </Button>
         </div>
       </div>
     );
   }
 
-  // select-picture mode
+  // Edit view: allow user to edit profile information
   return (
-    <div className="mx-auto min-h-[500px] max-w-2xl rounded-lg border border-border-subtle bg-[#292929]/30 px-6 py-10 backdrop-blur-md md:p-12">
-      <div className="flex justify-center">
-        <div className="grid grid-cols-3 place-items-center gap-8">
-          {SELECTABLE_PICTURES.map((picture, index) => {
-            const actualIndex = index + 1;
-            return (
-              <button
-                key={actualIndex}
-                type="button"
-                onClick={() => setEditProfilePictureIndex(actualIndex)}
-                className={`group relative size-24 overflow-hidden rounded-full transition-all hover:scale-105 md:size-36 ${
-                  editProfilePictureIndex === actualIndex
-                    ? "ring-4 ring-border-active"
-                    : "hover:ring-2 hover:ring-border-subtle"
-                }`}
-              >
-                <img
-                  src={picture}
-                  alt={`Profile ${actualIndex}`}
-                  className="size-full object-cover"
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="min-h-[500px] rounded-lg border border-border-subtle bg-[#292929]/30 px-6 py-10 backdrop-blur-md md:p-12"
+    >
+      <div className="space-y-6">
+        <div className="flex justify-between">
+          <div className="flex items-center gap-12">
+            <Avatar
+              onClick={() => {
+                if (window.innerWidth < 768) {
+                  setProfileMode("select-picture");
+                }
+              }}
+              className="size-30 cursor-pointer md:size-36 md:cursor-default"
+            >
+              <AvatarImage src={PROFILE_PICTURES[watchedProfilePictureIndex]} />
+              <AvatarFallback className="text-2xl">
+                {displayName.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <Button
+              type="button"
+              variant="secondary"
+              size="default"
+              className="hidden md:block"
+              onClick={() => setProfileMode("select-picture")}
+            >
+              Choose profile photo
+            </Button>
+          </div>
+
+          <div className="absolute top-6 right-6 flex gap-2">
+            <Button type="button" variant="ghost" size="sm" onClick={handleCancel} disabled={isSaving}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="secondary"
+              size="sm"
+              disabled={isSaving || bioWordCount > MAX_BIO_WORDS || watchedPronouns.length > MAX_PRONOUNS_LENGTH}
+            >
+              {isSaving ? "Saving..." : "Save"}
+            </Button>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="font-medium text-3xl text-text-primary">
+            {displayName} {pronouns && <span className="text-text-secondary">({pronouns})</span>}
+          </h3>
+        </div>
+
+        <div>
+          <h4 className="mb-2 font-medium text-md text-text-primary">Pronouns</h4>
+          <Input
+            type="text"
+            placeholder="e.g. she/her, he/him, they/them"
+            {...register("pronouns")}
+            className="text-base"
+          />
+          <div className="mt-1 flex items-center justify-between text-xs">
+            {errors.pronouns && <span className="text-text-error">{errors.pronouns.message}</span>}
+            <span
+              className={
+                watchedPronouns.length > MAX_PRONOUNS_LENGTH ? "text-text-error" : "text-text-secondary"
+              }
+            >
+              {watchedPronouns.length}/{MAX_PRONOUNS_LENGTH} characters
+            </span>
+          </div>
+        </div>
+
+        <div>
+          <h4 className="mb-2 font-medium text-md text-text-primary">Bio</h4>
+          <textarea
+            placeholder="Tell us about yourself..."
+            {...register("bio")}
+            rows={1}
+            className="w-full resize-none rounded-md border border-border-subtle bg-bg-text-field px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:border-border-active focus:outline-none"
+          />
+          <div className="mt-1 flex items-center justify-between text-xs">
+            <span className={bioWordCount > MAX_BIO_WORDS ? "text-text-error" : "text-text-secondary"}>
+              {bioWordCount} words
+            </span>
+            <span className="text-text-secondary">Max {MAX_BIO_WORDS} words</span>
+          </div>
+          {errors.bio && <p className="mt-1 text-text-error text-xs">{errors.bio.message}</p>}
+        </div>
+
+        <div>
+          <h4 className="mb-3 font-medium text-md text-text-primary">Tags</h4>
+          <p className="mb-3 text-text-secondary text-xs">
+            Auto-generated from your application. Click any tag to hide/show its category on your
+            profile.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {allTags.length > 0 ? (
+              allTags.map((tag, index) => {
+                const isHidden = watchedTagsToHide.includes(tag.category);
+                const tagColor = getTagBackgroundColor(watchedProfilePictureIndex);
+                return (
+                  <button
+                    type="button"
+                    key={`${tag.text}-${index}`}
+                    onClick={() => toggleTagVisibility(tag.category)}
+                    className={`rounded-lg px-3 py-1.5 font-medium text-sm transition-opacity ${
+                      isHidden ? "text-text-secondary line-through opacity-50" : "text-text-primary"
+                    }`}
+                    style={{
+                      backgroundColor: isHidden ? `${tagColor}30` : tagColor,
+                    }}
+                  >
+                    {tag.text}
+                  </button>
+                );
+              })
+            ) : (
+              <span className="text-sm text-text-secondary">
+                No tags available. Complete your application to generate tags.
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <h4 className="mb-4 font-medium text-base text-text-primary">Socials</h4>
+          <div className="space-y-3">
+            <div>
+              <div className="flex items-center gap-3">
+                <Linkedin className="size-6 shrink-0 text-text-secondary" />
+                <Input
+                  type="text"
+                  placeholder="@username"
+                  {...register("socialLinks.linkedin")}
+                  className="text-base"
                 />
-              </button>
-            );
-          })}
+              </div>
+              {errors.socialLinks?.linkedin && (
+                <p className="mt-1 ml-9 text-text-error text-xs">{errors.socialLinks.linkedin.message}</p>
+              )}
+            </div>
+
+            <div>
+              <div className="flex items-center gap-3">
+                <div className="flex size-6 shrink-0 items-center justify-center rounded-full border border-text-secondary text-text-secondary">
+                  <span className="font-bold text-xs">D</span>
+                </div>
+                <Input
+                  type="text"
+                  placeholder="@username"
+                  {...register("socialLinks.devpost")}
+                  className="text-base"
+                />
+              </div>
+              {errors.socialLinks?.devpost && (
+                <p className="mt-1 ml-9 text-text-error text-xs">{errors.socialLinks.devpost.message}</p>
+              )}
+            </div>
+
+            <div>
+              <div className="flex items-center gap-3">
+                <Globe className="size-6 shrink-0 text-text-secondary" />
+                <Input
+                  type="url"
+                  placeholder="www.example.com"
+                  {...register("socialLinks.website")}
+                  className="text-base"
+                />
+              </div>
+              {errors.socialLinks?.website && (
+                <p className="mt-1 ml-9 text-text-error text-xs">{errors.socialLinks.website.message}</p>
+              )}
+            </div>
+
+            <div>
+              <div className="flex items-center gap-3">
+                <Instagram className="size-6 shrink-0 text-text-secondary" />
+                <Input
+                  type="text"
+                  placeholder="@username"
+                  {...register("socialLinks.instagram")}
+                  className="text-base"
+                />
+              </div>
+              {errors.socialLinks?.instagram && (
+                <p className="mt-1 ml-9 text-text-error text-xs">{errors.socialLinks.instagram.message}</p>
+              )}
+            </div>
+
+            <div>
+              <div className="flex items-center gap-3">
+                <Github className="size-6 shrink-0 text-text-secondary" />
+                <Input
+                  type="text"
+                  placeholder="@username"
+                  {...register("socialLinks.github")}
+                  className="text-base"
+                />
+              </div>
+              {errors.socialLinks?.github && (
+                <p className="mt-1 ml-9 text-text-error text-xs">{errors.socialLinks.github.message}</p>
+              )}
+            </div>
+          </div>
         </div>
       </div>
-
-      <div className="mt-6 flex justify-center gap-3">
-        <Button variant="ghost" onClick={() => setProfileMode("edit")}>
-          Cancel
-        </Button>
-        <Button variant="secondary" onClick={() => setProfileMode("edit")}>
-          Save
-        </Button>
-      </div>
-    </div>
+    </form>
   );
 }
