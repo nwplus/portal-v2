@@ -8,6 +8,13 @@ type HackathonsFlagMap = Record<z.infer<typeof VALID_HACKATHONS>, boolean>;
 type HackathonsInfoMap = Record<z.infer<typeof VALID_HACKATHONS>, string>;
 type HackathonsDataMap = Record<z.infer<typeof VALID_HACKATHONS>, Record<string, string>>;
 
+export interface NotionLinks {
+  hackerPackageIFrame: string;
+  preHackathonWorkshops: string;
+}
+
+type HackathonsNotionLinksMap = Record<z.infer<typeof VALID_HACKATHONS>, NotionLinks>;
+
 // `InternalWebsites/Portal/` in Firebase
 type PortalStore = {
   applicationDeadline?: HackathonsInfoMap;
@@ -29,7 +36,7 @@ type PortalStore = {
   submissionsOpen?: HackathonsFlagMap;
   upNextHackathon?: HackathonsFlagMap;
   visitWebsite?: HackathonsFlagMap;
-  notionLinks?: HackathonsDataMap;
+  notionLinks?: HackathonsNotionLinksMap;
   waiversAndForms?: HackathonsDataMap;
   lastEdited?: Timestamp;
   lastEditedBy?: string;
