@@ -17,7 +17,7 @@ export default function NotFound() {
   const [cursorRatio, setCursorRatio] = useState({ x: 0, y: 0 });
 
   const portalTheme = usePortalTheme();
-  const gradientStyle = portalTheme.nwhacks?.backgroundGradients?.bottomMiddle;
+  const gradientStyle = portalTheme?.nwhacks?.backgroundGradients?.bottomMiddle;
 
   useEffect(() => {
     let rafId = 0;
