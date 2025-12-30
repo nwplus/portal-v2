@@ -9,6 +9,14 @@ const formatFullname = (first?: string, last?: string) => {
   return first && last ? `${first} ${last}` : `${first || last}`;
 };
 
+const formatPronouns = (pronouns?: Record<string, boolean>, otherPronouns?: string) => {
+  const selected = Object.keys(pronouns ?? {})
+    .filter((key) => pronouns?.[key] === true)
+    .map((p) => p.replace(/\b\w/g, (c) => c.toUpperCase()));
+  if (otherPronouns?.trim()) selected.push(otherPronouns.trim());
+  return selected.length > 0 ? selected.join(", ") : null;
+};
+
 export function HackerTicket({
   applicant,
 }: {
@@ -34,7 +42,12 @@ export function HackerTicket({
                   applicant?.basicInfo?.legalLastName,
                 )}
               </div>
-              <div>{applicant?.basicInfo?.pronouns ?? "No pronouns"}</div>
+              <div className="max-w-[75%] break-words">
+                {formatPronouns(
+                  applicant?.basicInfo?.pronouns,
+                  applicant?.basicInfo?.otherPronouns,
+                )}
+              </div>
             </div>
             <div>{applicant?.basicInfo?.email ?? "No email"}</div>
           </div>

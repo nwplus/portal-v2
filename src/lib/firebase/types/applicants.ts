@@ -20,7 +20,9 @@ export interface Applicant {
     isOfLegalAge: boolean;
     countryOfResidence: string;
     educationLevel: ApplicantEducationLevel;
+    otherEducationLevel?: string;
     major: ApplicantMajor | Record<string, boolean>;
+    otherMajor?: string;
     school: string;
     canadianStatus?: string;
     culturalBackground?: {
@@ -47,7 +49,8 @@ export interface Applicant {
     haveTransExperience?: boolean;
     identifyAsUnderrepresented?: boolean;
     indigenousIdentification?: boolean;
-    pronouns?: string;
+    pronouns?: Record<string, boolean>;
+    otherPronouns?: string;
     race?: Record<string, boolean>;
   };
   questionnaire: {
