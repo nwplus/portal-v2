@@ -5,6 +5,7 @@ import {
   NwHacksIcon,
   NwHacksSidebarIcon,
 } from "@/components/icons";
+import confetti from "canvas-confetti";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import type { Applicant } from "./firebase/types/applicants";
@@ -143,6 +144,33 @@ export const getColouredHackathonIcon = (hackathonId: string): React.ComponentTy
   if (lowerName.includes("hackcamp")) return HackCampIcon; // TODO: replace during reskin
   return NwHacksIcon;
 };
+
+// Fires confetti cannons from both sides of the screen using the active hackathon's portal gradient colors
+export function fireSideCannons(activeHackathon: string) {
+  const hackathonTheme = usePortalStore.getState().hackathonTheme;
+  const colors = hackathonTheme?.[activeHackathon]?.portalGradient;
+
+  const DURATION_MS = 1500;
+  const end = Date.now() + DURATION_MS;
+
+  const frame = () => {
+    if (Date.now() > end) return;
+
+    const baseConfig = {
+      particleCount: 2,
+      spread: 55,
+      startVelocity: 60,
+      ...(colors && { colors }),
+    };
+
+    confetti({ ...baseConfig, angle: 60, origin: { x: 0, y: 0.5 } });
+    confetti({ ...baseConfig, angle: 120, origin: { x: 1, y: 0.5 } });
+
+    requestAnimationFrame(frame);
+  };
+
+  frame();
+}
 
 export const getPreferredName = (applicant: Applicant): string => {
   return applicant.basicInfo?.preferredName || applicant.basicInfo.legalFirstName;
