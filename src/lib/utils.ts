@@ -8,6 +8,7 @@ import {
 import confetti from "canvas-confetti";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import type { Applicant } from "./firebase/types/applicants";
 import { useAuthStore } from "./stores/auth-store";
 import { usePortalStore } from "./stores/portal-store";
 import type { DeepPartial } from "./types";
@@ -170,3 +171,13 @@ export function fireSideCannons(activeHackathon: string) {
 
   frame();
 }
+
+export const getPreferredName = (applicant: Applicant): string => {
+  return applicant.basicInfo?.preferredName || applicant.basicInfo.legalFirstName;
+};
+
+export const getFullName = (applicant: Applicant): string => {
+  const firstName = applicant.basicInfo?.preferredName || applicant.basicInfo.legalFirstName;
+  const lastName = applicant.basicInfo.legalLastName;
+  return `${firstName} ${lastName}`.trim();
+};

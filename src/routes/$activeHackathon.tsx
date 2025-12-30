@@ -2,6 +2,7 @@ import { AppSidebarLayout } from "@/components/layout/app-sidebar";
 import { HackathonStylesheet } from "@/components/layout/hackathon-stylesheet";
 import { VALID_HACKATHONS } from "@/lib/constants";
 import { useAuthStore } from "@/lib/stores/auth-store";
+import { useHackerStore } from "@/lib/stores/hacker-store";
 import { usePortalStore } from "@/lib/stores/portal-store";
 import type { HackathonInfoItem, HackathonName } from "@/lib/types";
 import { fetchHackathonInfo } from "@/services/latest-hackathons";
@@ -78,17 +79,37 @@ export const Route = createFileRoute("/$activeHackathon")({
       hackathonInfo = data;
     }
 
-    const { applicationsOpen } = usePortalStore.getState();
-    const { isAdmin } = useAuthStore.getState();
-    const isApplicationsOpen = applicationsOpen?.[activeHackathon] ?? false;
+    const { portalLive } = usePortalStore.getState();
+    const { isAdmin, user } = useAuthStore.getState();
+    const isPortalLive = portalLive?.[activeHackathon] ?? false;
     const isOnApplicationPage = location.pathname.includes("/application");
     const isOnLoginPage = location.pathname.includes("/login");
 
-    if (isApplicationsOpen && !isOnApplicationPage && !isOnLoginPage && !isAdmin) {
-      throw redirect({
-        to: "/$activeHackathon/application",
-        params: { activeHackathon },
-      });
+    if (isAdmin && user) {
+      await useHackerStore.getState().getOrFetch(hackathonInfo.dbCollectionName, user.uid);
+    }
+
+    if (!isOnApplicationPage && !isOnLoginPage && !isAdmin) {
+      if (!isPortalLive) {
+        throw redirect({
+          to: "/$activeHackathon/application",
+          params: { activeHackathon },
+        });
+      }
+
+      if (user) {
+        const applicant = await useHackerStore
+          .getState()
+          .getOrFetch(hackathonInfo.dbCollectionName, user.uid);
+        const applicationStatus = applicant?.status?.applicationStatus;
+
+        if (applicationStatus !== "acceptedAndAttending") {
+          throw redirect({
+            to: "/$activeHackathon/application",
+            params: { activeHackathon },
+          });
+        }
+      }
     }
 
     return hackathonInfo;
