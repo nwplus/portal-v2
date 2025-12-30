@@ -103,6 +103,8 @@ const useGeneratedPortals = (hackathons: Hackathon[]) => {
   const hackathonWeekend = usePortalStore((state) => state.hackathonWeekend);
   const hackathonStart = usePortalStore((state) => state.hackathonStart);
   const upNextHackathon = usePortalStore((state) => state.upNextHackathon);
+  const applicationsOpen = usePortalStore((state) => state.applicationsOpen);
+  const applicationDeadline = usePortalStore((state) => state.applicationDeadline);
   const portalTheme = usePortalTheme();
 
   const portals = hackathonTypes
@@ -118,19 +120,18 @@ const useGeneratedPortals = (hackathons: Hackathon[]) => {
     )
     .filter(Boolean)
     .map((hackathon, index) => {
-      const hackathonName = parseDbCollectionName(hackathon._id).displayNameShort;
-      const hackathonId = hackathonName.toLowerCase() as keyof typeof upNextHackathon;
+      const { displayNameShort } = parseDbCollectionName(hackathon._id);
+      const hackathonId = displayNameShort.toLowerCase() as keyof typeof applicationsOpen;
 
       const hackathonStartDate = hackathonStart ? new Date(hackathonStart[hackathonId]) : null;
       const dates =
         hackathonWeekend && hackathonStartDate
           ? `${hackathonWeekend ? hackathonWeekend[hackathonId] : ""}, ${hackathonStartDate.getFullYear()}`
           : "";
-      const isPassed = hackathonStartDate ? hackathonStartDate.getTime() < Date.now() : false;
 
       return {
-        hackathon: hackathonName,
-        href: `/${hackathonName.toLowerCase()}`,
+        hackathon: displayNameShort,
+        href: `/${hackathonId}`,
         id: hackathon._id,
         logo: getHackathonIcon(hackathon._id),
         dates,
@@ -138,7 +139,8 @@ const useGeneratedPortals = (hackathons: Hackathon[]) => {
         gradients: portalTheme ? portalTheme[hackathonId].portalGradient : [],
         portalSvg: portalTheme ? portalTheme[hackathonId].portalSvg : "",
         isUpNext: upNextHackathon ? upNextHackathon[hackathonId] : false,
-        isPassed,
+        applicationOpen: applicationsOpen ? applicationsOpen[hackathonId] : false,
+        applicationDeadline: applicationDeadline?.[hackathonId],
         index,
       };
     });
