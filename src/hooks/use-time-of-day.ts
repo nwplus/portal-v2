@@ -13,7 +13,6 @@ export function useTimeOfDay(): TimeOfDay {
       const hour = new Date().getHours();
       setTimeOfDay(getTimeOfDay(hour));
     };
-    updateTimeOfDay();
 
     const interval = setInterval(updateTimeOfDay, 60000);
 

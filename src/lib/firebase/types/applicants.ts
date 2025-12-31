@@ -52,6 +52,14 @@ export interface Applicant {
     pronouns?: Record<string, boolean>;
     otherPronouns?: string;
     race?: Record<string, boolean>;
+
+    // RSVP fields
+    willBeAttendingCheck?: boolean;
+    releaseLiabilityCheck?: boolean;
+    mediaConsentCheck?: boolean;
+    safewalkCheck?: boolean;
+    sponsorEmailConsentCheck?: boolean;
+    marketingFeatureCheck?: boolean;
   };
   questionnaire: {
     engagementSource?: string | Record<string, boolean>;
