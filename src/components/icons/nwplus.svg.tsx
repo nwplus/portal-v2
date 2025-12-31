@@ -27,37 +27,37 @@ export const NwPlusIcon = () => (
     />
     <path
       fillRule="evenodd"
-      clip-rule="evenodd"
+      clipRule="evenodd"
       d="M28.1133 5.04883L38.0007 5.04883V7.87043L28.1133 7.87043V5.04883Z"
       fill="white"
     />
     <path
       fillRule="evenodd"
-      clip-rule="evenodd"
+      clipRule="evenodd"
       d="M34.6016 0L34.6016 10.2469L31.5117 13.217L31.5117 3.11861L34.6016 0Z"
       fill="white"
     />
     <path
       fillRule="evenodd"
-      clip-rule="evenodd"
+      clipRule="evenodd"
       d="M29.9668 17.5242L36.166 11.584L36.166 36.638L29.9668 33.5194L29.9668 17.5242Z"
       fill="white"
     />
     <path
       fillRule="evenodd"
-      clip-rule="evenodd"
+      clipRule="evenodd"
       d="M0.304688 8.31629V0L36.1467 34.4532V42.7695L0.304688 8.31629Z"
       fill="white"
     />
     <path
       fillRule="evenodd"
-      clip-rule="evenodd"
+      clipRule="evenodd"
       d="M0.304688 0L6.48434 5.94021L6.48434 36.8293L0.304688 42.7695L0.304688 0Z"
       fill="white"
     />
     <path
       fillRule="evenodd"
-      clip-rule="evenodd"
+      clipRule="evenodd"
       d="M0.30517 42.77L15.4453 28.5135L11.1196 24.3553L0.401368 34.0943L0.30517 42.77Z"
       fill="white"
     />
