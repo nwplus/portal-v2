@@ -11,11 +11,11 @@ import { usePortalStore } from "@/lib/stores/portal-store";
 
 export function ApplicationFaqs() {
   const { activeHackathon } = useHackathon();
-  const { displayNameShort, displayNameFull } = useHackathonInfo();
+  const { displayNameFull } = useHackathonInfo();
   const sendAcceptancesBy = usePortalStore((state) => state.sendAcceptancesBy?.[activeHackathon]);
-  const hackathonWeekend = usePortalStore((state) => state.hackathonWeekend?.[activeHackathon]);
-  const hackathonMonth = hackathonWeekend
-    ? new Date(hackathonWeekend).toLocaleDateString("en-US", { month: "long", year: "numeric" })
+  const hackathonStart = usePortalStore((state) => state.hackathonStart?.[activeHackathon]);
+  const hackathonMonth = hackathonStart
+    ? new Date(hackathonStart).toLocaleDateString("en-US", { month: "long", year: "numeric" })
     : null;
   return (
     <>
@@ -42,11 +42,8 @@ export function ApplicationFaqs() {
             <AccordionTrigger>I still have questions, who can I reach out to?</AccordionTrigger>
             <AccordionContent>
               Please reach out to{" "}
-              <a
-                href={`mailto:${displayNameShort.toLowerCase()}@nwplus.io`}
-                className="offset-4 underline"
-              >
-                {displayNameShort.toLowerCase()}@nwplus.io
+              <a href={`mailto:${activeHackathon}@nwplus.io`} className="offset-4 underline">
+                {activeHackathon}@nwplus.io
               </a>{" "}
               and we will be happy to help you out!
             </AccordionContent>

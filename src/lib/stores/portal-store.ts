@@ -3,10 +3,18 @@ import type z from "zod";
 import { create } from "zustand";
 import type { VALID_HACKATHONS } from "../constants";
 import { db } from "../firebase/client";
+import type { HackathonPortalTheme } from "../firebase/types";
 
 type HackathonsFlagMap = Record<z.infer<typeof VALID_HACKATHONS>, boolean>;
 type HackathonsInfoMap = Record<z.infer<typeof VALID_HACKATHONS>, string>;
 type HackathonsDataMap = Record<z.infer<typeof VALID_HACKATHONS>, Record<string, string>>;
+
+export interface NotionLinks {
+  hackerPackageIFrame: string;
+  preHackathonWorkshops: string;
+}
+
+type HackathonsNotionLinksMap = Record<z.infer<typeof VALID_HACKATHONS>, NotionLinks>;
 
 // `InternalWebsites/Portal/` in Firebase
 type PortalStore = {
@@ -16,7 +24,7 @@ type PortalStore = {
   hackathonEnd?: HackathonsInfoMap;
   hackathonStart?: HackathonsInfoMap;
   hackathonWeekend?: HackathonsInfoMap;
-  hackathonTheme?: HackathonsDataMap;
+  hackathonTheme?: HackathonPortalTheme;
   hackingEnd?: HackathonsInfoMap;
   hackingStart?: HackathonsInfoMap;
   judgingOpen?: HackathonsFlagMap;
@@ -25,11 +33,12 @@ type PortalStore = {
   offWaitlistNotify?: HackathonsInfoMap;
   portalLive?: HackathonsFlagMap;
   rsvpBy?: HackathonsInfoMap;
+  rsvpOpen?: HackathonsFlagMap;
   sendAcceptancesBy?: HackathonsInfoMap;
   submissionsOpen?: HackathonsFlagMap;
   upNextHackathon?: HackathonsFlagMap;
   visitWebsite?: HackathonsFlagMap;
-  notionLinks?: HackathonsDataMap;
+  notionLinks?: HackathonsNotionLinksMap;
   waiversAndForms?: HackathonsDataMap;
   lastEdited?: Timestamp;
   lastEditedBy?: string;
