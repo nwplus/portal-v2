@@ -71,16 +71,10 @@ export function Message({
     applicant?.basicInfo?.preferredName ?? applicant?.basicInfo?.legalFirstName ?? "hacker";
   const timeOfDay = useTimeOfDay();
 
-  const welcomeMessage = useMemo(
-    () => (applicantName ? getWelcomeMessage(timeOfDay, applicantName) : null),
+  const { message, emoji } = useMemo(
+    () => getWelcomeMessage(timeOfDay, applicantName),
     [timeOfDay, applicantName],
   );
-
-  if (!welcomeMessage) {
-    return <div>{JSON.stringify(welcomeMessage)}</div>;
-  }
-
-  const { message, emoji } = welcomeMessage;
 
   return (
     <div className="mx-auto flex flex-col items-center gap-2 pt-4">

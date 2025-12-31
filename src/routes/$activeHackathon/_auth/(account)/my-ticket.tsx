@@ -1,6 +1,6 @@
 import { Countdown } from "@/components/features/my-ticket/countdown";
 import { Message } from "@/components/features/my-ticket/message";
-import { HackerTicket } from "@/components/features/my-ticket/ticket";
+import { Ticket } from "@/components/features/my-ticket/ticket";
 import { GradientBackground } from "@/components/layout/gradient-background";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { fetchApplicant } from "@/services/applicants";
@@ -27,7 +27,7 @@ function RouteComponent() {
       <div className="flex flex-col gap-10 py-10 md:py-12">
         <Countdown />
         <Message applicant={applicant} />
-        <HackerTicket applicant={applicant} />
+        <Ticket applicant={applicant} />
       </div>
     </GradientBackground>
   );
