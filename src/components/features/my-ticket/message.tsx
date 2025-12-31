@@ -1,5 +1,6 @@
 import { type TimeOfDay, useTimeOfDay } from "@/hooks/use-time-of-day";
 import type { Applicant } from "@/lib/firebase/types/applicants";
+import { getPreferredName } from "@/lib/utils";
 import { useMemo } from "react";
 
 type WelcomeMessage = {
@@ -65,10 +66,9 @@ function getWelcomeMessage(timeOfDay: TimeOfDay, applicantName: string): Welcome
 export function Message({
   applicant,
 }: {
-  applicant: Applicant | null;
+  applicant: Applicant;
 }) {
-  const applicantName =
-    applicant?.basicInfo?.preferredName ?? applicant?.basicInfo?.legalFirstName ?? "hacker";
+  const applicantName = getPreferredName(applicant);
   const timeOfDay = useTimeOfDay();
 
   const { message, emoji } = useMemo(

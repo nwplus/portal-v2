@@ -1,13 +1,8 @@
 import { useElementDimension } from "@/hooks/use-element-dimension";
 import type { Applicant } from "@/lib/firebase/types/applicants";
-import { cn } from "@/lib/utils";
+import { cn, getFullName } from "@/lib/utils";
 import QRCode from "react-qr-code";
 import { Badge } from "../../ui/badge";
-
-const formatFullname = (first?: string, last?: string) => {
-  if (!first && !last) return "Hacker";
-  return first && last ? `${first} ${last}` : `${first || last}`;
-};
 
 const formatPronouns = (pronouns?: Record<string, boolean>, otherPronouns?: string) => {
   const selected = Object.keys(pronouns ?? {})
@@ -18,7 +13,7 @@ const formatPronouns = (pronouns?: Record<string, boolean>, otherPronouns?: stri
 };
 
 type TicketProps = {
-  applicant: Applicant | null;
+  applicant: Applicant;
   width?: number;
   height?: number;
   foldX?: number;
@@ -140,10 +135,7 @@ export function Ticket({
                   <Badge className="border-[#E4E4E730] bg-[#693F61] uppercase">Hacker</Badge>
                   <div className="flex flex-col">
                     <div className={cn("font-bold", isMobile ? "text-3xl" : "text-4xl")}>
-                      {formatFullname(
-                        applicant?.basicInfo?.legalFirstName,
-                        applicant?.basicInfo?.legalLastName,
-                      )}
+                      {getFullName(applicant)}
                     </div>
                     <div className="max-w-[75%] break-words">
                       {formatPronouns(
