@@ -5,6 +5,7 @@ import { useAuthStore } from "@/lib/stores/auth-store";
 import { useHackerStore } from "@/lib/stores/hacker-store";
 import { usePortalStore } from "@/lib/stores/portal-store";
 import type { HackathonInfoItem, HackathonName } from "@/lib/types";
+import { fetchApplicant } from "@/services/applicants";
 import { fetchHackathonInfo } from "@/services/latest-hackathons";
 import {
   Outlet,
