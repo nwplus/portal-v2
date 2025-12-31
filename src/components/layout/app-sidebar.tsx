@@ -108,6 +108,11 @@ export function AppSidebar() {
   const LogoComponent = getSidebarHackathonIcon(activeHackathon);
   const navigate = useNavigate();
 
+  const handleSignin = async () => {
+    await signInWithGoogle();
+    navigate({ to: "/$activeHackathon", params: { activeHackathon } });
+  };
+
   const handleLogout = async () => {
     await logout();
     navigate({ to: "/$activeHackathon", params: { activeHackathon } });
@@ -159,10 +164,9 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Home">
                   <Link
-                    to="/$activeHackathon"
+                    to="/$activeHackathon/home"
                     params={{ activeHackathon }}
                     activeProps={{ "data-active": true }}
-                    activeOptions={{ exact: true }}
                   >
                     <Home />
                     <span>Home</span>
@@ -265,7 +269,7 @@ export function AppSidebar() {
             <Button
               variant="login"
               className="w-full justify-start gap-2 group-data-[collapsible=icon]:justify-center"
-              onClick={() => signInWithGoogle()}
+              onClick={handleSignin}
             >
               <GoogleIcon />
               <span className="group-data-[collapsible=icon]:hidden">Log in with Google</span>
