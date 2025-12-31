@@ -117,6 +117,11 @@ code {
 }
 
 @layer base {
+  html,
+  body {
+    @apply overscroll-none;
+  }
+
   body {
     @apply bg-bg-main text-text-primary;
   }
