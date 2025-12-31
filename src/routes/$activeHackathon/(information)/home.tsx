@@ -36,7 +36,7 @@ function RouteComponent() {
           <h1 className="font-bold text-3xl text-text-primary md:text-4xl">
             Welcome to
             <br />
-            {displayNameFull }
+            {displayNameFull}
           </h1>
           <p className="text-base text-text-primary md:text-md">
             If you are a hacker, sign in below to view your account.
