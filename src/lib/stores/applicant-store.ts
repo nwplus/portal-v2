@@ -18,6 +18,11 @@ type ApplicantStore = {
   reset: () => void;
 };
 
+/**
+ * Applicant Store - manages draft state for the hacker application flow
+ * Used within the application form and subpages to handle draft editing, dirty state tracking, and hydration
+ * NOTE: this is different from hacker-store, which is a read-only cache for fetching existing applicant data
+ */
 export const useApplicantStore = create<ApplicantStore>((set, get) => ({
   applicantDraft: null,
   dbCollectionName: null,

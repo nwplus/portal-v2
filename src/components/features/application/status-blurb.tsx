@@ -15,6 +15,7 @@ type BlurbProps = {
   rsvpBy?: string;
   offWaitlistNotify?: string;
   sendAcceptancesBy?: string;
+  waitlistSignupDeadline?: string;
 };
 
 type InternalStatus = "inProgress" | "gradinginprog" | "scored" | "completed";
@@ -40,8 +41,13 @@ const statusBlurbs: Record<
   waitlisted: ({ name, displayNameFull, offWaitlistNotify }: BlurbProps) =>
     [
       `Hi ${name},`,
-      `We had a lovely time reading your application, and were very impressed with your commitment to joining the technology community. We would love to see you at ${displayNameFull} this year; however, at the moment, we cannot confirm a spot for you. `,
-      `You have been put on our waitlist and will be notified by ${offWaitlistNotify} if we find a spot for you, so please check your email then!`,
+      `We would love to see you at ${displayNameFull} this year; however, at the moment, we cannot confirm a spot for you. You have been put on our waitlist and will be notified by ${offWaitlistNotify} if we have a spot for you, so please check your email then!`,
+    ].join("\n\n"),
+
+  pendingWaitlist: ({ name, displayNameFull, waitlistSignupDeadline }: BlurbProps) =>
+    [
+      `Hi ${name},`,
+      `We're sorry that we didn't receive an RSVP from you by the provided deadline. If you are still interested in joining us at ${displayNameFull}, please check your email for instructions on how to join the waitlist by ${waitlistSignupDeadline}.`,
     ].join("\n\n"),
 
   closed: ({ displayNameFull }: BlurbProps) =>
@@ -80,6 +86,7 @@ export function StatusBlurb() {
   const rsvpBy = usePortalStore((state) => state.rsvpBy);
   const sendAcceptancesBy = usePortalStore((state) => state.sendAcceptancesBy);
   const offWaitlistNotify = usePortalStore((state) => state.offWaitlistNotify);
+  const waitlistSignupDeadline = usePortalStore((state) => state.waitlistSignupDeadline);
   const welcome = useApplicationQuestionStore((s) => s.welcome);
   const applicationStatus = useApplicantStore(
     (state) => state.applicantDraft?.status.applicationStatus,
@@ -103,6 +110,7 @@ export function StatusBlurb() {
       sendAcceptancesBy: sendAcceptancesBy?.[activeHackathon],
       rsvpBy: rsvpBy?.[activeHackathon],
       offWaitlistNotify: offWaitlistNotify?.[activeHackathon],
+      waitlistSignupDeadline: waitlistSignupDeadline?.[activeHackathon],
     };
 
     if (applicationStatus === "inProgress") {
