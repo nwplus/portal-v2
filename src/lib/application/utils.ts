@@ -120,3 +120,84 @@ export function isLinkedinUrl(value: string): boolean {
     return false;
   }
 }
+
+/**
+ * Validates pronouns field content.
+ * Checks for reasonable length and prevents URLs.
+ *
+ * @param value - pronouns string to validate
+ * @param maxLength - maximum character length (default: 50)
+ * @returns error message if invalid, null if valid
+ */
+export function validatePronouns(value: string, maxLength = 50): string | null {
+  if (!value.trim()) return null;
+  if (value.length > maxLength) {
+    return `Pronouns must be ${maxLength} characters or less`;
+  }
+  if (value.includes("http://") || value.includes("https://")) {
+    return "Pronouns cannot contain URLs";
+  }
+  return null;
+}
+
+/**
+ * Validates social media username or URL.
+ * Accepts both full URLs and username formats (with or without @).
+ *
+ * @param value - username or URL to validate
+ * @param platform - platform name for error messages
+ * @returns error message if invalid, null if valid
+ */
+export function validateSocialUsername(value: string, platform: string): string | null {
+  if (!value.trim()) return null;
+
+  const trimmed = value.trim();
+
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    try {
+      new URL(trimmed);
+      return null;
+    } catch {
+      return `Invalid ${platform} URL format`;
+    }
+  }
+
+  if (/\s/.test(trimmed)) {
+    return `${platform} username cannot contain spaces`;
+  }
+
+  if (!/^[@\w.-]+$/.test(trimmed)) {
+    return `${platform} username contains invalid characters`;
+  }
+
+  return null;
+}
+
+/**
+ * Validates website URL or domain.
+ * Accepts full URLs, www. prefixed domains, or bare domains.
+ *
+ * @param value - website URL or domain to validate
+ * @returns error message if invalid, null if valid
+ */
+export function validateWebsite(value: string): string | null {
+  if (!value.trim()) return null;
+
+  const trimmed = value.trim();
+
+  if (/\s/.test(trimmed)) {
+    return "Website URL cannot contain spaces";
+  }
+
+  if (
+    !trimmed.startsWith("http://") &&
+    !trimmed.startsWith("https://") &&
+    !trimmed.startsWith("www.")
+  ) {
+    if (!/^[\w.-]+\.[\w.-]+/.test(trimmed)) {
+      return "Please enter a valid website URL or domain";
+    }
+  }
+
+  return null;
+}
