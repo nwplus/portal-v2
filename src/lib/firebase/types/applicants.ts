@@ -139,6 +139,7 @@ export type ApplicationStatus =
   | "applied"
   | "gradinginprog"
   | "waitlisted"
+  | "pendingWaitlist"
   | "scored"
   | "rejected"
   | "completed"

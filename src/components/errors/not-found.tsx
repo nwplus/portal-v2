@@ -60,7 +60,7 @@ export default function NotFound() {
             }}
           >
             <div className="flex flex-col gap-3 pb-3">
-              <div className="flex justify-center aspect-square h-fit mx-auto md:h-12 md:mx-0">
+              <div className="mx-auto flex aspect-square h-fit justify-center md:mx-0 md:h-12">
                 <NwHacksColouredIcon />
               </div>
               <h1 className="pt-2 font-semibold text-5xl">404</h1>
@@ -91,7 +91,7 @@ export default function NotFound() {
 
           {/* These "lost in space" assets are positioned relative to the center content;
               this means '%' takes a percentage of the center content's dimensions */}
-          <div className="-bottom-[100%] absolute translate-x-[70%] -translate-y-[25%] md:translate-x-[100%] md:translate-y-[0%]">
+          <div className="-bottom-[100%] -translate-y-[25%] absolute translate-x-[70%] md:translate-x-[100%] md:translate-y-[0%]">
             <img
               aria-hidden
               alt=""

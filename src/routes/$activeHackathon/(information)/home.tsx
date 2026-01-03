@@ -29,7 +29,7 @@ function RouteComponent() {
       className="flex items-center justify-center p-4"
     >
       <div className="flex max-w-md flex-col items-center gap-6 text-center md:gap-8">
-        <div className="scale-[1.5] md:scale-[2]">
+        <div className="h-8 w-auto scale-[1.5] md:scale-[2]">
           <HackathonIcon />
         </div>
         <div className="flex flex-col gap-3 md:gap-4">

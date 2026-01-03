@@ -35,6 +35,7 @@ type PortalStore = {
   rsvpBy?: HackathonsInfoMap;
   rsvpOpen?: HackathonsFlagMap;
   sendAcceptancesBy?: HackathonsInfoMap;
+  waitlistSignupDeadline?: HackathonsInfoMap;
   submissionsOpen?: HackathonsFlagMap;
   upNextHackathon?: HackathonsFlagMap;
   visitWebsite?: HackathonsFlagMap;
