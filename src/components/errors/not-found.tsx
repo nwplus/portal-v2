@@ -6,9 +6,8 @@ import { useEffect, useState } from "react";
 import { Button, buttonVariants } from "../ui/button";
 
 /**
- * NOTE: Icon and assets may need to be replaced on each reskin:
- *  - `public/assets/{hackathon}/not-found`
- *  - `src/lib/utils.ts` (getColouredHackathonIcon)
+ * NOTE: Assets may need to be updated on each reskin:
+ *  - `public/assets/{activeHackathon}/not-found`
  */
 
 export default function NotFound() {
