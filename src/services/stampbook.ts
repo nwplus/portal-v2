@@ -21,26 +21,25 @@ export async function loadStampbook(
   console.log("allStamps", allStamps);
   console.log("unlockedStamps", unlockedStamps);
 
-  return allStamps
-    .map((stamp: Stamp) => {
-      // previosuly unlocked through QR or check-in app
-      if (unlockedStamps.has(stamp._id)) {
-        return { ...stamp, isUnlocked: true };
+  return allStamps.map((stamp: Stamp) => {
+    // previosuly unlocked through QR or check-in app
+    if (unlockedStamps.has(stamp._id)) {
+      return { ...stamp, isUnlocked: true };
+    }
+
+    // otherwise, evaluate portal-based criteria
+    if (stamp.criteria && hacker) {
+      const shouldUnlock = evaluateUnlockCriteria(stamp.criteria, hacker);
+
+      if (shouldUnlock) {
+        persistUnlockedStamp(uid, stamp._id);
       }
 
-      // otherwise, evaluate portal-based criteria
-      if (stamp.criteria && hacker) {
-        const shouldUnlock = evaluateUnlockCriteria(stamp.criteria, hacker);
+      return { ...stamp, isUnlocked: shouldUnlock };
+    }
 
-        if (shouldUnlock) {
-          persistUnlockedStamp(uid, stamp._id);
-        }
-
-        return { ...stamp, isUnlocked: shouldUnlock };
-      }
-
-      return { ...stamp, isUnlocked: false };
-    });
+    return { ...stamp, isUnlocked: false };
+  });
 }
 
 /**

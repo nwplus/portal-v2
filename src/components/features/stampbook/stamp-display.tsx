@@ -21,15 +21,10 @@ export function StampDisplay({ stamp, showDetails = true }: StampDisplayProps) {
       {showDetails && (
         // TODO: replace with theme colors
         <div className="flex min-h-14 max-w-40 flex-col items-center gap-0.5 font-mono text-[#0a0a0a]">
-          <span className="text-center font-semibold text-base leading-tight">
-            {stamp.name}
-          </span>
-          <span className="text-center text-xs leading-tight">
-            {stamp.description}
-          </span>
+          <span className="text-center font-semibold text-base leading-tight">{stamp.name}</span>
+          <span className="text-center text-xs leading-tight">{stamp.description}</span>
         </div>
       )}
     </div>
   );
 }
-

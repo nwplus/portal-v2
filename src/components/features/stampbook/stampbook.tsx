@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
 import type { StampWithUnlockState } from "@/lib/firebase/types/stamps";
+import { cn } from "@/lib/utils";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useState } from "react";
 import { StampbookPage } from "./stampbook-page";
 import { organizeIntoSpreads } from "./utils";
 
@@ -32,7 +32,7 @@ export function Stampbook({ stamps, displayName }: StampbookProps) {
           "rounded-full p-2 transition-all",
           canGoBack
             ? "cursor-pointer text-text-primary hover:bg-text-primary/10"
-            : "cursor-not-allowed text-text-secondary/30"
+            : "cursor-not-allowed text-text-secondary/30",
         )}
         aria-label="Previous page"
         type="button"
@@ -80,7 +80,7 @@ export function Stampbook({ stamps, displayName }: StampbookProps) {
           "rounded-full p-2 transition-all",
           canGoForward
             ? "cursor-pointer text-text-primary hover:bg-text-primary/10"
-            : "cursor-not-allowed text-text-secondary/30"
+            : "cursor-not-allowed text-text-secondary/30",
         )}
         aria-label="Next page"
         type="button"
@@ -100,7 +100,7 @@ export function Stampbook({ stamps, displayName }: StampbookProps) {
                 "h-2 w-2 rounded-full transition-all",
                 currentSpread === index
                   ? "bg-text-primary"
-                  : "bg-text-secondary/40 hover:bg-text-secondary/60"
+                  : "bg-text-secondary/40 hover:bg-text-secondary/60",
               )}
               aria-label={`Go to page ${index + 1}`}
             />
@@ -110,4 +110,3 @@ export function Stampbook({ stamps, displayName }: StampbookProps) {
     </div>
   );
 }
-

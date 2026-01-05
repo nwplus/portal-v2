@@ -1,5 +1,5 @@
-import { GradientBackground } from "@/components/layout/gradient-background";
 import { Stampbook } from "@/components/features/stampbook/stampbook";
+import { GradientBackground } from "@/components/layout/gradient-background";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useHackerStore } from "@/lib/stores/hacker-store";
 import { getPreferredName } from "@/lib/utils";

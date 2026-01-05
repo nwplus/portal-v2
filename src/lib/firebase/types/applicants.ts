@@ -176,4 +176,4 @@ export type Hacker = Applicant & {
       timestamp: Timestamp;
     }>;
   };
-}
+};

@@ -1,5 +1,5 @@
-import { cn } from "@/lib/utils";
 import type { StampWithUnlockState } from "@/lib/firebase/types/stamps";
+import { cn } from "@/lib/utils";
 import { StampDisplay } from "./stamp-display";
 
 type PageLayout = "single" | "grid" | "title";
@@ -17,7 +17,7 @@ export function StampbookPage({ layout, stamps = [], title, className }: Stampbo
       className={cn(
         "relative flex h-[600px] w-[480px] flex-col bg-[#F3EBEA] p-6",
         "shadow-inner",
-        className
+        className,
       )}
     >
       {/* <div className="pointer-events-none absolute inset-5 rounded-sm border-2 border-[#B8D4E8]/60 border-dashed" /> */}
@@ -25,9 +25,7 @@ export function StampbookPage({ layout, stamps = [], title, className }: Stampbo
       <div className="relative flex flex-1 flex-col items-center justify-center">
         {layout === "title" && title && (
           <div className="flex h-full flex-col items-center justify-center gap-8">
-            <div className="font-bold font-mono text-[#8A8A8A] text-xl tracking-wide">
-              {title}
-            </div>
+            <div className="font-bold font-mono text-[#8A8A8A] text-xl tracking-wide">{title}</div>
 
             {stamps[0] && (
               <div className="flex flex-col items-center gap-4">
@@ -57,4 +55,3 @@ export function StampbookPage({ layout, stamps = [], title, className }: Stampbo
     </div>
   );
 }
-

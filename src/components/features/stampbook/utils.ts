@@ -12,27 +12,27 @@ export interface StampbookSpread {
 
 /**
  * Organizes stamps into spreads for the stampbook display.
- * 
+ *
  * First spread: Hackathon stamp on left (title page), first 4 stamps on right
  * Subsequent spreads: 4 stamps per page, 8 stamps per spread
- * 
+ *
  * @param stamps - Array of stamps to organize
  * @param hackathonStamp - Optional dedicated hackathon stamp for the title page
  * @returns array of spreads
  */
 export function organizeIntoSpreads(
   stamps: StampWithUnlockState[],
-  hackathonStamp?: StampWithUnlockState
+  hackathonStamp?: StampWithUnlockState,
 ): StampbookSpread[] {
   if (stamps.length === 0 && !hackathonStamp) {
     return [];
   }
 
   const spreads: StampbookSpread[] = [];
-  
+
   let titleStamp = hackathonStamp;
   let remainingStamps = stamps;
-  
+
   if (!titleStamp && stamps.length > 0) {
     titleStamp = stamps[0];
     remainingStamps = stamps.slice(1);
@@ -46,11 +46,11 @@ export function organizeIntoSpreads(
   });
 
   const afterFirstPage = remainingStamps.slice(4);
-  
+
   for (let i = 0; i < afterFirstPage.length; i += 8) {
     const leftPageStamps = afterFirstPage.slice(i, i + 4);
     const rightPageStamps = afterFirstPage.slice(i + 4, i + 8);
-    
+
     if (leftPageStamps.length > 0 || rightPageStamps.length > 0) {
       spreads.push({
         leftPage: leftPageStamps,
@@ -71,4 +71,3 @@ export function getTotalStampSlots(spreads: StampbookSpread[]): number {
     return total + spread.leftPage.length + spread.rightPage.length;
   }, 0);
 }
-
