@@ -54,7 +54,7 @@ function RouteComponent() {
               </TabsTrigger>
             </TabsList>
             <TabsContent value="profile" className="w-full">
-              {user?.uid && user?.email && (
+              {user?.uid && user?.email && socialProfile ? (
                 <MyProfile
                   socialProfile={socialProfile}
                   onProfileUpdate={setUpdatedProfile}
@@ -62,6 +62,11 @@ function RouteComponent() {
                   email={user.email}
                   displayName={displayName}
                 />
+              ) : (
+                /* Impossible case since guarded under _auth + we fallback on creating a doc */
+                <div className="flex flex-col items-center justify-center">
+                  <p className="text-text-secondary">No profile found</p>
+                </div>
               )}
             </TabsContent>
             <TabsContent value="recently-viewed" className="w-full">
