@@ -10,6 +10,7 @@ import { ArrowUpRight, Loader2, Search, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getProfilePicture } from "./constants";
 import { HackathonBadges } from "./hackathon-badges";
+import { Input } from "../ui/input";
 
 interface RecentlyViewedItem {
   name: string;
@@ -128,7 +129,7 @@ export function RecentlyViewed({ socialProfile, onProfileUpdate }: RecentlyViewe
 
       <div className="relative mb-8">
         <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-text-secondary" />
-        <input
+        <Input
           type="text"
           placeholder="Search recently viewed"
           value={searchQuery}
