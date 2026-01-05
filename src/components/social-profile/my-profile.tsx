@@ -15,6 +15,7 @@ import { Github, Globe, Instagram, Linkedin } from "lucide-react";
 import { useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
+import { Textarea } from "../ui/textarea";
 
 const PROFILE_PICTURES = [
   "/assets/profiles/default-nugget.svg",
@@ -74,6 +75,10 @@ export function MyProfile({
 }: MyProfileProps) {
   const [profileMode, setProfileMode] = useState<ProfileMode>("view");
   const [isSaving, setIsSaving] = useState(false);
+
+  // Stores profile picture while on edit/view mode, before editing it in the select-picture mode. 
+  // Enables 'Cancel' button on the select-picture mode to revert changes.
+  const [cachedProfilePictureIdx, setCachedProfilePictureIdx] = useState<number | null>(null);
 
   const {
     register,
@@ -206,21 +211,21 @@ export function MyProfile({
         _id: uid,
         email,
         preferredName: socialProfile?.preferredName,
-        pronouns: data.pronouns?.trim() || undefined,
-        bio: data.bio?.trim() || undefined,
+        pronouns: data.pronouns?.trim() || "",
+        bio: data.bio?.trim() || "",
         profilePictureIndex: data.profilePictureIndex,
         areaOfStudy: socialProfile?.areaOfStudy,
         school: socialProfile?.school,
         year: socialProfile?.year,
         role: socialProfile?.role,
         hideRecentlyViewed: socialProfile?.hideRecentlyViewed ?? false,
-        tagsToHide: data.tagsToHide.length > 0 ? data.tagsToHide : undefined,
+        tagsToHide: data.tagsToHide.length > 0 ? data.tagsToHide : [],
         socialLinks: {
-          linkedin: data.socialLinks.linkedin?.trim() || undefined,
-          github: data.socialLinks.github?.trim() || undefined,
-          website: data.socialLinks.website?.trim() || undefined,
-          instagram: data.socialLinks.instagram?.trim() || undefined,
-          devpost: data.socialLinks.devpost?.trim() || undefined,
+          linkedin: data.socialLinks.linkedin?.trim() || "",
+          github: data.socialLinks.github?.trim() || "",
+          website: data.socialLinks.website?.trim() || "",
+          instagram: data.socialLinks.instagram?.trim() || "",
+          devpost: data.socialLinks.devpost?.trim() || "",
         },
       };
 
@@ -378,10 +383,17 @@ export function MyProfile({
         </div>
 
         <div className="mt-6 flex justify-center gap-3">
-          <Button variant="ghost" onClick={() => setProfileMode("edit")}>
+          <Button variant="ghost" onClick={() => {
+            if (cachedProfilePictureIdx !== null) {
+              setValue("profilePictureIndex", cachedProfilePictureIdx);
+            }
+            setProfileMode("edit");
+          }}>
             Cancel
           </Button>
-          <Button variant="secondary" onClick={() => setProfileMode("edit")}>
+          <Button variant="secondary" onClick={() => {
+            setProfileMode("edit");
+          }}>
             Save
           </Button>
         </div>
@@ -401,6 +413,7 @@ export function MyProfile({
             <Avatar
               onClick={() => {
                 if (window.innerWidth < 768) {
+                  setCachedProfilePictureIdx(watchedProfilePictureIndex);
                   setProfileMode("select-picture");
                 }
               }}
@@ -416,7 +429,10 @@ export function MyProfile({
               variant="secondary"
               size="default"
               className="hidden md:block"
-              onClick={() => setProfileMode("select-picture")}
+              onClick={() => {
+                setCachedProfilePictureIdx(watchedProfilePictureIndex);
+                setProfileMode("select-picture");
+              }}
             >
               Choose profile photo
             </Button>
@@ -477,7 +493,7 @@ export function MyProfile({
 
         <div>
           <h4 className="mb-2 font-medium text-md text-text-primary">Bio</h4>
-          <textarea
+          <Textarea
             placeholder="Tell us about yourself..."
             {...register("bio")}
             rows={1}
@@ -572,7 +588,7 @@ export function MyProfile({
               <div className="flex items-center gap-3">
                 <Globe className="size-6 shrink-0 text-text-secondary" />
                 <Input
-                  type="url"
+                  type="text"
                   placeholder="www.example.com"
                   {...register("socialLinks.website")}
                   className="text-base"

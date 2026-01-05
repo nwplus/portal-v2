@@ -1,4 +1,5 @@
 import { Search } from "lucide-react";
+import { Input } from "../ui/input";
 
 export function RecentlyViewed() {
   return (
@@ -7,7 +8,7 @@ export function RecentlyViewed() {
 
       <div className="relative mb-12">
         <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-text-secondary" />
-        <input
+        <Input
           type="text"
           placeholder="Search recently viewed"
           className="w-full rounded-md border border-border-subtle bg-bg-text-field py-2 pr-3 pl-10 text-sm text-text-primary placeholder:text-text-secondary focus:border-border-active focus:outline-none"

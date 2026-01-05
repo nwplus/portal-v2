@@ -1,124 +1,70 @@
 import { GradientBackground } from "@/components/layout/gradient-background";
 import { MyProfile } from "@/components/social-profile/my-profile";
 import { RecentlyViewed } from "@/components/social-profile/recently-viewed";
-import { Spinner } from "@/components/ui/spinner";
-import { useHackathonInfo } from "@/hooks/use-hackathon-info";
-import type { Applicant } from "@/lib/firebase/types/applicants";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Social } from "@/lib/firebase/types/socials";
-import { useApplicantStore } from "@/lib/stores/applicant-store";
 import { useAuthStore } from "@/lib/stores/auth-store";
-import { fetchApplicant } from "@/services/applicants";
+import { useHackerStore } from "@/lib/stores/hacker-store";
 import { fetchOrCreateSocial } from "@/services/socials";
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export const Route = createFileRoute("/$activeHackathon/_auth/(account)/social-profile")({
+  loader: async ({ context }) => {
+    const { dbCollectionName } = context;
+    const { user } = useAuthStore.getState();
+    const getOrFetchHacker = useHackerStore.getState().getOrFetch;
+
+    if (!user?.uid || !user?.email || !dbCollectionName) {
+      return { socialProfile: null };
+    }
+
+    const hacker = await getOrFetchHacker(dbCollectionName, user.uid);
+    const socialProfile = await fetchOrCreateSocial(user.uid, user.email, hacker);
+
+    return { socialProfile };
+  },
   component: RouteComponent,
 });
 
 function RouteComponent() {
   const user = useAuthStore((state) => state.user);
-  const applicant = useApplicantStore((state) => state.applicantDraft);
-  const setApplicant = useApplicantStore((state) => state.setApplicant);
-  const { dbCollectionName } = useHackathonInfo();
+  const { socialProfile: loaderProfile } = Route.useLoaderData();
 
-  const [socialProfile, setSocialProfile] = useState<Social | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"profile" | "recently-viewed">("profile");
+  // for profile updates made by the user
+  const [updatedProfile, setUpdatedProfile] = useState<Social | null>(loaderProfile);
 
-  useEffect(() => {
-    if (!user?.uid || !user?.email || !dbCollectionName) return;
-
-    const uid = user.uid;
-    const email = user.email;
-
-    const loadData = async () => {
-      try {
-        setIsLoading(true);
-
-        const loadedApplicant = applicant ? null : await fetchApplicant(dbCollectionName, uid);
-
-        if (loadedApplicant && !applicant) {
-          setApplicant(
-            {
-              ...loadedApplicant,
-              submission: {
-                submitted: loadedApplicant.submission?.submitted ?? false,
-                ...(loadedApplicant.submission ?? {}),
-              },
-            },
-            dbCollectionName,
-          );
-        }
-
-        const applicantForSocial = loadedApplicant || (applicant as Applicant | null);
-        const loadedSocial = await fetchOrCreateSocial(uid, email, applicantForSocial);
-        setSocialProfile(loadedSocial);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-  }, [user?.uid, user?.email, dbCollectionName, applicant, setApplicant]);
-
-  const displayName = socialProfile?.preferredName || user?.displayName || "Unknown User";
-
-  if (isLoading) {
-    return (
-      <GradientBackground
-        gradientPosition="bottomMiddle"
-        className="max-h-screen overflow-y-scroll"
-      >
-        <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
-          <Spinner className="size-8 text-white" />
-        </div>
-      </GradientBackground>
-    );
-  }
+  const socialProfile = updatedProfile ?? loaderProfile;
+  const displayName = updatedProfile?.preferredName || user?.displayName || "Unknown User";
 
   return (
-    <GradientBackground gradientPosition="bottomMiddle" className="max-h-screen overflow-y-scroll">
+    <GradientBackground gradientPosition="bottomMiddle" className="scrollbar-hidden max-h-screen overflow-y-auto">
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-6">
         <div className="w-full max-w-3xl">
-          <div className="mb-6 flex justify-center">
-            <div className="inline-flex gap-1 rounded-lg border border-border-subtle bg-bg-pane-container p-1">
-              <button
-                type="button"
-                onClick={() => setActiveTab("profile")}
-                className={`rounded-md px-4 py-1.5 font-medium text-sm transition-colors ${
-                  activeTab === "profile"
-                    ? "bg-bg-button-secondary text-text-primary"
-                    : "text-text-secondary hover:text-text-primary"
-                }`}
-              >
+          <Tabs defaultValue="profile" className="flex flex-col items-center">
+            <TabsList className="mb-6 inline-flex h-auto gap-1 rounded-lg border border-border-subtle px-2 py-1 backdrop-blur-sm">
+              <TabsTrigger value="profile" className="transition-all duration-200">
                 My profile
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab("recently-viewed")}
-                className={`rounded-md px-4 py-1.5 font-medium text-sm transition-colors ${
-                  activeTab === "recently-viewed"
-                    ? "bg-bg-button-secondary text-text-primary"
-                    : "text-text-secondary hover:text-text-primary"
-                }`}
-              >
+              </TabsTrigger>
+              <TabsTrigger value="recently-viewed" className="transition-all duration-200">
                 Recently viewed
-              </button>
-            </div>
-          </div>
-
-          {activeTab === "profile" && user?.uid && user?.email && (
-            <MyProfile
-              socialProfile={socialProfile}
-              onProfileUpdate={setSocialProfile}
-              uid={user.uid}
-              email={user.email}
-              displayName={displayName}
-            />
-          )}
-
-          {activeTab === "recently-viewed" && <RecentlyViewed />}
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="profile" className="w-full">
+              {user?.uid && user?.email && (
+                <MyProfile
+                  socialProfile={socialProfile}
+                  onProfileUpdate={setUpdatedProfile}
+                  uid={user.uid}
+                  email={user.email}
+                  displayName={displayName}
+                />
+              )}
+            </TabsContent>
+            <TabsContent value="recently-viewed" className="w-full">
+              <RecentlyViewed />
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </GradientBackground>

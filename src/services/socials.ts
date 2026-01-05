@@ -1,5 +1,5 @@
 import { db } from "@/lib/firebase/client";
-import type { Applicant, ApplicantMajor } from "@/lib/firebase/types/applicants";
+import type { Applicant, ApplicantContribution, ApplicantMajor } from "@/lib/firebase/types/applicants";
 import type { Social, SocialDraft } from "@/lib/firebase/types/socials";
 import { type DocumentData, type DocumentReference, doc, getDoc, setDoc } from "firebase/firestore";
 
@@ -22,11 +22,11 @@ function getSocialRef(uid: string): DocumentReference<DocumentData> {
  * @returns display name for the major; undefined if no major selected
  */
 function getMajorDisplayName(
-  major?: ApplicantMajor | Record<string, boolean | undefined>,
+  major?: ApplicantMajor | Record<ApplicantMajor, boolean | undefined>,
 ): string | undefined {
   if (!major) return undefined;
 
-  const majorMap: Record<string, string> = {
+  const majorMap: Record<ApplicantMajor, string> = {
     computerScience: "Computer Science",
     otherEngineering: "Engineering",
     informationTech: "Information Technology",
@@ -54,7 +54,7 @@ function getMajorDisplayName(
 
   if (selectedMajors.length > 0) {
     const firstMajor = selectedMajors[0];
-    return majorMap[firstMajor] || selectedMajors[0];
+    return majorMap[firstMajor as ApplicantMajor] || selectedMajors[0];
   }
 
   return undefined;
@@ -91,11 +91,11 @@ function getYearLevel(graduationYear?: number): string | undefined {
  * @returns comma-separated role names (e.g. "Developer, Designer"); undefined if no roles selected
  */
 function getRoleDisplayNames(
-  contributionRole?: Record<string, boolean | undefined>,
+  contributionRole?: ApplicantContribution,
 ): string | undefined {
   if (!contributionRole) return undefined;
 
-  const roleMap: Record<string, string> = {
+  const roleMap: Record<keyof ApplicantContribution, string> = {
     developer: "Developer",
     designer: "Designer",
     productManager: "Product Manager",
@@ -104,7 +104,7 @@ function getRoleDisplayNames(
 
   const roles = Object.entries(contributionRole)
     .filter(([_, selected]) => selected === true)
-    .map(([key]) => roleMap[key] || key);
+    .map(([key]) => roleMap[key as keyof ApplicantContribution] || key);
 
   return roles.length > 0 ? roles.join(", ") : undefined;
 }
