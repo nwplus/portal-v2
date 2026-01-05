@@ -6,6 +6,8 @@ import { Button } from "./button";
 
 interface ImageViewerProps {
   src: string;
+  height?: number | string;
+  width?: number | string;
   defaultZoom?: number;
   className?: string;
 }
@@ -18,7 +20,12 @@ const SCALE_STEP = 1;
 const TRANSITION_MS = 180;
 const MAX_STEPS = Math.round((MAX_SCALE - MIN_SCALE) / SCALE_STEP);
 
-export function ImageViewer({ src, className, defaultZoom = 1 }: ImageViewerProps) {
+const toCssSize = (value?: number | string) => {
+  if (typeof value === "number") return `${value}px`;
+  return value;
+};
+
+export function ImageViewer({ src, className, height, width, defaultZoom = 1 }: ImageViewerProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
 
@@ -46,7 +53,8 @@ export function ImageViewer({ src, className, defaultZoom = 1 }: ImageViewerProp
     (scaleValue: number) => {
       const containerWidth = containerRef.current?.clientWidth ?? 0;
       const baseWidth = containerWidth;
-      const baseHeight = containerHeight ?? 0;
+      const measuredHeight = containerRef.current?.clientHeight ?? 0;
+      const baseHeight = containerHeight ?? measuredHeight;
 
       return {
         containerWidth,
@@ -92,14 +100,19 @@ export function ImageViewer({ src, className, defaultZoom = 1 }: ImageViewerProp
   }, []);
 
   const updateContainerHeight = useCallback(() => {
-    const containerWidth = containerRef.current?.clientWidth ?? 0;
-    const { width, height } = naturalSizeRef.current;
-    if (!containerWidth || !width || !height) return;
+    if (height !== undefined) {
+      setOffset((current) => clampOffset(scale, current));
+      return;
+    }
 
-    const nextHeight = (height / width) * containerWidth;
+    const containerWidth = containerRef.current?.clientWidth ?? 0;
+    const { width: naturalWidth, height: naturalHeight } = naturalSizeRef.current;
+    if (!containerWidth || !naturalWidth || !naturalHeight) return;
+
+    const nextHeight = (naturalHeight / naturalWidth) * containerWidth;
     setContainerHeight(nextHeight);
     setOffset((current) => clampOffset(scale, current));
-  }, [clampOffset, scale]);
+  }, [clampOffset, height, scale]);
 
   useEffect(() => {
     const handleResize = () => updateContainerHeight();
@@ -309,7 +322,16 @@ export function ImageViewer({ src, className, defaultZoom = 1 }: ImageViewerProp
       <div
         ref={containerRef}
         className="relative overflow-hidden rounded-lg bg-bg-pane-container"
-        style={{ height: containerHeight ? `${containerHeight}px` : undefined }}
+        style={{
+          // use passed height, otherwise use responsive calculated height
+          height:
+            height !== undefined
+              ? toCssSize(height)
+              : containerHeight
+                ? `${containerHeight}px`
+                : undefined,
+          width: toCssSize(width),
+        }}
       >
         <img
           ref={imageRef}
