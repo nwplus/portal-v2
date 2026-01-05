@@ -19,7 +19,8 @@ import {
 import { useHackathon } from "@/hooks/use-hackathon";
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
 import { useAuthStore } from "@/lib/stores/auth-store";
-import { getSidebarHackathonIcon } from "@/lib/utils";
+import { useHackerStore } from "@/lib/stores/hacker-store";
+import { getFullName, getSidebarHackathonIcon } from "@/lib/utils";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   Calendar,
@@ -102,6 +103,7 @@ export function AppSidebar() {
   const logout = useAuthStore((state) => state.logout);
   const signInWithGoogle = useAuthStore((state) => state.signInWithGoogle);
   const user = useAuthStore((state) => state.user);
+  const hacker = useHackerStore((state) => state.hacker);
   const { isMobile } = useSidebar();
   const LogoComponent = getSidebarHackathonIcon(activeHackathon);
   const navigate = useNavigate();
@@ -221,20 +223,20 @@ export function AppSidebar() {
         )}
       </SidebarContent>
 
-      {isAuthenticated && user ? (
+      {isAuthenticated && hacker ? (
         <SidebarFooter>
           <SidebarMenu>
             <SidebarMenuItem className="flex flex-row items-center justify-between">
               <div className="flex items-center gap-2 group-data-[collapsible=icon]:hidden">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.photoURL ?? undefined} referrerPolicy="no-referrer" />
+                  <AvatarImage src={user?.photoURL ?? undefined} referrerPolicy="no-referrer" />
                   <AvatarFallback className="rounded-lg">
-                    {user.displayName?.charAt(0) ?? "?"}
+                    {getFullName(hacker).charAt(0) || "?"}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col">
-                  <span className="truncate font-semibold text-sm">{user.displayName}</span>
-                  <span className="truncate text-xs">{user.email}</span>
+                  <span className="truncate font-semibold text-sm">{getFullName(hacker)}</span>
+                  <span className="truncate text-xs">{hacker.basicInfo.email}</span>
                 </div>
               </div>
 
