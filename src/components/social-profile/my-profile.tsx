@@ -17,8 +17,8 @@ import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { Textarea } from "../ui/textarea";
 import { PROFILE_PICTURES, getTagBackgroundColor } from "./constants";
-import ProfileView from "./profile-view";
 import ProfilePicturePicker from "./profile-picture-picker";
+import ProfileView from "./profile-view";
 
 type ProfileMode = "view" | "select-picture" | "edit";
 
@@ -169,7 +169,9 @@ export function MyProfile({
     return (
       <ProfilePicturePicker
         profilePictureIndex={watchedProfilePictureIndex}
-        onSelect={(index) => {setValue("profilePictureIndex", index)}}
+        onSelect={(index) => {
+          setValue("profilePictureIndex", index);
+        }}
         onCancel={() => {
           if (cachedProfilePictureIdx !== null) {
             setValue("profilePictureIndex", cachedProfilePictureIdx);
@@ -244,7 +246,10 @@ export function MyProfile({
 
         <div>
           <h3 className="font-medium text-3xl text-text-primary">
-            {displayName} {socialProfile?.pronouns && <span className="text-text-secondary">({socialProfile?.pronouns})</span>}
+            {displayName}{" "}
+            {socialProfile?.pronouns && (
+              <span className="text-text-secondary">({socialProfile?.pronouns})</span>
+            )}
           </h3>
         </div>
 
