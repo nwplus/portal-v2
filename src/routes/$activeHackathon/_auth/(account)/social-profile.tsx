@@ -2,6 +2,7 @@ import { GradientBackground } from "@/components/layout/gradient-background";
 import { MyProfile } from "@/components/social-profile/my-profile";
 import { RecentlyViewed } from "@/components/social-profile/recently-viewed";
 import { Spinner } from "@/components/ui/spinner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
 import type { Applicant } from "@/lib/firebase/types/applicants";
 import type { Social } from "@/lib/firebase/types/socials";
@@ -24,7 +25,6 @@ function RouteComponent() {
 
   const [socialProfile, setSocialProfile] = useState<Social | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"profile" | "recently-viewed">("profile");
 
   useEffect(() => {
     if (!user?.uid || !user?.email || !dbCollectionName) return;
@@ -78,49 +78,46 @@ function RouteComponent() {
   }
 
   return (
-    <GradientBackground gradientPosition="bottomMiddle" className="max-h-screen overflow-y-scroll">
+    <GradientBackground
+      gradientPosition="bottomMiddle"
+      className="scrollbar-hidden max-h-screen overflow-y-auto"
+    >
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-6">
         <div className="w-full max-w-3xl">
-          <div className="mb-6 flex justify-center">
-            <div className="inline-flex gap-1 rounded-lg border border-border-subtle bg-bg-pane-container p-1">
-              <button
-                type="button"
-                onClick={() => setActiveTab("profile")}
-                className={`rounded-md px-4 py-1.5 font-medium text-sm transition-colors ${
-                  activeTab === "profile"
-                    ? "bg-bg-button-secondary text-text-primary"
-                    : "text-text-secondary hover:text-text-primary"
-                }`}
-              >
-                My profile
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab("recently-viewed")}
-                className={`rounded-md px-4 py-1.5 font-medium text-sm transition-colors ${
-                  activeTab === "recently-viewed"
-                    ? "bg-bg-button-secondary text-text-primary"
-                    : "text-text-secondary hover:text-text-primary"
-                }`}
-              >
-                Recently viewed
-              </button>
+          <Tabs defaultValue="profile" className="w-full">
+            <div className="mb-6 flex justify-center">
+              <TabsList className="h-auto gap-1 rounded-lg border border-border-subtle bg-bg-pane-container p-1">
+                <TabsTrigger
+                  value="profile"
+                  className="h-auto rounded-md px-4 py-1.5 font-medium text-sm text-text-secondary transition-all duration-200 hover:text-text-primary data-[state=active]:bg-bg-button-secondary data-[state=active]:text-text-primary data-[state=active]:shadow-none"
+                >
+                  My profile
+                </TabsTrigger>
+                <TabsTrigger
+                  value="recently-viewed"
+                  className="h-auto rounded-md px-4 py-1.5 font-medium text-sm text-text-secondary transition-all duration-200 hover:text-text-primary data-[state=active]:bg-bg-button-secondary data-[state=active]:text-text-primary data-[state=active]:shadow-none"
+                >
+                  Recently viewed
+                </TabsTrigger>
+              </TabsList>
             </div>
-          </div>
 
-          {activeTab === "profile" && user?.uid && user?.email && (
-            <MyProfile
-              socialProfile={socialProfile}
-              onProfileUpdate={setSocialProfile}
-              uid={user.uid}
-              email={user.email}
-              displayName={displayName}
-            />
-          )}
+            <TabsContent value="profile">
+              {user?.uid && user?.email && (
+                <MyProfile
+                  socialProfile={socialProfile}
+                  onProfileUpdate={setSocialProfile}
+                  uid={user.uid}
+                  email={user.email}
+                  displayName={displayName}
+                />
+              )}
+            </TabsContent>
 
-          {activeTab === "recently-viewed" && (
-            <RecentlyViewed socialProfile={socialProfile} onProfileUpdate={setSocialProfile} />
-          )}
+            <TabsContent value="recently-viewed">
+              <RecentlyViewed socialProfile={socialProfile} onProfileUpdate={setSocialProfile} />
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </GradientBackground>
