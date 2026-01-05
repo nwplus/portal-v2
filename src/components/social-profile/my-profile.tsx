@@ -76,7 +76,7 @@ export function MyProfile({
   const [profileMode, setProfileMode] = useState<ProfileMode>("view");
   const [isSaving, setIsSaving] = useState(false);
 
-  // Stores profile picture while on edit/view mode, before editing it in the select-picture mode. 
+  // Stores profile picture while on edit/view mode, before editing it in the select-picture mode.
   // Enables 'Cancel' button on the select-picture mode to revert changes.
   const [cachedProfilePictureIdx, setCachedProfilePictureIdx] = useState<number | null>(null);
 
@@ -383,17 +383,23 @@ export function MyProfile({
         </div>
 
         <div className="mt-6 flex justify-center gap-3">
-          <Button variant="ghost" onClick={() => {
-            if (cachedProfilePictureIdx !== null) {
-              setValue("profilePictureIndex", cachedProfilePictureIdx);
-            }
-            setProfileMode("edit");
-          }}>
+          <Button
+            variant="ghost"
+            onClick={() => {
+              if (cachedProfilePictureIdx !== null) {
+                setValue("profilePictureIndex", cachedProfilePictureIdx);
+              }
+              setProfileMode("edit");
+            }}
+          >
             Cancel
           </Button>
-          <Button variant="secondary" onClick={() => {
-            setProfileMode("edit");
-          }}>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setProfileMode("edit");
+            }}
+          >
             Save
           </Button>
         </div>

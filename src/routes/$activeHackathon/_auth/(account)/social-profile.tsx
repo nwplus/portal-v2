@@ -38,7 +38,10 @@ function RouteComponent() {
   const displayName = updatedProfile?.preferredName || user?.displayName || "Unknown User";
 
   return (
-    <GradientBackground gradientPosition="bottomMiddle" className="scrollbar-hidden max-h-screen overflow-y-auto">
+    <GradientBackground
+      gradientPosition="bottomMiddle"
+      className="scrollbar-hidden max-h-screen overflow-y-auto"
+    >
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-6">
         <div className="w-full max-w-3xl">
           <Tabs defaultValue="profile" className="flex flex-col items-center">

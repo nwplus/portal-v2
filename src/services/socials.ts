@@ -1,5 +1,9 @@
 import { db } from "@/lib/firebase/client";
-import type { Applicant, ApplicantContribution, ApplicantMajor } from "@/lib/firebase/types/applicants";
+import type {
+  Applicant,
+  ApplicantContribution,
+  ApplicantMajor,
+} from "@/lib/firebase/types/applicants";
 import type { Social, SocialDraft } from "@/lib/firebase/types/socials";
 import { type DocumentData, type DocumentReference, doc, getDoc, setDoc } from "firebase/firestore";
 
@@ -90,9 +94,7 @@ function getYearLevel(graduationYear?: number): string | undefined {
  * @param contributionRole - object with boolean flags for each role the user selected
  * @returns comma-separated role names (e.g. "Developer, Designer"); undefined if no roles selected
  */
-function getRoleDisplayNames(
-  contributionRole?: ApplicantContribution,
-): string | undefined {
+function getRoleDisplayNames(contributionRole?: ApplicantContribution): string | undefined {
   if (!contributionRole) return undefined;
 
   const roleMap: Record<keyof ApplicantContribution, string> = {

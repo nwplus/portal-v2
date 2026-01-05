@@ -46,7 +46,7 @@ function validateWebsite(value: string): boolean {
 
   const trimmed = value.trim();
   const normalized = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
-  
+
   try {
     const url = new URL(normalized);
     return url.hostname.includes(".");
