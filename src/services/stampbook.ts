@@ -1,11 +1,11 @@
 import { db } from "@/lib/firebase/client";
-import type { Applicant } from "@/lib/firebase/types/applicants";
+import type { Hacker } from "@/lib/firebase/types/applicants";
 import type { Stamp, StampCriteria, StampWithUnlockState } from "@/lib/firebase/types/stamps";
 import { fetchApplicant } from "@/services/applicants";
 import { arrayUnion, collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 
 /**
- * Load stampbook with computed unlock states
+ * Load stampbook with computed unlock states; returns active stamps and whether they are unlocked for a given user
  * Called on stampbook page load
  */
 export async function loadStampbook(
@@ -22,7 +22,6 @@ export async function loadStampbook(
   console.log("unlockedStamps", unlockedStamps);
 
   return allStamps
-    .filter((s: Stamp) => !s.isHidden || unlockedStamps.has(s._id))
     .map((stamp: Stamp) => {
       // previosuly unlocked through QR or check-in app
       if (unlockedStamps.has(stamp._id)) {
@@ -97,9 +96,9 @@ export async function fetchUnlockedStampIds(uid: string): Promise<Set<string>> {
 }
 
 /**
- * Evaluate if a stamp's criteria is satisifed by hacker data
+ * Evaluate if a stamp's criteria is satisfied by hacker data
  */
-export function evaluateUnlockCriteria(criterion: StampCriteria[], hacker: Applicant): boolean {
+export function evaluateUnlockCriteria(criterion: StampCriteria[], hacker: Hacker): boolean {
   if (!criterion || criterion.length === 0) return false;
 
   let result = true;

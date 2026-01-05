@@ -152,3 +152,28 @@ export type ApplicantDraft = DeepPartial<Applicant> & {
   status: { applicationStatus: ApplicationStatus } & DeepPartial<Applicant["status"]>;
   submission: { submitted: boolean } & DeepPartial<NonNullable<Applicant["submission"]>>;
 };
+
+/**
+ * Extended applicant type for attending and checked-in hackers.
+ */
+export type Hacker = Applicant & {
+  dayOf?: {
+    day1?: {
+      breakfast?: Timestamp[];
+      lunch?: Timestamp[];
+      dinner?: Timestamp[];
+      snack?: Timestamp[];
+    };
+    day2?: {
+      breakfast?: Timestamp[];
+      lunch?: Timestamp[];
+      dinner?: Timestamp[];
+    };
+    checkedIn?: boolean;
+    events?: Array<{
+      eventId: string;
+      eventName: string;
+      timestamp: Timestamp;
+    }>;
+  };
+}
