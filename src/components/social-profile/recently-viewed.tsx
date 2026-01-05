@@ -8,9 +8,9 @@ import { fetchSocial, fetchSocialsByUids, removeFromRecentlyViewed } from "@/ser
 import { Link, useParams } from "@tanstack/react-router";
 import { ArrowUpRight, Loader2, Search, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Input } from "../ui/input";
 import { getProfilePicture } from "./constants";
 import { HackathonBadges } from "./hackathon-badges";
-import { Input } from "../ui/input";
 
 interface RecentlyViewedItem {
   name: string;

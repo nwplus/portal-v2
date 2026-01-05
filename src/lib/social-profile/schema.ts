@@ -45,18 +45,17 @@ function validateWebsite(value: string): boolean {
   if (!value.trim()) return true;
 
   const trimmed = value.trim();
+  const urlToTest =
+    trimmed.startsWith("http://") || trimmed.startsWith("https://")
+      ? trimmed
+      : `https://${trimmed}`;
 
-  if (/\s/.test(trimmed)) return false;
-
-  if (
-    !trimmed.startsWith("http://") &&
-    !trimmed.startsWith("https://") &&
-    !trimmed.startsWith("www.")
-  ) {
-    if (!/^[\w.-]+\.[\w.-]+/.test(trimmed)) return false;
+  try {
+    const url = new URL(urlToTest);
+    return url.hostname.includes(".");
+  } catch {
+    return false;
   }
-
-  return true;
 }
 
 /**
