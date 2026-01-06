@@ -15,12 +15,7 @@ export function StampbookPage({ layout, stamps = [], title, className }: Stampbo
   const titleIndex = stamps.findIndex((stamp) => stamp.isTitle) ?? 0;
 
   return (
-    <div
-      className={cn(
-        "relative flex h-[600px] w-[480px] flex-col bg-[#F3EBEA] p-6",
-        className,
-      )}
-    >
+    <div className={cn("relative flex h-[600px] w-[480px] flex-col bg-[#F3EBEA] p-6", className)}>
       {/* <div className="pointer-events-none absolute inset-5 rounded-sm border-2 border-[#B8D4E8]/60 border-dashed" /> */}
 
       <div className="relative flex flex-1 flex-col items-center justify-center">

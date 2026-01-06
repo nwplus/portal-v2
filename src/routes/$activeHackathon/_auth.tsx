@@ -8,13 +8,19 @@ export const Route = createFileRoute("/$activeHackathon/_auth")({
     const { isAuthenticated } = useAuthStore.getState();
 
     if (!isAuthenticated) {
+      // Preserve full URL including search params for post-auth redirect (e.g. ?unlockStamp=xxx)
+      // As of now, we use this to enable unlocking stamps through scanning a QR code with the relevant id (query param)
+      const redirectUrl = location.search
+        ? `${location.pathname}${location.search}`
+        : location.pathname;
+
       throw redirect({
         to: "/$activeHackathon/login",
         params: {
           activeHackathon: params.activeHackathon,
         },
         search: {
-          redirect: location.pathname,
+          redirect: redirectUrl,
         },
       });
     }

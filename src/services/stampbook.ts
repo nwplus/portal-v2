@@ -57,6 +57,27 @@ async function persistUnlockedStamp(uid: string, stampId: string): Promise<void>
 }
 
 /**
+ * Wrapper around persistUnlockedStamp with validation + richer metadata.
+ * Unlock a stamp by ID (used when scanning a QR code). Returns true if the stamp exists and was unlocked, false otherwise.
+ */
+export async function unlockStampById(
+  uid: string,
+  stampId: string,
+  dbCollectionName: string,
+): Promise<{ success: boolean; stampName?: string }> {
+  const allStamps = await fetchStamps(dbCollectionName);
+  const stamp = allStamps.find((s) => s._id === stampId);
+
+  if (!stamp) {
+    return { success: false };
+  }
+
+  await persistUnlockedStamp(uid, stampId);
+
+  return { success: true, stampName: stamp.name };
+}
+
+/**
  * Utility to fetch all valid stamps.
  *
  * @param hackathonId - the hackathon ID to (optionally) filter stamps by

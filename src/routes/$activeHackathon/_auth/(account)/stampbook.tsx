@@ -3,16 +3,31 @@ import { GradientBackground } from "@/components/layout/gradient-background";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useHackerStore } from "@/lib/stores/hacker-store";
 import { getPreferredName } from "@/lib/utils";
-import { loadStampbook } from "@/services/stampbook";
-import { createFileRoute } from "@tanstack/react-router";
+import { loadStampbook, unlockStampById } from "@/services/stampbook";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/$activeHackathon/_auth/(account)/stampbook")({
-  loader: async ({ context }) => {
+  validateSearch: (search) => ({
+    unlockStamp: (search.unlockStamp as string) || undefined,
+  }),
+  loaderDeps: ({ search }) => ({ unlockStamp: search.unlockStamp }),
+  loader: async ({ context, deps }) => {
     const { dbCollectionName } = context;
     const user = useAuthStore.getState().user;
 
     if (!dbCollectionName || !user?.uid) {
-      return { stamps: [], preferredName: "User" };
+      return { stamps: [], preferredName: "User", unlockedStampName: undefined };
+    }
+
+    // In the case of stamps that must be unlocked through scanning a QR (which holds an id query param), unlock the stamp
+    let unlockedStampName: string | undefined;
+    if (deps.unlockStamp) {
+      const result = await unlockStampById(user.uid, deps.unlockStamp, dbCollectionName);
+      if (result.success) {
+        unlockedStampName = result.stampName;
+      }
     }
 
     const [stamps, hacker] = await Promise.all([
@@ -24,13 +39,31 @@ export const Route = createFileRoute("/$activeHackathon/_auth/(account)/stampboo
 
     console.log("stamps", stamps);
 
-    return { stamps, preferredName };
+    return { stamps, preferredName, unlockedStampName };
   },
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  const { stamps, preferredName } = Route.useLoaderData();
+  const { stamps, preferredName, unlockedStampName } = Route.useLoaderData();
+  const { activeHackathon } = Route.useParams();
+  const navigate = useNavigate();
+
+  // Show notification toast and clear URL param when stamp is unlocked
+  useEffect(() => {
+    if (unlockedStampName) {
+      toast.success(
+        unlockedStampName ? `"${unlockedStampName}" stamp unlocked!` : "Stamp unlocked!",
+      );
+
+      navigate({
+        to: "/$activeHackathon/stampbook",
+        params: { activeHackathon },
+        search: { unlockStamp: undefined },
+        replace: true,
+      });
+    }
+  }, [unlockedStampName, navigate, activeHackathon]);
 
   return (
     <GradientBackground gradientPosition="bottomMiddle">
