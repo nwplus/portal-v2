@@ -6,14 +6,21 @@ import type { Social } from "@/lib/firebase/types/socials";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useHackerStore } from "@/lib/stores/hacker-store";
 import { fetchOrCreateSocial } from "@/services/socials";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useState } from "react";
 
-export const Route = createFileRoute("/$activeHackathon/_auth/(account)/social-profile")({
-  loader: async ({ context }) => {
+export const Route = createFileRoute(
+  "/$activeHackathon/_auth/(account)/social-profile/$userId",
+)({
+  loader: async ({ context, params }) => {
     const { dbCollectionName } = context;
     const { user } = useAuthStore.getState();
     const getOrFetchHacker = useHackerStore.getState().getOrFetch;
+
+    // TODO: only allow viewing own profile for now; change in recently-viewed PR
+    if (params.userId !== user?.uid) {
+      throw notFound();
+    }
 
     if (!user?.uid || !user?.email || !dbCollectionName) {
       return { socialProfile: null };
