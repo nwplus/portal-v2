@@ -1,7 +1,8 @@
 import type { StampWithUnlockState } from "@/lib/firebase/types/stamps";
 import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { forwardRef, useCallback, useRef, useState } from "react";
+import HTMLFlipBook from "react-pageflip";
 import { StampbookPage } from "./stampbook-page";
 import { organizeIntoSpreads } from "./utils";
 
@@ -10,23 +11,65 @@ interface StampbookProps {
   displayName: string;
 }
 
+// react-pageflip requires forwardRef wrapper for page components
+const Page = forwardRef<HTMLDivElement, { children: React.ReactNode }>(({ children }, ref) => (
+  <div ref={ref}>{children}</div>
+));
+Page.displayName = "Page";
+
 export function Stampbook({ stamps, displayName }: StampbookProps) {
   // Should not display isHidden stamps that are not unlocked
   const stampsToDisplay = stamps.filter((stamp) => !stamp.isHidden || stamp.isUnlocked);
-
-  const [currentSpread, setCurrentSpread] = useState(0);
   const spreads = organizeIntoSpreads(stampsToDisplay);
 
-  const canGoBack = currentSpread > 0;
-  const canGoForward = currentSpread < spreads.length - 1;
+  // biome-ignore lint/suspicious/noExplicitAny: react-pageflip doesn't export proper types
+  const bookRef = useRef<any>(null);
+  const [currentPage, setCurrentPage] = useState(0);
 
-  const currentSpreadData = spreads[currentSpread];
+  const pages = spreads.flatMap((spread, spreadIndex) => [
+    {
+      id: `left-${spreadIndex}`,
+      layout: spread.isTitleSpread ? ("title" as const) : ("grid" as const),
+      stamps: spread.leftPage,
+      title: spread.isTitleSpread ? `${displayName}'s stampbook` : undefined,
+      isLeft: true,
+    },
+    {
+      id: `right-${spreadIndex}`,
+      layout: "grid" as const,
+      stamps: spread.rightPage,
+      title: undefined,
+      isLeft: false,
+    },
+  ]);
+
+  const handleFlip = useCallback((e: { data: number }) => {
+    setCurrentPage(e.data);
+  }, []);
+
+  const handlePrev = () => {
+    bookRef.current?.pageFlip()?.flipPrev();
+  };
+
+  const handleNext = () => {
+    bookRef.current?.pageFlip()?.flipNext();
+  };
+
+  const canGoBack = currentPage > 1;
+  const canGoForward = currentPage < pages.length - 2;
+
+  if (pages.length === 0) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <p className="text-text-secondary">No stamps available yet.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="relative flex items-center justify-center gap-4 py-8">
-      {/* TODO: Refactor arrow buttons out */}
       <button
-        onClick={() => setCurrentSpread((i) => Math.max(0, i - 1))}
+        onClick={handlePrev}
         disabled={!canGoBack}
         className={cn(
           "rounded-full p-2 transition-all",
@@ -40,41 +83,48 @@ export function Stampbook({ stamps, displayName }: StampbookProps) {
         <ChevronLeft size={40} strokeWidth={1.5} />
       </button>
 
-      <div className="relative flex overflow-hidden rounded-lg shadow-2xl">
-        <div className="pointer-events-none absolute inset-0 z-10 rounded-lg bg-gradient-to-b from-black/5 to-black/20" />
-
-        <StampbookPage
-          layout={currentSpreadData.isTitleSpread ? "title" : "grid"}
-          stamps={currentSpreadData.leftPage}
-          title={currentSpreadData.isTitleSpread ? `${displayName}'s stampbook` : undefined}
-          className="rounded-l-lg"
-        />
-
-        <div className="relative w-3 flex-shrink-0 bg-gradient-to-r from-[#D8D0C4] via-[#C8C0B4] to-[#D8D0C4]">
-          <div className="absolute inset-y-0 left-0 w-px bg-[#B8B0A4]" />
-          <div className="absolute inset-y-0 right-0 w-px bg-[#B8B0A4]" />
-          <div className="-translate-x-1/2 absolute inset-y-0 left-1/2 w-px bg-[#A8A098]" />
-        </div>
-
-        <StampbookPage
-          layout="grid"
-          stamps={currentSpreadData.rightPage}
-          className="rounded-r-lg"
-        />
-
-        <div className="pointer-events-none absolute right-0 bottom-0 h-10 w-10">
-          <div
-            className="absolute right-0 bottom-0 h-full w-full"
-            style={{
-              background: "linear-gradient(135deg, transparent 50%, #E8E0D4 50%, #D8D0C4 100%)",
-              borderRadius: "0 0 8px 0",
-            }}
-          />
-        </div>
+      <div className="relative overflow-hidden rounded-lg shadow-md">
+        {/* @ts-expect-error - react-pageflip types are incomplete */}
+        <HTMLFlipBook
+          ref={bookRef}
+          width={480}
+          height={600}
+          size="fixed"
+          minWidth={480}
+          maxWidth={480}
+          minHeight={600}
+          maxHeight={600}
+          showCover={false}
+          mobileScrollSupport={true}
+          flippingTime={450}
+          useMouseEvents={true}
+          swipeDistance={30}
+          onFlip={handleFlip}
+          startPage={0}
+          drawShadow={true}
+          maxShadowOpacity={0.15}
+          usePortrait={false}
+          startZIndex={0}
+          autoSize={false}
+          clickEventForward={false}
+          showPageCorners={true}
+          disableFlipByClick={true}
+        >
+          {pages.map((page) => (
+            <Page key={page.id}>
+              <StampbookPage
+                layout={page.layout}
+                stamps={page.stamps}
+                title={page.title}
+                className={page.isLeft ? "rounded-r-sm rounded-l-lg" : "rounded-r-lg rounded-l-sm"}
+              />
+            </Page>
+          ))}
+        </HTMLFlipBook>
       </div>
 
       <button
-        onClick={() => setCurrentSpread((i) => Math.min(spreads.length - 1, i + 1))}
+        onClick={handleNext}
         disabled={!canGoForward}
         className={cn(
           "rounded-full p-2 transition-all",
@@ -95,10 +145,10 @@ export function Stampbook({ stamps, displayName }: StampbookProps) {
               // biome-ignore lint/suspicious/noArrayIndexKey: page indicators are positional and don't reorder
               key={`page-indicator-${index}`}
               type="button"
-              onClick={() => setCurrentSpread(index)}
+              onClick={() => bookRef.current?.pageFlip()?.turnToPage(index * 2)}
               className={cn(
                 "h-2 w-2 rounded-full transition-all",
-                currentSpread === index
+                Math.floor(currentPage / 2) === index
                   ? "bg-text-primary"
                   : "bg-text-secondary/40 hover:bg-text-secondary/60",
               )}

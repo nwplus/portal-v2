@@ -13,39 +13,30 @@ export interface StampbookSpread {
 /**
  * Organizes stamps into spreads for the stampbook display.
  *
- * First spread: Hackathon stamp on left (title page), first 4 stamps on right
+ * First spread: Title stamp on left, first 4 regular stamps on right
  * Subsequent spreads: 4 stamps per page, 8 stamps per spread
  *
  * @param stamps - Array of stamps to organize
- * @param hackathonStamp - Optional dedicated hackathon stamp for the title page
  * @returns array of spreads
  */
-export function organizeIntoSpreads(
-  stamps: StampWithUnlockState[],
-  hackathonStamp?: StampWithUnlockState,
-): StampbookSpread[] {
-  if (stamps.length === 0 && !hackathonStamp) {
+export function organizeIntoSpreads(stamps: StampWithUnlockState[]): StampbookSpread[] {
+  if (stamps.length === 0) {
     return [];
   }
 
   const spreads: StampbookSpread[] = [];
 
-  let titleStamp = hackathonStamp;
-  let remainingStamps = stamps;
+  const titleStamp = stamps.find((s) => s.isTitle) ?? stamps[0];
+  const regularStamps = stamps.filter((s) => s._id !== titleStamp._id);
 
-  if (!titleStamp && stamps.length > 0) {
-    titleStamp = stamps[0];
-    remainingStamps = stamps.slice(1);
-  }
-
-  const firstRightPageStamps = remainingStamps.slice(0, 4);
+  const firstRightPageStamps = regularStamps.slice(0, 4);
   spreads.push({
-    leftPage: titleStamp ? [titleStamp] : [],
+    leftPage: [titleStamp],
     rightPage: firstRightPageStamps,
     isTitleSpread: true,
   });
 
-  const afterFirstPage = remainingStamps.slice(4);
+  const afterFirstPage = regularStamps.slice(4);
 
   for (let i = 0; i < afterFirstPage.length; i += 8) {
     const leftPageStamps = afterFirstPage.slice(i, i + 4);

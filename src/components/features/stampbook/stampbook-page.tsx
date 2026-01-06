@@ -12,11 +12,12 @@ interface StampbookPageProps {
 }
 
 export function StampbookPage({ layout, stamps = [], title, className }: StampbookPageProps) {
+  const titleIndex = stamps.findIndex((stamp) => stamp.isTitle) ?? 0;
+
   return (
     <div
       className={cn(
         "relative flex h-[600px] w-[480px] flex-col bg-[#F3EBEA] p-6",
-        "shadow-inner",
         className,
       )}
     >
@@ -27,11 +28,11 @@ export function StampbookPage({ layout, stamps = [], title, className }: Stampbo
           <div className="flex h-full flex-col items-center justify-center gap-8">
             <div className="font-bold font-mono text-[#8A8A8A] text-xl tracking-wide">{title}</div>
 
-            {stamps[0] && (
+            {stamps[titleIndex] && (
               <div className="flex flex-col items-center gap-4">
-                <StampDisplay stamp={stamps[0]} showDetails={false} />
+                <StampDisplay stamp={stamps[titleIndex]} showDetails={false} />
                 <span className="max-w-48 text-center font-mono text-[#4A4A4A] text-sm">
-                  {stamps[0].description}
+                  {stamps[titleIndex].description}
                 </span>
               </div>
             )}
