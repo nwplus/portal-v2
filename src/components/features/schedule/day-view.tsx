@@ -5,6 +5,7 @@ import { EventBlock } from "./event-block";
 type DayViewProps = {
   dayLabel: string;
   events: (DayOfEvent & { location?: string })[];
+  hideTitle?: boolean;
 };
 
 type PositionedEvent = {
@@ -187,7 +188,7 @@ function buildTimeline(events: (DayOfEvent & { location?: string })[]) {
   };
 }
 
-export function DayView({ dayLabel, events }: DayViewProps) {
+export function DayView({ dayLabel, events, hideTitle = false }: DayViewProps) {
   const timeline = useMemo(() => buildTimeline(events), [events]);
   const [now, setNow] = useState<Date>(() => new Date());
 
@@ -218,8 +219,8 @@ export function DayView({ dayLabel, events }: DayViewProps) {
     currentTop <= timeline.height;
 
   return (
-    <section className="flex flex-col gap-2 pt-10 pr-2">
-      <div className="pl-16 text-text-primary text-xl md:pl-28">{dayLabel}</div>
+    <section className="flex flex-col gap-2 py-4 pr-2">
+      {!hideTitle && <div className="pl-16 text-text-primary text-xl md:pl-28">{dayLabel}</div>}
       <div className="flex gap-0 md:gap-4">
         <div className="relative w-16 md:w-24" style={{ minHeight: timeline.height }}>
           {timeline.labels.map((label) => (
