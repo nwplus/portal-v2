@@ -37,7 +37,7 @@ function RouteComponent() {
 
   const HackathonIcon = getColouredHackathonIcon(activeHackathon);
 
-  const showFaqs =
+  const treatAsApplied =
     applicationStatus === "applied" ||
     applicationStatus === "gradinginprog" ||
     applicationStatus === "scored" ||
@@ -81,13 +81,19 @@ function RouteComponent() {
                         : "Application not started"}
                     </>
                   )}
-                  {applicationStatus === "applied" && (
+                  {treatAsApplied && (
                     <>
                       <Check className="size-3 md:size-5" strokeWidth={2} />
                       Application submitted
                     </>
                   )}
 
+                  {applicationStatus === "pendingWaitlist" && (
+                    <>
+                      <Clock className="size-3 md:size-5" strokeWidth={2} />
+                      Pending waitlist
+                    </>
+                  )}
                   {(applicationStatus === "acceptedNoResponseYet" ||
                     applicationStatus === "acceptedAndAttending") && (
                     <>
@@ -130,7 +136,7 @@ function RouteComponent() {
           <div className="flex flex-col items-start gap-4 rounded-2xl border border-border-subtle p-5 text-sm [background:var(--background-translucent-card)] md:gap-6 md:rounded-none md:border-0 md:p-0 md:text-base md:[background:none]">
             <StatusBlurb />
           </div>
-          {showFaqs && <ApplicationFaqs />}
+          {treatAsApplied && <ApplicationFaqs />}
           {applicationStatus === "inProgress" && applicationsOpen?.[activeHackathon] === true && (
             <Button variant="primary" asChild>
               <Link to="/$activeHackathon/application/basic-info" params={{ activeHackathon }}>

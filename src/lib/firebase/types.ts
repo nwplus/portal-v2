@@ -83,3 +83,13 @@ export type DayOfEvent = {
   type?: "main" | "workshops" | "minievents";
   points?: string;
 };
+
+export interface FAQ {
+  hackathonIDs: string[];
+  question?: string;
+  lastModified?: string;
+  lastModifiedBy?: string;
+  answer?: string;
+  // `Rewards` is a new; we may not have any FAQs for this category (yet)
+  category?: "General" | "Teams & Projects" | "Logistics" | "Rewards";
+}
