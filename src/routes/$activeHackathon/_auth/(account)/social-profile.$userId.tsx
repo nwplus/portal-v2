@@ -9,9 +9,7 @@ import { fetchOrCreateSocial } from "@/services/socials";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useState } from "react";
 
-export const Route = createFileRoute(
-  "/$activeHackathon/_auth/(account)/social-profile/$userId",
-)({
+export const Route = createFileRoute("/$activeHackathon/_auth/(account)/social-profile/$userId")({
   loader: async ({ context, params }) => {
     const { dbCollectionName } = context;
     const { user } = useAuthStore.getState();

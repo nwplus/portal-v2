@@ -149,7 +149,7 @@ export async function fetchOrCreateSocial(
     // TODO: Update user Socials on application submission instead
     // Backfill only empty fields from applicant data - doesn't handle when a user has changed their information for a different hackathon
     const updates: Partial<Social> = {};
-    
+
     if (!existing.school && applicant?.basicInfo?.school) {
       updates.school = applicant.basicInfo.school;
     }
@@ -164,7 +164,7 @@ export async function fetchOrCreateSocial(
     }
 
     if (Object.keys(updates).length > 0) {
-      await createOrMergeSocial(uid, email, { _id: uid, email, ...updates});
+      await createOrMergeSocial(uid, email, { _id: uid, email, ...updates });
       return { ...existing, ...updates };
     }
   }
