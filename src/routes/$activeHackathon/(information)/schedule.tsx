@@ -72,6 +72,8 @@ function RouteComponent() {
   const isMobile = useIsMobile();
   const groupedDays = useMemo(() => groupEventsByLocalDay(dayOfEvents ?? []), [dayOfEvents]);
 
+  console.log(groupedDays);
+
   return (
     <GradientBackground gradientPosition={isMobile ? "bottomMiddle" : "topLeft"} className="py-10">
       {groupedDays ? (

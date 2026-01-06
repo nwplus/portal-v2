@@ -31,7 +31,7 @@ type TimeLabel = {
 };
 
 const MIN_EVENT_DURATION_MINUTES = 30;
-const PIXELS_PER_MINUTE = 1.5;
+const PIXELS_PER_MINUTE = 2;
 const TEST_TIME_ISO: string | null = null; // set to an ISO string for visual testing (i.e. "2025-01-18T17:00:00.000Z")
 const OVERLAP_CARD_PADDING_PCT = 0.5;
 
@@ -85,18 +85,23 @@ function buildTimeline(events: (DayOfEvent & { location?: string })[]) {
   parsed.sort((a, b) => a.start.getTime() - b.start.getTime());
 
   const baseDate = parsed[0].start;
-  const minStart = Math.min(...parsed.map(({ start }) => minutesSinceMidnight(start)));
-  const maxEnd = Math.max(...parsed.map(({ end }) => minutesSinceMidnight(end)));
+  const dayDate = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate());
+  const dayStartMs = dayDate.getTime();
+
+  const minStart = Math.min(
+    ...parsed.map(({ start }) => Math.round((start.getTime() - dayStartMs) / 60_000)),
+  );
+  const maxEnd = Math.max(
+    ...parsed.map(({ end }) => Math.round((end.getTime() - dayStartMs) / 60_000)),
+  );
 
   const timelineStart = Math.floor(minStart / 60) * 60;
   const timelineEnd = Math.ceil(maxEnd / 60) * 60;
   const timelineHeight = Math.max((timelineEnd - timelineStart) * PIXELS_PER_MINUTE, 1);
-  const dayDate = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate());
 
   const labels: TimeLabel[] = [];
   for (let minutes = timelineStart; minutes <= timelineEnd; minutes += 60) {
-    const labelDate = new Date(baseDate);
-    labelDate.setHours(0, minutes, 0, 0);
+    const labelDate = new Date(dayStartMs + minutes * 60_000);
     labels.push({
       id: `${minutes}`,
       top: (minutes - timelineStart) * PIXELS_PER_MINUTE,
@@ -111,8 +116,8 @@ function buildTimeline(events: (DayOfEvent & { location?: string })[]) {
   };
 
   const segments: EventSegment[] = parsed.map(({ event, start, end }) => {
-    const startMinutes = minutesSinceMidnight(start);
-    const endMinutes = minutesSinceMidnight(end);
+    const startMinutes = Math.round((start.getTime() - dayStartMs) / 60_000);
+    const endMinutes = Math.round((end.getTime() - dayStartMs) / 60_000);
     const durationMinutes = Math.max(endMinutes - startMinutes, MIN_EVENT_DURATION_MINUTES);
 
     return {

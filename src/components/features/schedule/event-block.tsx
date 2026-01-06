@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { Map as MapIcon } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 interface EventBlockProps {
@@ -185,16 +186,16 @@ export function EventBlock({
             <div className="flex-grow text-left text-sm text-text-secondary">
               {description ?? ""}
             </div>
-            <div>
-              <div className="text-sm text-text-secondary">
-                {startLabel} — {endLabel}
+            <div className="flex flex-wrap gap-x-4 gap-y-1">
+              <div className="text-sm">
+                {startLabel} - {endLabel}
               </div>
-              {(location || points) && (
-                <div className="flex gap-3 text-sm text-text-secondary">
-                  {location && <div>{location}</div>}
-                  {points && <div>{points}</div>}
+              {location && (
+                <div className="flex items-center gap-2 text-sm">
+                  {location} <MapIcon className="h-4 w-4" />
                 </div>
               )}
+              {points && <div className="text-sm">{points} points</div>}
             </div>
 
             {hasOverflow && !isFocused && (
@@ -243,15 +244,17 @@ export function EventBlock({
                 <div className="font-semibold text-text-primary">{name ?? "Untitled event"}</div>
               </div>
               <div className="flex-grow text-sm text-text-secondary">{description ?? ""}</div>
-              <div className="text-sm text-text-secondary">
-                {startLabel} — {endLabel}
-              </div>
-              {(location || points) && (
-                <div className="mt-1 flex gap-3 text-sm text-text-secondary">
-                  {location && <div>{location}</div>}
-                  {points && <div>{points}</div>}
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-text-primary">
+                <div className="text-sm">
+                  {startLabel} - {endLabel}
                 </div>
-              )}
+                {location && (
+                  <div className="flex items-center gap-2 text-sm">
+                    {location} <MapIcon className="h-4 w-4" />
+                  </div>
+                )}
+                {points && <div className="text-sm">{points} points</div>}
+              </div>
             </div>
           </div>
         </dialog>
