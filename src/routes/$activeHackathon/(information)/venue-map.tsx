@@ -4,6 +4,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { ImageViewer } from "@/components/ui/image-viewer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useHackathon } from "@/hooks/use-hackathon";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export const Route = createFileRoute("/$activeHackathon/(information)/venue-map")({
@@ -11,6 +12,7 @@ export const Route = createFileRoute("/$activeHackathon/(information)/venue-map"
 });
 
 function RouteComponent() {
+  const { activeHackathon } = useHackathon();
   const isMobile = useIsMobile();
 
   return (
@@ -25,11 +27,15 @@ function RouteComponent() {
             <ImageViewer
               className="-mt-11"
               height={isMobile ? "80vh" : undefined}
-              src="/assets/maps/lsi.png"
+              src={`/assets/${activeHackathon}/maps/venue.png`}
             />
           </TabsContent>
           <TabsContent value="ceremonies">
-            <ImageViewer className="-mt-11" height="90vh" src="/assets/maps/ceremonies.png" />
+            <ImageViewer
+              className="-mt-11"
+              height="90vh"
+              src={`/assets/${activeHackathon}/maps/ceremonies.png`}
+            />
           </TabsContent>
         </Tabs>
       </Container>
