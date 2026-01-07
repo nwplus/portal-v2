@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Social } from "@/lib/firebase/types/socials";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useHackerStore } from "@/lib/stores/hacker-store";
+import { getPreferredName } from "@/lib/utils";
 import { fetchOrCreateSocial } from "@/services/socials";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useState } from "react";
@@ -27,20 +28,20 @@ export const Route = createFileRoute("/$activeHackathon/_auth/(account)/social-p
     const hacker = await getOrFetchHacker(dbCollectionName, user.uid);
     const socialProfile = await fetchOrCreateSocial(user.uid, user.email, hacker);
 
-    return { socialProfile };
+    return { socialProfile, hacker };
   },
   component: RouteComponent,
 });
 
 function RouteComponent() {
   const user = useAuthStore((state) => state.user);
-  const { socialProfile: loaderProfile } = Route.useLoaderData();
+  const { socialProfile: loaderProfile, hacker } = Route.useLoaderData();
 
   // for profile updates made by the user
   const [updatedProfile, setUpdatedProfile] = useState<Social | null>(loaderProfile);
 
   const socialProfile = updatedProfile ?? loaderProfile;
-  const displayName = updatedProfile?.preferredName || user?.displayName || "Unknown User";
+  const displayName = hacker ? getPreferredName(hacker) : "User";
 
   return (
     <GradientBackground

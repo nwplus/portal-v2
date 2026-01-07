@@ -167,6 +167,8 @@ export async function fetchOrCreateSocial(
       await createOrMergeSocial(uid, email, { _id: uid, email, ...updates });
       return { ...existing, ...updates };
     }
+
+    return existing;
   }
 
   const newSocial: Social = {

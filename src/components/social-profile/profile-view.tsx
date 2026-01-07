@@ -43,7 +43,7 @@ export default function ProfileView({ socialProfile, onEdit, allTags }: ProfileV
       case "devpost":
         return `https://devpost.com/${cleanUsername}`;
       default:
-        return username.startsWith("www.") ? `https://${username}` : username;
+        return `https://${username}`;
     }
   };
 
