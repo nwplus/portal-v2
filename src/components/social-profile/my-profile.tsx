@@ -29,10 +29,6 @@ interface MyProfileProps {
   displayName: string;
 }
 
-/**
- * User social profile with modes to view and edit profile information.
- * The single component holds all views to avoid additional prop drilling shared form state.
- */
 export function MyProfile({
   socialProfile,
   onProfileUpdate,

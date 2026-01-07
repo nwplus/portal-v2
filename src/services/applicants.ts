@@ -1,3 +1,4 @@
+import type { RsvpFormValues } from "@/lib/application/rsvp-schema";
 import { db } from "@/lib/firebase/client";
 import { storage } from "@/lib/firebase/client";
 import type { Applicant, ApplicantDraft } from "@/lib/firebase/types/applicants";
@@ -142,4 +143,41 @@ export async function saveApplicantDraft(dbCollectionName: string): Promise<void
   await createOrMergeApplicant(dbCollectionName, user.uid, applicantDraft);
   setDirty(false);
   setLastLocalSaveAt(Date.now());
+}
+
+/**
+ * Updates basicInfo with RSVP answers and sets status to acceptedAndAttending
+ *
+ * @param dbCollectionName - firestore collection name for the hackathon
+ * @param uid - firebase auth user id
+ * @param rsvpAnswers - RSVP form answers to merge into basicInfo
+ */
+export async function confirmRsvp(
+  dbCollectionName: string,
+  uid: string,
+  rsvpAnswers: RsvpFormValues,
+): Promise<void> {
+  const { applicantDraft, patchApplicant } = useApplicantStore.getState();
+
+  if (!applicantDraft) {
+    throw new Error("No applicant draft found");
+  }
+
+  patchApplicant({
+    basicInfo: {
+      ...applicantDraft.basicInfo,
+      ...rsvpAnswers,
+    },
+    status: {
+      ...applicantDraft.status,
+      attending: true,
+      responded: true,
+      applicationStatus: "acceptedAndAttending",
+    },
+  });
+
+  const updatedDraft = useApplicantStore.getState().applicantDraft;
+  if (updatedDraft) {
+    await createOrMergeApplicant(dbCollectionName, uid, updatedDraft);
+  }
 }

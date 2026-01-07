@@ -13,14 +13,14 @@ export const Route = createFileRoute("/$activeHackathon/(information)/home")({
 
 function RouteComponent() {
   const { activeHackathon } = useHackathon();
-  const { displayNameShort, hackathonYear } = useHackathonInfo();
+  const { displayNameFull } = useHackathonInfo();
   const signInWithGoogle = useAuthStore((state) => state.signInWithGoogle);
   const navigate = useNavigate();
   const HackathonIcon = getColouredHackathonIcon(activeHackathon);
 
   const handleSignIn = async () => {
     await signInWithGoogle();
-    navigate({ to: "/$activeHackathon/my-ticket", params: { activeHackathon } });
+    navigate({ to: "/$activeHackathon", params: { activeHackathon } });
   };
 
   return (
@@ -29,14 +29,14 @@ function RouteComponent() {
       className="flex items-center justify-center p-4"
     >
       <div className="flex max-w-md flex-col items-center gap-6 text-center md:gap-8">
-        <div className="scale-[1.5] md:scale-[2]">
+        <div className="h-8 w-auto scale-[1.5] md:scale-[2]">
           <HackathonIcon />
         </div>
         <div className="flex flex-col gap-3 md:gap-4">
           <h1 className="font-bold text-3xl text-text-primary md:text-4xl">
             Welcome to
             <br />
-            {displayNameShort} {hackathonYear}
+            {displayNameFull}
           </h1>
           <p className="text-base text-text-primary md:text-md">
             If you are a hacker, sign in below to view your account.

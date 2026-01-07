@@ -59,7 +59,7 @@ function RouteComponent() {
   // for profile updates made by the user
   const [updatedProfile, setUpdatedProfile] = useState<Social | null>(loaderProfile);
 
-  // viewing others always uses loader data to avoid stale and incorrect navigation
+  // viewing others always uses loader data to avoid staleness and incorrect navigation
   const socialProfile = isOwnProfile ? (updatedProfile ?? loaderProfile) : loaderProfile;
 
   if (!isOwnProfile) {

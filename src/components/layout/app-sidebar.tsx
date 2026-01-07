@@ -109,6 +109,11 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const handleSignin = async () => {
+    await signInWithGoogle();
+    navigate({ to: "/$activeHackathon", params: { activeHackathon } });
+  };
+
   const handleLogout = async () => {
     await logout();
     navigate({ to: "/$activeHackathon", params: { activeHackathon } });
@@ -166,10 +171,9 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Home">
                   <Link
-                    to="/$activeHackathon"
+                    to="/$activeHackathon/home"
                     params={{ activeHackathon }}
                     activeProps={{ "data-active": true }}
-                    activeOptions={{ exact: true }}
                   >
                     <Home />
                     <span>Home</span>
@@ -272,7 +276,7 @@ export function AppSidebar() {
             <Button
               variant="login"
               className="w-full justify-start gap-2 group-data-[collapsible=icon]:justify-center"
-              onClick={() => signInWithGoogle()}
+              onClick={handleSignin}
             >
               <GoogleIcon />
               <span className="group-data-[collapsible=icon]:hidden">Log in with Google</span>
@@ -288,7 +292,11 @@ export function AppSidebarLayout({ children }: PropsWithChildren) {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset>{children}</SidebarInset>
+      <SidebarInset className="overflow-auto">
+        {/* mobile trigger */}
+        <SidebarTrigger className="absolute top-4 left-4 z-50 size-6 md:hidden" />
+        {children}
+      </SidebarInset>
     </SidebarProvider>
   );
 }

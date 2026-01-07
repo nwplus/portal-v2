@@ -30,6 +30,7 @@ code {
   --text-secondary: #737373;
   --text-error: #f87171;
   --text-accent: #4f263d;
+  --text-neutral: #f5f5f5;
   --text-tertiary-button: #fafafa; /* only used for tertiary button */
 
   --border-subtle: #e4e4e740;
@@ -76,6 +77,7 @@ code {
   --color-text-secondary: var(--text-secondary);
   --color-text-error: var(--text-error);
   --color-text-accent: var(--text-accent);
+  --color-text-neutral: var(--text-neutral);
 
   --color-border-subtle: var(--border-subtle);
   --color-border-active: var(--border-active);
@@ -115,6 +117,11 @@ code {
 }
 
 @layer base {
+  html,
+  body {
+    @apply overscroll-none;
+  }
+
   body {
     @apply bg-bg-main text-text-primary;
   }
@@ -147,6 +154,13 @@ code {
 
 .scrollbar-hidden::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Edge */
+}
+
+code {
+  font-size: 0.8rem;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.2rem;
+  border-radius: 0.2rem;
 }
 
 input:-webkit-autofill,
