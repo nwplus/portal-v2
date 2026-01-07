@@ -54,7 +54,7 @@ const ACCOUNT_MENU_ITEMS: MenuItem[] = [
   },
   {
     label: "Social profile",
-    to: "/$activeHackathon/social-profile",
+    to: "/$activeHackathon/social-profile/$userId",
     icon: Share2,
   },
   {
@@ -144,7 +144,7 @@ export function AppSidebar() {
                     <SidebarMenuButton asChild tooltip={label}>
                       <Link
                         to={to}
-                        params={{ activeHackathon }}
+                        params={{ activeHackathon, userId: user?.uid }}
                         activeProps={{ "data-active": true }}
                       >
                         <Icon />
