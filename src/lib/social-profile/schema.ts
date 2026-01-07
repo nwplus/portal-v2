@@ -45,13 +45,10 @@ function validateWebsite(value: string): boolean {
   if (!value.trim()) return true;
 
   const trimmed = value.trim();
-  const urlToTest =
-    trimmed.startsWith("http://") || trimmed.startsWith("https://")
-      ? trimmed
-      : `https://${trimmed}`;
+  const normalized = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
 
   try {
-    const url = new URL(urlToTest);
+    const url = new URL(normalized);
     return url.hostname.includes(".");
   } catch {
     return false;

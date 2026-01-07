@@ -16,17 +16,15 @@ import { Github, Globe, Instagram, Linkedin } from "lucide-react";
 import { useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
-import {
-  DEFAULT_PROFILE_INDEX,
-  SELECTABLE_PICTURES,
-  getProfilePicture,
-  getTagBackgroundColor,
-} from "./constants";
+import { Textarea } from "../ui/textarea";
+import { PROFILE_PICTURES, getTagBackgroundColor } from "./constants";
+import ProfilePicturePicker from "./profile-picture-picker";
+import ProfileView from "./profile-view";
 
-type ProfileMode = "view" | "edit" | "select-picture";
+type ProfileMode = "view" | "select-picture" | "edit";
 
 interface MyProfileProps {
-  socialProfile: Social | null;
+  socialProfile: Social;
   onProfileUpdate: (profile: Social) => void;
   uid: string;
   email: string;
@@ -46,9 +44,10 @@ export function MyProfile({
 }: MyProfileProps) {
   const [profileMode, setProfileMode] = useState<ProfileMode>("view");
   const [isSaving, setIsSaving] = useState(false);
-  // Stores form state when in 'edit' mode and before 'select-picture' mode,
-  // so that user can cancel picture selection if needed.
-  const formStateBeforePictureSelect = useRef<SocialProfileFormValues | null>(null);
+
+  // Stores profile picture while on edit/view mode, before editing it in the select-picture mode.
+  // Enables 'Cancel' button on the select-picture mode to revert changes.
+  const [cachedProfilePictureIdx, setCachedProfilePictureIdx] = useState<number | null>(null);
 
   const {
     register,
@@ -71,96 +70,6 @@ export function MyProfile({
   const watchedTagsToHide = watch("tagsToHide");
 
   const bioWordCount = watchedBio.trim().split(/\s+/).filter(Boolean).length;
-
-  // Deriving display values from profile data
-  const pronouns = socialProfile?.pronouns;
-  const bio = socialProfile?.bio;
-  const profilePictureIndex = socialProfile?.profilePictureIndex ?? DEFAULT_PROFILE_INDEX;
-  const profilePicture = getProfilePicture(profilePictureIndex);
-
-  const linkedin = socialProfile?.socialLinks?.linkedin;
-  const github = socialProfile?.socialLinks?.github;
-  const website = socialProfile?.socialLinks?.website;
-  const instagram = socialProfile?.socialLinks?.instagram;
-  const devpost = socialProfile?.socialLinks?.devpost;
-
-  const formatSocialUrl = (platform: string, username: string): string => {
-    if (username.startsWith("http://") || username.startsWith("https://")) {
-      return username;
-    }
-
-    const cleanUsername = username.replace(/^@/, "");
-
-    switch (platform) {
-      case "linkedin":
-        return `https://www.linkedin.com/in/${cleanUsername}`;
-      case "github":
-        return `https://github.com/${cleanUsername}`;
-      case "instagram":
-        return `https://www.instagram.com/${cleanUsername}`;
-      case "devpost":
-        return `https://devpost.com/${cleanUsername}`;
-      default:
-        return username.startsWith("www.") ? `https://${username}` : username;
-    }
-  };
-
-  const socials = [
-    linkedin
-      ? {
-          icon: Linkedin,
-          url: formatSocialUrl("linkedin", linkedin),
-          displayText: linkedin,
-          label: "LinkedIn",
-        }
-      : null,
-    github
-      ? {
-          icon: Github,
-          url: formatSocialUrl("github", github),
-          displayText: github,
-          label: "GitHub",
-        }
-      : null,
-    website
-      ? {
-          icon: Globe,
-          url: formatSocialUrl("website", website),
-          displayText: website,
-          label: "Website",
-        }
-      : null,
-    instagram
-      ? {
-          icon: Instagram,
-          url: formatSocialUrl("instagram", instagram),
-          displayText: instagram,
-          label: "Instagram",
-        }
-      : null,
-    devpost
-      ? {
-          icon: Globe,
-          url: formatSocialUrl("devpost", devpost),
-          displayText: devpost,
-          label: "Devpost",
-        }
-      : null,
-  ].filter((social): social is NonNullable<typeof social> => social !== null);
-
-  // Tags are populated from the current hackathon's application data
-  const allTags: Array<{ text: string; category: TagCategory }> = [];
-  if (socialProfile?.school) allTags.push({ text: socialProfile.school, category: "school" });
-  if (socialProfile?.areaOfStudy)
-    allTags.push({ text: socialProfile.areaOfStudy, category: "areaOfStudy" });
-  if (socialProfile?.year) allTags.push({ text: socialProfile.year, category: "year" });
-  if (socialProfile?.role) {
-    const roles = socialProfile.role.split(", ");
-    allTags.push(...roles.map((role) => ({ text: role, category: "role" as TagCategory })));
-  }
-
-  const hiddenCategories = new Set(socialProfile?.tagsToHide || []);
-  const visibleTags = allTags.filter((tag) => !hiddenCategories.has(tag.category));
 
   const handleOpenEdit = () => {
     reset(deriveDefaultValues(socialProfile));
@@ -237,6 +146,17 @@ export function MyProfile({
     }
   };
 
+  // Tags are populated from the current hackathon's application data
+  const allTags: Array<{ text: string; category: TagCategory }> = [];
+  if (socialProfile?.school) allTags.push({ text: socialProfile.school, category: "school" });
+  if (socialProfile?.areaOfStudy)
+    allTags.push({ text: socialProfile.areaOfStudy, category: "areaOfStudy" });
+  if (socialProfile?.year) allTags.push({ text: socialProfile.year, category: "year" });
+  if (socialProfile?.role) {
+    const roles = socialProfile.role.split(", ");
+    allTags.push(...roles.map((role) => ({ text: role, category: "role" as TagCategory })));
+  }
+
   const toggleTagVisibility = (category: TagCategory) => {
     const current = watchedTagsToHide;
     const isHidden = current.includes(category);
@@ -246,130 +166,28 @@ export function MyProfile({
     );
   };
 
-  // View: display user's profile information
   if (profileMode === "view") {
-    return (
-      <div className="relative min-h-[500px] rounded-lg border border-border-subtle bg-[#292929]/30 px-6 py-10 backdrop-blur-md md:p-12">
-        <Button
-          variant="secondary"
-          size="sm"
-          className="absolute top-4 right-4"
-          onClick={handleOpenEdit}
-        >
-          Edit <span className="hidden md:inline">Profile</span>
-        </Button>
-
-        <div className="flex flex-col items-center text-center md:items-start md:text-left">
-          <Avatar className="mb-4 size-30 md:size-36">
-            <AvatarImage src={profilePicture ?? undefined} referrerPolicy="no-referrer" />
-            <AvatarFallback className="text-2xl">
-              {displayName.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-
-          <h2 className="mb-1 font-medium text-2xl text-text-primary">
-            {displayName} {pronouns && <span className="text-text-secondary">({pronouns})</span>}
-          </h2>
-
-          <p className="mb-6 text-text-secondary">{bio || "No bio added"}</p>
-
-          <div className="mb-6 w-full">
-            <h3 className="mb-3 font-medium text-md text-text-primary">Tags</h3>
-            <div className="flex flex-wrap gap-2">
-              {visibleTags.length > 0 ? (
-                visibleTags.map((tag, index) => (
-                  <span
-                    key={`${tag.text}-${index}`}
-                    className="rounded px-3 py-1 font-medium text-sm text-text-primary"
-                    style={{ backgroundColor: getTagBackgroundColor(profilePictureIndex) }}
-                  >
-                    {tag.text}
-                  </span>
-                ))
-              ) : (
-                <span className="text-sm text-text-secondary">No tags available</span>
-              )}
-            </div>
-          </div>
-
-          <div className="w-full">
-            <h3 className="mb-3 font-semibold text-sm text-text-primary">Socials</h3>
-            {socials.length > 0 ? (
-              <div className="flex flex-col gap-2">
-                {socials.map((social, index) => {
-                  const Icon = social.icon;
-                  return (
-                    <a
-                      key={`${social.label}-${index}`}
-                      href={social.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-text-primary hover:underline"
-                    >
-                      <Icon className="size-4 shrink-0" />
-                      <span className="break-all text-sm">{social.displayText}</span>
-                    </a>
-                  );
-                })}
-              </div>
-            ) : (
-              <span className="text-sm text-text-secondary">None added</span>
-            )}
-          </div>
-        </div>
-      </div>
-    );
+    return <ProfileView socialProfile={socialProfile} onEdit={handleOpenEdit} allTags={allTags} />;
   }
 
-  // Select picture view: allow user to select a new profile picture
   if (profileMode === "select-picture") {
     return (
-      <div className="mx-auto min-h-[500px] max-w-2xl rounded-lg border border-border-subtle bg-[#292929]/30 px-6 py-10 backdrop-blur-md md:p-12">
-        <div className="flex justify-center">
-          <div className="grid grid-cols-3 place-items-center gap-8">
-            {SELECTABLE_PICTURES.map((picture, index) => {
-              const actualIndex = index + 1;
-              return (
-                <button
-                  key={actualIndex}
-                  type="button"
-                  onClick={() => setValue("profilePictureIndex", actualIndex)}
-                  className={`group relative size-24 overflow-hidden rounded-full transition-all hover:scale-105 md:size-36 ${
-                    watchedProfilePictureIndex === actualIndex
-                      ? "ring-4 ring-border-active"
-                      : "hover:ring-2 hover:ring-border-subtle"
-                  }`}
-                >
-                  <img
-                    src={picture}
-                    alt={`Profile ${actualIndex}`}
-                    className="size-full object-cover"
-                  />
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="mt-6 flex justify-center gap-3">
-          <Button variant="ghost" onClick={
-            () => {
-              if (formStateBeforePictureSelect.current) {
-                reset(formStateBeforePictureSelect.current);
-              }
-              setProfileMode("edit");
-            }}>
-            Cancel
-          </Button>
-          <Button variant="secondary" onClick={() => setProfileMode("edit")}>
-            Save
-          </Button>
-        </div>
-      </div>
+      <ProfilePicturePicker
+        profilePictureIndex={watchedProfilePictureIndex}
+        onSelect={(index) => {
+          setValue("profilePictureIndex", index);
+        }}
+        onCancel={() => {
+          if (cachedProfilePictureIdx !== null) {
+            setValue("profilePictureIndex", cachedProfilePictureIdx);
+          }
+          setProfileMode("edit");
+        }}
+        onSave={() => setProfileMode("edit")}
+      />
     );
   }
 
-  // Edit view: allow user to edit profile information
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
@@ -381,7 +199,7 @@ export function MyProfile({
             <Avatar
               onClick={() => {
                 if (window.innerWidth < 768) {
-                  formStateBeforePictureSelect.current = watch();
+                  setCachedProfilePictureIdx(watchedProfilePictureIndex);
                   setProfileMode("select-picture");
                 }
               }}
@@ -398,7 +216,7 @@ export function MyProfile({
               size="default"
               className="hidden md:block"
               onClick={() => {
-                formStateBeforePictureSelect.current = watch();
+                setCachedProfilePictureIdx(watchedProfilePictureIndex);
                 setProfileMode("select-picture");
               }}
             >
@@ -433,7 +251,10 @@ export function MyProfile({
 
         <div>
           <h3 className="font-medium text-3xl text-text-primary">
-            {displayName} {pronouns && <span className="text-text-secondary">({pronouns})</span>}
+            {displayName}{" "}
+            {socialProfile?.pronouns && (
+              <span className="text-text-secondary">({socialProfile?.pronouns})</span>
+            )}
           </h3>
         </div>
 

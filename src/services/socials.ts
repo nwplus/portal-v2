@@ -1,7 +1,7 @@
 import { db } from "@/lib/firebase/client";
 import type {
   Applicant,
-  ApplicantContributionRole,
+  ApplicantContribution,
   ApplicantMajor,
 } from "@/lib/firebase/types/applicants";
 import type {
@@ -41,7 +41,7 @@ function getSocialRef(uid: string): DocumentReference<DocumentData> {
  * @returns display name for the major; undefined if no major selected
  */
 function getMajorDisplayName(
-  major?: ApplicantMajor | Record<string, boolean | undefined>,
+  major?: ApplicantMajor | Record<ApplicantMajor, boolean | undefined>,
 ): string | undefined {
   if (!major) return undefined;
 
@@ -73,10 +73,7 @@ function getMajorDisplayName(
 
   if (selectedMajors.length > 0) {
     const firstMajor = selectedMajors[0];
-    if (firstMajor in majorMap) {
-      return majorMap[firstMajor as ApplicantMajor];
-    }
-    return firstMajor;
+    return majorMap[firstMajor as ApplicantMajor] || selectedMajors[0];
   }
 
   return undefined;
@@ -112,12 +109,10 @@ function getYearLevel(graduationYear?: number): string | undefined {
  * @param contributionRole - object with boolean flags for each role the user selected
  * @returns comma-separated role names (e.g. "Developer, Designer"); undefined if no roles selected
  */
-function getRoleDisplayNames(
-  contributionRole?: Partial<Record<ApplicantContributionRole, boolean>>,
-): string | undefined {
+function getRoleDisplayNames(contributionRole?: ApplicantContribution): string | undefined {
   if (!contributionRole) return undefined;
 
-  const roleMap: Record<ApplicantContributionRole, string> = {
+  const roleMap: Record<keyof ApplicantContribution, string> = {
     developer: "Developer",
     designer: "Designer",
     productManager: "Product Manager",
@@ -126,7 +121,7 @@ function getRoleDisplayNames(
 
   const roles = Object.entries(contributionRole)
     .filter(([_, selected]) => selected === true)
-    .map(([key]) => (key in roleMap ? roleMap[key as ApplicantContributionRole] : key));
+    .map(([key]) => roleMap[key as keyof ApplicantContribution] || key);
 
   return roles.length > 0 ? roles.join(", ") : undefined;
 }
@@ -166,15 +161,33 @@ export async function fetchOrCreateSocial(
   const existing = await fetchSocial(uid);
 
   if (existing) {
+    const updates: Partial<Social> = {};
+
+    // Update hackathonsAttended if missing
     if (!existing.hackathonsAttended) {
-      const hackathonsAttended = await fetchUserHackathonsAttended(uid);
-      await createOrMergeSocial(uid, email, {
-        _id: uid,
-        email,
-        hackathonsAttended,
-      });
-      return { ...existing, hackathonsAttended };
+      updates.hackathonsAttended = await fetchUserHackathonsAttended(uid);
     }
+
+    // TODO: Update user Socials on application submission instead
+    // Backfill only empty fields from applicant data - doesn't handle when a user has changed their information for a different hackathon
+    if (!existing.school && applicant?.basicInfo?.school) {
+      updates.school = applicant.basicInfo.school;
+    }
+    if (!existing.areaOfStudy && applicant?.basicInfo?.major) {
+      updates.areaOfStudy = getMajorDisplayName(applicant.basicInfo.major);
+    }
+    if (!existing.year && applicant?.basicInfo?.graduation) {
+      updates.year = getYearLevel(applicant.basicInfo.graduation);
+    }
+    if (!existing.role && applicant?.skills?.contributionRole) {
+      updates.role = getRoleDisplayNames(applicant.skills.contributionRole);
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await createOrMergeSocial(uid, email, { _id: uid, email, ...updates });
+      return { ...existing, ...updates };
+    }
+
     return existing;
   }
 

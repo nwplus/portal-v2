@@ -178,7 +178,7 @@ export function RecentlyViewed({ socialProfile, onProfileUpdate }: RecentlyViewe
                   <HackathonBadges hackathonsAttended={item.profile?.hackathonsAttended} />
 
                   <Link
-                    to="/$activeHackathon/view-profile/$userId"
+                    to="/$activeHackathon/social-profile/$userId"
                     params={{
                       activeHackathon: activeHackathon ?? "nwhacks",
                       userId: item.profileId,
