@@ -104,13 +104,20 @@ export function RecentlyViewed({ socialProfile, onProfileUpdate }: RecentlyViewe
   );
 
   const filteredItems = useMemo(() => {
-    if (!searchQuery.trim()) return recentlyViewedItems;
+    // Additional guard to filter out own profile; stored profileId might differ from uid due to legacy data
+    const withoutSelf = recentlyViewedItems.filter((item) => {
+      const isOwnByProfileId = item.profileId === user?.uid;
+      const isOwnByFetchedId = item.profile?._id === user?.uid;
+      return !isOwnByProfileId && !isOwnByFetchedId;
+    });
+
+    if (!searchQuery.trim()) return withoutSelf;
 
     const query = searchQuery.toLowerCase();
-    return recentlyViewedItems.filter((item) => {
+    return withoutSelf.filter((item) => {
       return item.name.toLowerCase().includes(query);
     });
-  }, [recentlyViewedItems, searchQuery]);
+  }, [recentlyViewedItems, searchQuery, user?.uid]);
 
   if (isLoading) {
     return (

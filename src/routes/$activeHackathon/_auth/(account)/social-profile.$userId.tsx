@@ -31,23 +31,22 @@ export const Route = createFileRoute("/$activeHackathon/_auth/(account)/social-p
       const socialProfile = await fetchOrCreateSocial(user.uid, user.email, hacker);
 
       return { socialProfile, hacker, isOwnProfile: true };
-    } else {
-      if (!user?.uid || !user?.email) {
-        return { socialProfile: null, hacker: null, isOwnProfile: false };
-      }
-
-      const targetProfile = await fetchSocial(params.userId);
-
-      if (!targetProfile) {
-        throw notFound();
-      }
-
-      addToRecentlyViewed(user.uid, user.email, params.userId, targetProfile.preferredName).catch(
-        (err) => console.error("Error adding to recently viewed:", err),
-      );
-
-      return { socialProfile: targetProfile, hacker: null, isOwnProfile: false };
     }
+    if (!user?.uid || !user?.email) {
+      return { socialProfile: null, hacker: null, isOwnProfile: false };
+    }
+
+    const targetProfile = await fetchSocial(params.userId);
+
+    if (!targetProfile) {
+      throw notFound();
+    }
+
+    addToRecentlyViewed(user.uid, user.email, params.userId, targetProfile.preferredName).catch(
+      (err) => console.error("Error adding to recently viewed:", err),
+    );
+
+    return { socialProfile: targetProfile, hacker: null, isOwnProfile: false };
   },
   component: RouteComponent,
 });
@@ -60,7 +59,8 @@ function RouteComponent() {
   // for profile updates made by the user
   const [updatedProfile, setUpdatedProfile] = useState<Social | null>(loaderProfile);
 
-  const socialProfile = updatedProfile ?? loaderProfile;
+  // viewing others always uses loader data to avoid stale and incorrect navigation
+  const socialProfile = isOwnProfile ? (updatedProfile ?? loaderProfile) : loaderProfile;
 
   if (!isOwnProfile) {
     if (!socialProfile) {
@@ -85,7 +85,10 @@ function RouteComponent() {
     }
 
     return (
-      <GradientBackground gradientPosition="bottomMiddle" className="max-h-screen overflow-y-scroll">
+      <GradientBackground
+        gradientPosition="bottomMiddle"
+        className="max-h-screen overflow-y-scroll"
+      >
         <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-6">
           <div className="w-full max-w-3xl">
             <div className="mb-6">

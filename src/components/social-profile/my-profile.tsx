@@ -13,14 +13,12 @@ import {
 import { createOrMergeSocial } from "@/services/socials";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Github, Globe, Instagram, Linkedin } from "lucide-react";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
-import { Textarea } from "../ui/textarea";
-import { PROFILE_PICTURES, getTagBackgroundColor } from "./constants";
+import { getProfilePicture, getTagBackgroundColor } from "./constants";
 import ProfilePicturePicker from "./profile-picture-picker";
 import ProfileView from "./profile-view";
-
 type ProfileMode = "view" | "select-picture" | "edit";
 
 interface MyProfileProps {

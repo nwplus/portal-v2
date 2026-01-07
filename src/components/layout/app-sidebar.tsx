@@ -21,7 +21,7 @@ import { useHackathonInfo } from "@/hooks/use-hackathon-info";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useHackerStore } from "@/lib/stores/hacker-store";
 import { getFullName, getSidebarHackathonIcon } from "@/lib/utils";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import {
   Calendar,
   ForkKnife,
@@ -107,6 +107,7 @@ export function AppSidebar() {
   const { isMobile } = useSidebar();
   const LogoComponent = getSidebarHackathonIcon(activeHackathon);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = async () => {
     await logout();
@@ -134,20 +135,26 @@ export function AppSidebar() {
             <SidebarGroupLabel>Account</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {ACCOUNT_MENU_ITEMS.map(({ label, to, icon: Icon }) => (
-                  <SidebarMenuItem key={to}>
-                    <SidebarMenuButton asChild tooltip={label}>
-                      <Link
-                        to={to}
-                        params={{ activeHackathon, userId: user?.uid }}
-                        activeProps={{ "data-active": true }}
-                      >
-                        <Icon />
-                        <span>{label}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {ACCOUNT_MENU_ITEMS.map(({ label, to, icon: Icon }) => {
+                  const isSocialProfileItem = to.includes("social-profile");
+                  return (
+                    <SidebarMenuItem key={to}>
+                      <SidebarMenuButton asChild tooltip={label}>
+                        <Link
+                          to={to}
+                          params={{ activeHackathon, userId: user?.uid }}
+                          activeProps={{ "data-active": true }}
+                          {...(isSocialProfileItem && {
+                            "data-active": location.pathname.includes("/social-profile/"),
+                          })}
+                        >
+                          <Icon />
+                          <span>{label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
