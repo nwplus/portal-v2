@@ -130,7 +130,6 @@ export function RecentlyViewed({ socialProfile, onProfileUpdate }: RecentlyViewe
     );
   }
 
-export function RecentlyViewed() {
   return (
     <div className="min-h-[500px] rounded-lg border border-border-subtle bg-[#292929]/30 p-12 backdrop-blur-md">
       <h2 className="mb-6 font-medium text-2xl text-text-primary">Recently viewed by you</h2>
