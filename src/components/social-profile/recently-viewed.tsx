@@ -24,6 +24,9 @@ interface RecentlyViewedProps {
   onProfileUpdate?: (profile: Social) => void;
 }
 
+/**
+ * Displays list of recently viewed profiles for a given user except for own profile
+ */
 export function RecentlyViewed({ socialProfile, onProfileUpdate }: RecentlyViewedProps) {
   const user = useAuthStore((state) => state.user);
   const { activeHackathon } = useParams({ strict: false });
@@ -104,20 +107,13 @@ export function RecentlyViewed({ socialProfile, onProfileUpdate }: RecentlyViewe
   );
 
   const filteredItems = useMemo(() => {
-    // Additional guard to filter out own profile; stored profileId might differ from uid due to legacy data
-    const withoutSelf = recentlyViewedItems.filter((item) => {
-      const isOwnByProfileId = item.profileId === user?.uid;
-      const isOwnByFetchedId = item.profile?._id === user?.uid;
-      return !isOwnByProfileId && !isOwnByFetchedId;
-    });
-
-    if (!searchQuery.trim()) return withoutSelf;
+    if (!searchQuery.trim()) return recentlyViewedItems;
 
     const query = searchQuery.toLowerCase();
-    return withoutSelf.filter((item) => {
+    return recentlyViewedItems.filter((item) => {
       return item.name.toLowerCase().includes(query);
     });
-  }, [recentlyViewedItems, searchQuery, user?.uid]);
+  }, [recentlyViewedItems, searchQuery]);
 
   if (isLoading) {
     return (

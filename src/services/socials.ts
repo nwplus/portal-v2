@@ -340,11 +340,9 @@ export async function addToRecentlyViewed(
       return;
     }
 
-    // Get current viewer's social profile
     const viewerSocial = await fetchSocial(viewerUid);
     const currentList: RecentlyViewedProfile[] = viewerSocial?.recentlyViewedProfiles ?? [];
 
-    // if present remove existing entry
     const filteredList = currentList.filter((entry) => entry.profileId !== targetUid);
 
     const newEntry: RecentlyViewedProfile = {

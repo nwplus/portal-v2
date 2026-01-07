@@ -59,7 +59,7 @@ function RouteComponent() {
   // for profile updates made by the user
   const [updatedProfile, setUpdatedProfile] = useState<Social | null>(loaderProfile);
 
-  // viewing others always uses loader data to avoid staleness and incorrect navigation
+  // still opt for loaderProfile to guard against staleness when viewing others' profiles
   const socialProfile = isOwnProfile ? (updatedProfile ?? loaderProfile) : loaderProfile;
 
   if (!isOwnProfile) {
@@ -148,7 +148,10 @@ function RouteComponent() {
               )}
             </TabsContent>
             <TabsContent value="recently-viewed" className="w-full">
-              <RecentlyViewed />
+              <RecentlyViewed
+                socialProfile={socialProfile}
+                onProfileUpdate={setUpdatedProfile}
+              />
             </TabsContent>
           </Tabs>
         </div>
