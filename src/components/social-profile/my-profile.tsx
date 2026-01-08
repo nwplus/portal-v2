@@ -29,12 +29,7 @@ interface MyProfileProps {
   displayName: string;
 }
 
-export function MyProfile({
-  socialProfile,
-  uid,
-  email,
-  displayName,
-}: MyProfileProps) {
+export function MyProfile({ socialProfile, uid, email, displayName }: MyProfileProps) {
   const router = useRouter();
   const [profileMode, setProfileMode] = useState<ProfileMode>("view");
   const [isSaving, setIsSaving] = useState(false);
