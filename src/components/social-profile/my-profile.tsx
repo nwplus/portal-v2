@@ -12,6 +12,7 @@ import {
 } from "@/lib/social-profile/schema";
 import { createOrMergeSocial } from "@/services/socials";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "@tanstack/react-router";
 import { Github, Globe, Instagram, Linkedin } from "lucide-react";
 import { useState } from "react";
 import type { Resolver } from "react-hook-form";
@@ -23,7 +24,6 @@ type ProfileMode = "view" | "select-picture" | "edit";
 
 interface MyProfileProps {
   socialProfile: Social;
-  onProfileUpdate: (profile: Social) => void;
   uid: string;
   email: string;
   displayName: string;
@@ -31,11 +31,11 @@ interface MyProfileProps {
 
 export function MyProfile({
   socialProfile,
-  onProfileUpdate,
   uid,
   email,
   displayName,
 }: MyProfileProps) {
+  const router = useRouter();
   const [profileMode, setProfileMode] = useState<ProfileMode>("view");
   const [isSaving, setIsSaving] = useState(false);
 
@@ -102,11 +102,8 @@ export function MyProfile({
       };
 
       await createOrMergeSocial(uid, email, socialData);
-
-      onProfileUpdate({
-        ...socialProfile,
-        ...socialData,
-      });
+      // re-fetch to hydrate state; slower than optimistic update but ensures consistency
+      await router.invalidate();
 
       setProfileMode("view");
     } catch (error) {

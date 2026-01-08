@@ -4,14 +4,13 @@ import { RecentlyViewed } from "@/components/social-profile/recently-viewed";
 import { ViewProfile } from "@/components/social-profile/view-profile";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Social } from "@/lib/firebase/types/socials";
+import { useHackathon } from "@/hooks/use-hackathon";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useHackerStore } from "@/lib/stores/hacker-store";
 import { getPreferredName } from "@/lib/utils";
 import { addToRecentlyViewed, fetchOrCreateSocial, fetchSocial } from "@/services/socials";
 import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
-import { useState } from "react";
 
 export const Route = createFileRoute("/$activeHackathon/_auth/(account)/social-profile/$userId")({
   loader: async ({ context, params }) => {
@@ -53,14 +52,8 @@ export const Route = createFileRoute("/$activeHackathon/_auth/(account)/social-p
 
 function RouteComponent() {
   const user = useAuthStore((state) => state.user);
-  const { activeHackathon } = Route.useParams();
-  const { socialProfile: loaderProfile, hacker, isOwnProfile } = Route.useLoaderData();
-
-  // for profile updates made by the user
-  const [updatedProfile, setUpdatedProfile] = useState<Social | null>(loaderProfile);
-
-  // for viewing others' profiles, always use fresh loader data; local state only used for own profile edits
-  const socialProfile = isOwnProfile ? (updatedProfile ?? loaderProfile) : loaderProfile;
+  const { activeHackathon } = useHackathon();
+  const { socialProfile, hacker, isOwnProfile } = Route.useLoaderData();
 
   if (!isOwnProfile) {
     return (
@@ -114,7 +107,6 @@ function RouteComponent() {
               {user?.uid && user?.email && socialProfile ? (
                 <MyProfile
                   socialProfile={socialProfile}
-                  onProfileUpdate={setUpdatedProfile}
                   uid={user.uid}
                   email={user.email}
                   displayName={displayName}
@@ -127,7 +119,7 @@ function RouteComponent() {
               )}
             </TabsContent>
             <TabsContent value="recently-viewed" className="w-full">
-              <RecentlyViewed socialProfile={socialProfile} onProfileUpdate={setUpdatedProfile} />
+              <RecentlyViewed socialProfile={socialProfile} />
             </TabsContent>
           </Tabs>
         </div>

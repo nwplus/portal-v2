@@ -21,13 +21,12 @@ interface RecentlyViewedItem {
 
 interface RecentlyViewedProps {
   socialProfile?: Social | null;
-  onProfileUpdate?: (profile: Social) => void;
 }
 
 /**
  * Displays list of recently viewed profiles for a given user except for own profile
  */
-export function RecentlyViewed({ socialProfile, onProfileUpdate }: RecentlyViewedProps) {
+export function RecentlyViewed({ socialProfile }: RecentlyViewedProps) {
   const user = useAuthStore((state) => state.user);
   const { activeHackathon } = useParams({ strict: false });
 
@@ -87,23 +86,13 @@ export function RecentlyViewed({ socialProfile, onProfileUpdate }: RecentlyViewe
         await removeFromRecentlyViewed(user.uid, user.email, targetProfileId);
 
         setRecentlyViewedItems((prev) => prev.filter((p) => p.profileId !== targetProfileId));
-
-        if (onProfileUpdate && socialProfile) {
-          const updatedRecentlyViewed = (socialProfile.recentlyViewedProfiles ?? []).filter(
-            (entry) => entry.profileId !== targetProfileId,
-          );
-          onProfileUpdate({
-            ...socialProfile,
-            recentlyViewedProfiles: updatedRecentlyViewed,
-          });
-        }
       } catch (error) {
         console.error("Error removing from recently viewed:", error);
       } finally {
         setRemovingProfileId(null);
       }
     },
-    [user?.uid, user?.email, onProfileUpdate, socialProfile],
+    [user?.uid, user?.email],
   );
 
   const filteredItems = useMemo(() => {
