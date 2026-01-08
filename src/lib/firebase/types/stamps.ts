@@ -25,9 +25,10 @@ export interface Stamp {
   hackathon?: string; // optional: if hackathon-specific
   criteria?: StampCriteria[]; // optional: for portal-based stamps
   isHidden: boolean; // whether to hide if locked
-  isQRUnlockable: boolean; // whether this stamp has a QR associated with it ie. sponsor/judging-unlockable stamps
+  isQRUnlockable?: boolean; // whether this stamp has a QR associated with it ie. sponsor/judging-unlockable stamps
+  isEventUnlockable?: boolean;
   isTitle?: boolean; // whether this stamp should be displayed on the title page (only one at a time)
-  lastModified: Timestamp;
+  lastModified?: Timestamp;
   lastModifiedBy: string;
 }
 
