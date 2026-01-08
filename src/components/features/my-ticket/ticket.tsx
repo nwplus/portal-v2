@@ -31,7 +31,9 @@ export function Ticket({
   notchRadius = 26,
 }: TicketProps) {
   const { activeHackathon } = useHackathon();
-  const qrData = applicant?._id;
+  const qrData = applicant?._id
+    ? `${window.location.origin}/${activeHackathon}/social-profile/${applicant._id}`
+    : "";
 
   // We use manual breakpoints for styles using `isMobile` below instead of
   // TailwindCSS breakpoints so that breakpoints are based on relevant (parent)
