@@ -59,35 +59,14 @@ function RouteComponent() {
   // for profile updates made by the user
   const [updatedProfile, setUpdatedProfile] = useState<Social | null>(loaderProfile);
 
-  // still opt for loaderProfile to guard against staleness when viewing others' profiles
+  // for viewing others' profiles, always use fresh loader data; local state only used for own profile edits
   const socialProfile = isOwnProfile ? (updatedProfile ?? loaderProfile) : loaderProfile;
 
   if (!isOwnProfile) {
-    if (!socialProfile) {
-      return (
-        <GradientBackground
-          gradientPosition="bottomMiddle"
-          className="max-h-screen overflow-y-scroll"
-        >
-          <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center gap-4 p-6">
-            <p className="text-sm text-text-error">Profile not found</p>
-            {user?.uid && (
-              <Link
-                to="/$activeHackathon/social-profile/$userId"
-                params={{ activeHackathon, userId: user.uid }}
-              >
-                <Button variant="secondary">Back to My Profile</Button>
-              </Link>
-            )}
-          </div>
-        </GradientBackground>
-      );
-    }
-
     return (
       <GradientBackground
         gradientPosition="bottomMiddle"
-        className="max-h-screen overflow-y-scroll"
+        className="scrollbar-hidden max-h-screen overflow-y-auto"
       >
         <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-6">
           <div className="w-full max-w-3xl">
@@ -105,7 +84,7 @@ function RouteComponent() {
               )}
             </div>
 
-            <ViewProfile socialProfile={socialProfile} />
+            {socialProfile && <ViewProfile socialProfile={socialProfile} />}
           </div>
         </div>
       </GradientBackground>
@@ -148,10 +127,7 @@ function RouteComponent() {
               )}
             </TabsContent>
             <TabsContent value="recently-viewed" className="w-full">
-              <RecentlyViewed
-                socialProfile={socialProfile}
-                onProfileUpdate={setUpdatedProfile}
-              />
+              <RecentlyViewed socialProfile={socialProfile} onProfileUpdate={setUpdatedProfile} />
             </TabsContent>
           </Tabs>
         </div>

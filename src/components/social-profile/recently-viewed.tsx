@@ -177,12 +177,12 @@ export function RecentlyViewed({ socialProfile, onProfileUpdate }: RecentlyViewe
                 </div>
 
                 <div className="flex items-center gap-3">
-                  {/* TODO: add tooltip for every badge ie. hackcamp, nwhacks, cmd-f */}
                   <HackathonBadges hackathonsAttended={item.profile?.hackathonsAttended} />
 
                   <Link
                     to="/$activeHackathon/social-profile/$userId"
                     params={{
+                      // TODO: probably don't hardcode this
                       activeHackathon: activeHackathon ?? "nwhacks",
                       userId: item.profileId,
                     }}
@@ -196,7 +196,7 @@ export function RecentlyViewed({ socialProfile, onProfileUpdate }: RecentlyViewe
                     type="button"
                     onClick={() => handleRemove(item.profileId)}
                     disabled={removingProfileId !== null}
-                    className="p-1.5 text-text-error transition-colors hover:cursor-pointer hover:text-red-400 disabled:cursor-not-allowed"
+                    className="p-1.5 text-text-error transition-colors hover:cursor-pointer hover:opacity-90 disabled:cursor-not-allowed"
                     title="Remove"
                   >
                     {removingProfileId === item.profileId ? (

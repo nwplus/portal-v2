@@ -282,11 +282,9 @@ export async function fetchUserHackathonsAttended(uid: string): Promise<Hackatho
   };
 
   try {
-    // Get all hackathon collection names
     const hackathonsSnap = await getDocs(collection(db, "Hackathons"));
     const hackathonIds = hackathonsSnap.docs.map((d) => d.id);
 
-    // Check each hackathon for accepted status
     for (const hackathonId of hackathonIds) {
       const applicantRef = doc(db, "Hackathons", hackathonId, "Applicants", uid);
       const applicantSnap = await getDoc(applicantRef);
@@ -295,8 +293,8 @@ export async function fetchUserHackathonsAttended(uid: string): Promise<Hackatho
         const applicant = applicantSnap.data() as Applicant;
         const status = applicant.status?.applicationStatus;
 
-        if (status && status === "acceptedAndAttending") {
-          // Determine which hackathon type this is
+        // TODO: maybe swap out for checked-in status?
+        if (status === "acceptedAndAttending") {
           const lowerCaseId = hackathonId.toLowerCase();
           if (lowerCaseId.startsWith("hackcamp")) {
             hackathonsAttended.hackcamp = true;
