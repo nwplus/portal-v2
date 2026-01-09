@@ -1,13 +1,12 @@
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { StampWithUnlockState } from "@/lib/firebase/types/stamps";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, HelpCircle } from "lucide-react";
 import { forwardRef, useCallback, useRef, useState } from "react";
 import HTMLFlipBook from "react-pageflip";
 import { StampbookPage } from "./stampbook-page";
 import { organizeIntoSpreads } from "./utils";
 
-// responsive dimensions for the stampbook
 const DESKTOP_PAGE_WIDTH = 480;
 const DESKTOP_PAGE_HEIGHT = 600;
 const MOBILE_PAGE_WIDTH = 320;
@@ -210,25 +209,38 @@ export function Stampbook({ stamps, displayName }: StampbookProps) {
     </div>
   );
 
-  if (isMobile) {
-    return (
-      <div className="flex flex-col items-center gap-6 py-8">
-        {FlipBook}
-        <div className="flex items-center gap-6">
-          {PrevButton}
-          {PageIndicators}
-          {NextButton}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="relative flex items-center justify-center gap-4 py-8">
-      {PrevButton}
-      {FlipBook}
-      {NextButton}
-      <div className="-translate-x-1/2 absolute bottom-0 left-1/2">{PageIndicators}</div>
+    <div className="flex flex-col items-center gap-6 py-8">
+      <div className="max-w-sm px-6 sm:px-10 md:max-w-4xl md:text-center">
+      <p className="text-text-secondary text-xs md:text-sm">
+        <HelpCircle className="mr-1 hidden h-4 w-4 md:inline-block" /> 
+        There are many ways to unlock these stamps, and each one earns you a ticket to our{" "}
+        <span className="font-bold">prize raffle!</span>
+        {" "}Click the icons beside a stamp to learn how to earn it. Some stamps are hidden, so it's up to you to discover them.
+        <span className="font-bold md:font-normal">
+          <br className="md:hidden"/> 
+          <br className="md:hidden"/>
+          {" "}Try to collect them all!
+        </span>
+      </p>
+    </div>
+      {isMobile ? (
+        <div className="flex flex-col items-center gap-6 py-4">
+          {FlipBook}
+          <div className="flex items-center gap-6">
+            {PrevButton}
+            {PageIndicators}
+            {NextButton}
+          </div>
+        </div>
+      ) : (
+        <div className="relative flex items-center justify-center gap-4 py-8">
+          {PrevButton}
+          {FlipBook}
+            {NextButton}
+            <div className="-translate-x-1/2 absolute bottom-0 left-1/2">{PageIndicators}</div>
+        </div>
+      )}
     </div>
   );
 }

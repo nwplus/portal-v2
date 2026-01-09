@@ -1,5 +1,7 @@
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { StampWithUnlockState } from "@/lib/firebase/types/stamps";
 import { cn } from "@/lib/utils";
+import { PartyPopperIcon, QrCodeIcon } from "lucide-react";
 
 type StampSize = "sm" | "md";
 
@@ -35,7 +37,9 @@ export function StampDisplay({ stamp, showDetails = true, size = "md" }: StampDi
 
   return (
     <div className={cn("flex flex-col items-center", styles.gap)}>
-      <div className={cn("relative flex items-center justify-center rounded-full", styles.container)}>
+      <div
+        className={cn("relative flex items-center justify-center rounded-full", styles.container)}
+      >
         <img
           src={imageSrc}
           alt={stamp.isUnlocked ? stamp.name : "Locked stamp"}
@@ -44,10 +48,36 @@ export function StampDisplay({ stamp, showDetails = true, size = "md" }: StampDi
       </div>
 
       {showDetails && (
-        // TODO: replace with theme colors
-        <div className={cn("flex flex-col items-center gap-0.5 font-mono text-[#0a0a0a]", styles.details)}>
-          <span className={cn("text-center font-semibold leading-tight", styles.name)}>{stamp.name}</span>
-          <span className={cn("text-center leading-tight", styles.description)}>{stamp.description}</span>
+        // TODO: portal is dark-themed; if dark text is re-used, add as a stylesheet token for reskin
+        <div
+          className={cn(
+            "flex flex-col items-center gap-0.5 font-mono text-[#0a0a0a]",
+            styles.details,
+          )}
+        >
+          <div className={cn("flex items-center gap-2 text-center font-semibold leading-tight", styles.name)}>
+            {stamp.name}
+            {stamp.isQRUnlockable && (
+              <span className={cn("text-center leading-tight", styles.description)}>
+                <Tooltip>
+                  <TooltipTrigger><QrCodeIcon className="inline-block h-4 w-4" /></TooltipTrigger>
+                  <TooltipContent>This stamp can be unlocked by scanning a QR code</TooltipContent>
+                </Tooltip>
+              </span>
+            )}
+            {stamp.isEventUnlockable && (
+              <span className={cn("text-center leading-tight", styles.description)}>
+                <Tooltip>
+                  <TooltipTrigger><PartyPopperIcon className="inline-block h-4 w-4" /></TooltipTrigger>
+                  <TooltipContent>This stamp can be unlocked by attending an event</TooltipContent>
+                </Tooltip>
+              </span>
+            )}
+          </div>
+          
+          <span className={cn("text-center leading-tight", styles.description)}>
+            {stamp.description}
+          </span>
         </div>
       )}
     </div>

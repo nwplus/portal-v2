@@ -53,7 +53,11 @@ export function StampbookPage({
 
             {stamps[titleIndex] && (
               <div className={cn("flex flex-col items-center", isMobile ? "gap-2" : "gap-4")}>
-                <StampDisplay stamp={stamps[titleIndex]} showDetails={false} size={isMobile ? "sm" : "md"} />
+                <StampDisplay
+                  stamp={stamps[titleIndex]}
+                  showDetails={false}
+                  size={isMobile ? "sm" : "md"}
+                />
                 <span
                   className={cn(
                     "text-center font-mono text-[#4A4A4A]",
