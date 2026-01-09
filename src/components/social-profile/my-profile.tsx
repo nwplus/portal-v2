@@ -193,7 +193,7 @@ export function MyProfile({ socialProfile, uid, email, displayName }: MyProfileP
             >
               <AvatarImage src={getProfilePicture(watchedProfilePictureIndex)} />
               <AvatarFallback className="text-2xl">
-                {displayName.charAt(0).toUpperCase()}
+                {(socialProfile?.preferredName || displayName).charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <Button
@@ -237,7 +237,7 @@ export function MyProfile({ socialProfile, uid, email, displayName }: MyProfileP
 
         <div>
           <h3 className="font-medium text-3xl text-text-primary">
-            {displayName}{" "}
+            {socialProfile?.preferredName || displayName}{" "}
             {socialProfile?.pronouns && (
               <span className="text-text-secondary">({socialProfile?.pronouns})</span>
             )}
@@ -291,7 +291,7 @@ export function MyProfile({ socialProfile, uid, email, displayName }: MyProfileP
             Auto-generated from your application. Click any tag to hide/show its category on your
             profile.
           </p>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex justify-center flex-wrap gap-2">
             {allTags.length > 0 ? (
               allTags.map((tag, index) => {
                 const isHidden = watchedTagsToHide.includes(tag.category);

@@ -182,6 +182,9 @@ export async function fetchOrCreateSocial(
     if (!existing.role && applicant?.skills?.contributionRole) {
       updates.role = getRoleDisplayNames(applicant.skills.contributionRole);
     }
+    if (!existing.preferredName && applicant?.basicInfo?.preferredName) {
+      updates.preferredName = applicant.basicInfo.preferredName;
+    }
 
     if (Object.keys(updates).length > 0) {
       await createOrMergeSocial(uid, email, { _id: uid, email, ...updates });
