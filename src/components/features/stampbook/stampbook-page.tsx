@@ -9,24 +9,57 @@ interface StampbookPageProps {
   stamps?: StampWithUnlockState[];
   title?: string;
   className?: string;
+  width?: number;
+  height?: number;
 }
 
-export function StampbookPage({ layout, stamps = [], title, className }: StampbookPageProps) {
+const DEFAULT_WIDTH = 480;
+const DEFAULT_HEIGHT = 600;
+const MOBILE_THRESHOLD_WIDTH = 400;
+
+export function StampbookPage({
+  layout,
+  stamps = [],
+  title,
+  className,
+  width = DEFAULT_WIDTH,
+  height = DEFAULT_HEIGHT,
+}: StampbookPageProps) {
   const titleIndex = stamps.findIndex((stamp) => stamp.isTitle) ?? 0;
+  const isMobile = width < MOBILE_THRESHOLD_WIDTH;
 
   return (
-    <div className={cn("relative flex h-[600px] w-[480px] flex-col bg-[#F3EBEA] p-6", className)}>
-      {/* <div className="pointer-events-none absolute inset-5 rounded-sm border-2 border-[#B8D4E8]/60 border-dashed" /> */}
-
+    // TODO: only used in stampbook for now; add as stylesheet token if re-used
+    <div
+      className={cn("relative flex flex-col bg-[#F3EBEA]", isMobile ? "p-4" : "p-6", className)}
+      style={{ width, height }}
+    >
       <div className="relative flex flex-1 flex-col items-center justify-center">
         {layout === "title" && title && (
-          <div className="flex h-full flex-col items-center justify-center gap-8">
-            <div className="font-bold font-mono text-[#8A8A8A] text-xl tracking-wide">{title}</div>
+          <div
+            className={cn(
+              "flex h-full flex-col items-center justify-center",
+              isMobile ? "gap-4" : "gap-8",
+            )}
+          >
+            <div
+              className={cn(
+                "font-bold font-mono text-[#8A8A8A] tracking-wide",
+                isMobile ? "text-base" : "text-xl",
+              )}
+            >
+              {title}
+            </div>
 
             {stamps[titleIndex] && (
-              <div className="flex flex-col items-center gap-4">
-                <StampDisplay stamp={stamps[titleIndex]} showDetails={false} />
-                <span className="max-w-48 text-center font-mono text-[#4A4A4A] text-sm">
+              <div className={cn("flex flex-col items-center", isMobile ? "gap-2" : "gap-4")}>
+                <StampDisplay stamp={stamps[titleIndex]} showDetails={false} size={isMobile ? "sm" : "md"} />
+                <span
+                  className={cn(
+                    "text-center font-mono text-[#4A4A4A]",
+                    isMobile ? "max-w-36 text-xs" : "max-w-48 text-sm",
+                  )}
+                >
                   {stamps[titleIndex].description}
                 </span>
               </div>
@@ -36,14 +69,19 @@ export function StampbookPage({ layout, stamps = [], title, className }: Stampbo
 
         {layout === "single" && stamps[0] && (
           <div className="flex h-full items-center justify-center">
-            <StampDisplay stamp={stamps[0]} />
+            <StampDisplay stamp={stamps[0]} size={isMobile ? "sm" : "md"} />
           </div>
         )}
 
         {layout === "grid" && (
-          <div className="grid grid-cols-2 place-items-center gap-x-12 gap-y-6">
+          <div
+            className={cn(
+              "grid grid-cols-2 place-items-center",
+              isMobile ? "gap-x-10 gap-y-2" : "gap-x-12 gap-y-6",
+            )}
+          >
             {stamps.slice(0, 4).map((stamp) => (
-              <StampDisplay key={stamp._id} stamp={stamp} />
+              <StampDisplay key={stamp._id} stamp={stamp} size={isMobile ? "sm" : "md"} />
             ))}
           </div>
         )}
