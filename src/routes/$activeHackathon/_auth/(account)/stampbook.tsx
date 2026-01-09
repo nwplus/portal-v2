@@ -53,7 +53,7 @@ function RouteComponent() {
   useEffect(() => {
     if (unlockedStampName) {
       toast.success(
-        unlockedStampName ? `"${unlockedStampName}" stamp unlocked!` : "Stamp unlocked!",
+        unlockedStampName ? `"🎉 ${unlockedStampName}" stamp unlocked!` : "🎉 Stamp unlocked!",
       );
 
       navigate({
