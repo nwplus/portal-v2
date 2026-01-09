@@ -2,7 +2,7 @@ import type { DayOfEvent } from "@/lib/firebase/types";
 import { useEffect, useMemo, useState } from "react";
 import { EventBlock } from "./event-block";
 
-type DayViewProps = {
+interface DayViewProps {
   dayLabel: string;
   events: (DayOfEvent & { location?: string })[];
   hideTitle?: boolean;
@@ -18,10 +18,7 @@ type PositionedEvent = {
   endLabel: string;
   column: number;
   columns: number;
-  name?: string;
-  description?: string;
-  location?: string;
-  points?: string;
+  event: DayOfEvent;
 };
 
 type TimeLabel = {
@@ -126,10 +123,7 @@ function buildTimeline(events: (DayOfEvent & { location?: string })[]) {
       height: durationMinutes * PIXELS_PER_MINUTE,
       startLabel: formatTime(start),
       endLabel: formatTime(end),
-      name: event.name,
-      description: event.description,
-      location: event.location,
-      points: event.points,
+      event,
       column: 0,
       columns: 1,
       leftPct: 0,
@@ -246,7 +240,7 @@ export function DayView({ dayLabel, events, hideTitle = false }: DayViewProps) {
               style={{ top: currentTop, pointerEvents: "none" }}
             >
               <div className="flex items-center gap-0 md:gap-2">
-                <div className="shrink-0 rounded-md border border-line-accent bg-bg-translucent-card px-1.5 py-1 font-medium text-line-accent text-xs backdrop-blur-md md:px-2">
+                <div className="background:var(--background-translucent-card) shrink-0 rounded-md border border-line-accent px-1.5 py-1 font-medium text-line-accent text-xs backdrop-blur-md md:px-2">
                   {formatTime(displayNow)}
                 </div>
                 <div className="flex w-full items-center">

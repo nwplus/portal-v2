@@ -1,5 +1,8 @@
-import { cn } from "@/lib/utils";
-import { Map as MapIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import type { DayOfEvent } from "@/lib/firebase/types";
+import { cn, getEventName } from "@/lib/utils";
+import { Map as MapIcon, Pointer, Puzzle, Wrench } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 interface EventBlockProps {
@@ -10,24 +13,18 @@ interface EventBlockProps {
     leftPct: number;
     widthPct: number;
   };
-  name?: string;
-  description?: string;
-  startLabel?: string;
-  endLabel?: string;
-  location?: string;
-  points?: string;
+  startLabel: string;
+  endLabel: string;
+  event: DayOfEvent;
 }
 
-export function EventBlock({
-  id,
-  position,
-  name,
-  description,
-  startLabel,
-  endLabel,
-  location,
-  points,
-}: EventBlockProps) {
+export function EventBlock({ id, position, startLabel, endLabel, event }: EventBlockProps) {
+  const TRANSITION_MS = 250;
+  const FOCUSED_MAX_WIDTH_PX = 520;
+  const FOCUSED_MAX_HEIGHT_PX = 460;
+
+  const { name, description, location, points, isDelayed, type } = event;
+
   const cardRef = useRef<HTMLButtonElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const [isFocused, setIsFocused] = useState(false);
@@ -44,8 +41,8 @@ export function EventBlock({
   );
 
   const computeTargetFrame = useCallback(() => {
-    const maxWidth = Math.min(520, window.innerWidth - 32);
-    const maxHeight = Math.min(460, window.innerHeight - 32);
+    const maxWidth = Math.min(FOCUSED_MAX_WIDTH_PX, window.innerWidth - 32);
+    const maxHeight = Math.min(FOCUSED_MAX_HEIGHT_PX, window.innerHeight - 32);
     const left = (window.innerWidth - maxWidth) / 2;
     const top = (window.innerHeight - maxHeight) / 2;
     return { top, left, width: maxWidth, height: maxHeight };
@@ -54,7 +51,6 @@ export function EventBlock({
   const [targetFrame, setTargetFrame] = useState(() => computeTargetFrame());
 
   const closeTimerRef = useRef<number | null>(null);
-  const TRANSITION_MS = 250;
 
   const handleOpen = useCallback(() => {
     if (isFocused) return;
@@ -153,6 +149,41 @@ export function EventBlock({
           }
       : null;
 
+  const eventContent = () => (
+    <>
+      <div className="flex w-full items-center justify-between gap-2">
+        <div className="font-semibold text-text-primary">{name ?? "Untitled event"}</div>
+        {isDelayed && <Badge variant="destructive">Delayed</Badge>}
+      </div>
+      <div className="flex-grow text-sm text-text-secondary">{description ?? ""}</div>
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-text-primary text-xs md:text-sm">
+        <div>
+          {startLabel} - {endLabel}
+        </div>
+        {location && (
+          <div className="flex items-center gap-1">
+            {location} <MapIcon className="h-4 w-4" />
+          </div>
+        )}
+        {points && <div>{points} points</div>}
+        {type && (
+          <Tooltip>
+            <TooltipTrigger>
+              {type === "workshops" ? (
+                <Wrench className="h-4 w-4 text-[#059669]" />
+              ) : type === "minievents" ? (
+                <Puzzle className="h-4 w-4 text-[#D97706]" />
+              ) : (
+                <></>
+              )}
+            </TooltipTrigger>
+            <TooltipContent className="z-100">{getEventName(type)}</TooltipContent>
+          </Tooltip>
+        )}
+      </div>
+    </>
+  );
+
   return (
     <>
       <div
@@ -165,8 +196,12 @@ export function EventBlock({
         }}
       >
         <button
+          type="button"
           ref={cardRef}
-          className={cn("h-full w-full", isFocused ? "pointer-events-none opacity-0" : "")}
+          className={cn(
+            "h-full w-full text-left",
+            isFocused ? "pointer-events-none opacity-0" : "",
+          )}
           onClick={handleOpen}
           onKeyDown={(event) => {
             if (event.key === "Enter" || event.key === " ") {
@@ -174,39 +209,29 @@ export function EventBlock({
               handleOpen();
             }
           }}
-          type="button"
         >
           <div
             ref={contentRef}
-            className="grid-1 relative flex h-full w-full cursor-pointer flex-col items-start gap-1 overflow-hidden rounded-xl border border-border-subtle bg-bg-translucent-card px-2.5 py-1.5 backdrop-blur-lg transition-shadow duration-200 hover:shadow-lg"
+            className="grid-1 background:var(--background-translucent-card) relative flex h-full w-full cursor-pointer flex-col items-start gap-1 overflow-hidden rounded-xl border border-border-subtle px-3 py-2.5 backdrop-blur-lg transition-shadow duration-200 hover:shadow-xl"
           >
-            <div className="text-left font-semibold text-text-primary">
-              {name ?? "Untitled event"}
-            </div>
-            <div className="flex-grow text-left text-sm text-text-secondary">
-              {description ?? ""}
-            </div>
-            <div className="flex flex-wrap gap-x-4 gap-y-1">
-              <div className="text-sm">
-                {startLabel} - {endLabel}
-              </div>
-              {location && (
-                <div className="flex items-center gap-2 text-sm">
-                  {location} <MapIcon className="h-4 w-4" />
-                </div>
-              )}
-              {points && <div className="text-sm">{points} points</div>}
-            </div>
-
+            {eventContent()}
             {hasOverflow && !isFocused && (
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-10 bg-gradient-to-t from-bg-main/90 to-transparent" />
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-10 bg-gradient-to-t from-bg-main/80 to-transparent">
+                <div className="flex h-full items-end justify-center gap-2 pb-2 text-text-neutral/90 text-xs">
+                  <div className="flex gap-2">
+                    <Pointer className="h-3 w-3" />
+                    <div>Expand</div>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         </button>
       </div>
 
       {isFocused && originRect && floatingStyle && (
-        <dialog className="fixed inset-0 z-200 bg-text-accent" open>
+        <dialog className="fixed inset-0 z-[99] bg-text-accent" open>
+          {/* Background overlay */}
           <button
             className={cn(
               "fixed inset-0 bg-bg-main/20 backdrop-blur-sm transition-all duration-300",
@@ -222,8 +247,10 @@ export function EventBlock({
             type="button"
             aria-label="Close event details"
           />
+
+          {/* Focused card */}
           <div
-            className="fixed z-50 overflow-hidden rounded-2xl border border-border-subtle bg-bg-translucent-card shadow-xl backdrop-blur-lg transition-all duration-250 ease-out"
+            className="background:var(--background-translucent-card) fixed z-50 overflow-hidden rounded-2xl border border-border-subtle shadow-xl backdrop-blur-lg transition-all duration-250 ease-out"
             style={{
               top: floatingStyle.top,
               left: floatingStyle.left,
@@ -237,24 +264,10 @@ export function EventBlock({
             <div
               className={cn(
                 "flex h-full w-full flex-col transition-all",
-                animate ? "gap-2 p-4" : "gap-1 px-2.5 py-1.5",
+                animate ? "gap-2 p-4" : "gap-1 px-3 py-2.5",
               )}
             >
-              <div className="flex items-start justify-between">
-                <div className="font-semibold text-text-primary">{name ?? "Untitled event"}</div>
-              </div>
-              <div className="flex-grow text-sm text-text-secondary">{description ?? ""}</div>
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-text-primary">
-                <div className="text-sm">
-                  {startLabel} - {endLabel}
-                </div>
-                {location && (
-                  <div className="flex items-center gap-2 text-sm">
-                    {location} <MapIcon className="h-4 w-4" />
-                  </div>
-                )}
-                {points && <div className="text-sm">{points} points</div>}
-              </div>
+              {eventContent()}
             </div>
           </div>
         </dialog>

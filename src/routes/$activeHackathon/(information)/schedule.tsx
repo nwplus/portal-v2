@@ -1,6 +1,7 @@
 import { DayView } from "@/components/features/schedule/day-view";
 import { GradientBackground } from "@/components/layout/gradient-background";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { DayOfEvent } from "@/lib/firebase/types";
 import { fetchSchedule } from "@/services/schedule";
@@ -75,32 +76,38 @@ function RouteComponent() {
   console.log(groupedDays);
 
   return (
-    <GradientBackground gradientPosition={isMobile ? "bottomMiddle" : "topLeft"} className="py-10">
-      {groupedDays ? (
-        <Tabs defaultValue={groupedDays[0].label}>
-          {/* NOTE: manually added styles here, another PR will add default styles to tabs */}
-          <TabsList className="ml-16 border border-border-subtle bg-border-active/10 md:ml-28">
+    <TooltipProvider>
+      {/* ToolTip is used in the event-block.tsx */}
+      <GradientBackground
+        gradientPosition={isMobile ? "bottomMiddle" : "topLeft"}
+        className="py-10"
+      >
+        {groupedDays ? (
+          <Tabs defaultValue={groupedDays[0].label}>
+            {/* NOTE: manually added styles here, another PR will add default styles to tabs */}
+            <TabsList className="ml-16 border border-border-subtle bg-border-active/10 md:ml-28">
+              {groupedDays.map((day) => (
+                <TabsTrigger
+                  key={day.dayKey}
+                  value={day.label}
+                  className="data-[state=active]:bg-bg-main/30"
+                >
+                  {day.label.split(",")[0]}
+                </TabsTrigger>
+              ))}
+            </TabsList>
             {groupedDays.map((day) => (
-              <TabsTrigger
-                key={day.dayKey}
-                value={day.label}
-                className="data-[state=active]:bg-bg-main/30"
-              >
-                {day.label.split(",")[0]}
-              </TabsTrigger>
+              <TabsContent key={day.dayKey} value={day.label}>
+                <DayView hideTitle key={day.dayKey} dayLabel={day.label} events={day.events} />
+              </TabsContent>
             ))}
-          </TabsList>
-          {groupedDays.map((day) => (
-            <TabsContent key={day.dayKey} value={day.label}>
-              <DayView hideTitle key={day.dayKey} dayLabel={day.label} events={day.events} />
-            </TabsContent>
-          ))}
-        </Tabs>
-      ) : (
-        <div className="w-full p-10 text-center text-text-secondary">
-          Schedule has not been added yet, please check back later.
-        </div>
-      )}
-    </GradientBackground>
+          </Tabs>
+        ) : (
+          <div className="w-full p-10 text-center text-text-secondary">
+            Schedule has not been added yet, please check back later.
+          </div>
+        )}
+      </GradientBackground>
+    </TooltipProvider>
   );
 }

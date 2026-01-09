@@ -67,6 +67,8 @@ export type HackathonPortalThemeEntry = {
 };
 export type HackathonPortalTheme = Record<string, HackathonPortalThemeEntry>;
 
+export type DayOfEventType = "main" | "workshops" | "minievents";
+
 export type DayOfEvent = {
   // `key` == `eventID` == doc ID
   key: string;
@@ -80,7 +82,7 @@ export type DayOfEvent = {
   lastModified?: Timestamp;
   lastModifiedBy?: string;
   name?: string;
-  type?: "main" | "workshops" | "minievents";
+  type?: DayOfEventType;
   points?: string;
 };
 
