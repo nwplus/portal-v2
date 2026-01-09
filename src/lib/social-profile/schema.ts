@@ -83,6 +83,8 @@ export const socialProfileSchema = z.object({
 
   tagsToHide: z.array(z.enum(["school", "areaOfStudy", "year", "role"])),
 
+  hideRecentlyViewed: z.boolean(),
+
   socialLinks: z.object({
     linkedin: z
       .string()
@@ -123,6 +125,7 @@ export function deriveDefaultValues(
     bio?: string;
     profilePictureIndex?: number;
     tagsToHide?: Array<"school" | "areaOfStudy" | "year" | "role">;
+    hideRecentlyViewed?: boolean;
     socialLinks?: {
       linkedin?: string;
       github?: string;
@@ -137,6 +140,7 @@ export function deriveDefaultValues(
     bio: profile?.bio ?? "",
     profilePictureIndex: profile?.profilePictureIndex ?? 0,
     tagsToHide: profile?.tagsToHide ?? [],
+    hideRecentlyViewed: profile?.hideRecentlyViewed ?? false,
     socialLinks: {
       linkedin: profile?.socialLinks?.linkedin ?? "",
       github: profile?.socialLinks?.github ?? "",

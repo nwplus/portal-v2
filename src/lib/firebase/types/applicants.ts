@@ -131,7 +131,7 @@ export type ApplicantMajor =
   | "schoolDoesNotOfferMajors"
   | "preferNotToAnswer";
 
-type ApplicantContributionRole = "developer" | "designer" | "productManager" | "other";
+export type ApplicantContributionRole = "developer" | "designer" | "productManager" | "other";
 export type ApplicantContribution = Record<ApplicantContributionRole, boolean>;
 
 export type ApplicationStatus =

@@ -1,6 +1,8 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import type { Social, TagCategory } from "@/lib/firebase/types/socials";
 import {
   MAX_BIO_WORDS,
@@ -11,32 +13,25 @@ import {
 } from "@/lib/social-profile/schema";
 import { createOrMergeSocial } from "@/services/socials";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "@tanstack/react-router";
 import { Github, Globe, Instagram, Linkedin } from "lucide-react";
 import { useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
-import { Textarea } from "../ui/textarea";
-import { PROFILE_PICTURES, getTagBackgroundColor } from "./constants";
+import { getProfilePicture, getTagBackgroundColor } from "./constants";
 import ProfilePicturePicker from "./profile-picture-picker";
 import ProfileView from "./profile-view";
-
 type ProfileMode = "view" | "select-picture" | "edit";
 
 interface MyProfileProps {
   socialProfile: Social;
-  onProfileUpdate: (profile: Social) => void;
   uid: string;
   email: string;
   displayName: string;
 }
 
-export function MyProfile({
-  socialProfile,
-  onProfileUpdate,
-  uid,
-  email,
-  displayName,
-}: MyProfileProps) {
+export function MyProfile({ socialProfile, uid, email, displayName }: MyProfileProps) {
+  const router = useRouter();
   const [profileMode, setProfileMode] = useState<ProfileMode>("view");
   const [isSaving, setIsSaving] = useState(false);
 
@@ -63,6 +58,7 @@ export function MyProfile({
   const watchedPronouns = watch("pronouns") ?? "";
   const watchedProfilePictureIndex = watch("profilePictureIndex");
   const watchedTagsToHide = watch("tagsToHide");
+  const watchedHideRecentlyViewed = watch("hideRecentlyViewed");
 
   const bioWordCount = watchedBio.trim().split(/\s+/).filter(Boolean).length;
 
@@ -91,7 +87,7 @@ export function MyProfile({
         school: socialProfile?.school,
         year: socialProfile?.year,
         role: socialProfile?.role,
-        hideRecentlyViewed: socialProfile?.hideRecentlyViewed ?? false,
+        hideRecentlyViewed: data.hideRecentlyViewed,
         tagsToHide: data.tagsToHide.length > 0 ? data.tagsToHide : [],
         socialLinks: {
           linkedin: data.socialLinks.linkedin?.trim() || "",
@@ -103,11 +99,8 @@ export function MyProfile({
       };
 
       await createOrMergeSocial(uid, email, socialData);
-
-      onProfileUpdate({
-        ...socialProfile,
-        ...socialData,
-      });
+      // re-fetch to hydrate state; slower than optimistic update but ensures consistency
+      await router.invalidate();
 
       setProfileMode("view");
     } catch (error) {
@@ -200,9 +193,9 @@ export function MyProfile({
               }}
               className="size-30 cursor-pointer md:size-36 md:cursor-default"
             >
-              <AvatarImage src={PROFILE_PICTURES[watchedProfilePictureIndex]} />
+              <AvatarImage src={getProfilePicture(watchedProfilePictureIndex)} />
               <AvatarFallback className="text-2xl">
-                {displayName.charAt(0).toUpperCase()}
+                {(socialProfile?.preferredName || displayName).charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <Button
@@ -246,7 +239,7 @@ export function MyProfile({
 
         <div>
           <h3 className="font-medium text-3xl text-text-primary">
-            {displayName}{" "}
+            {socialProfile?.preferredName || displayName}{" "}
             {socialProfile?.pronouns && (
               <span className="text-text-secondary">({socialProfile?.pronouns})</span>
             )}
@@ -300,7 +293,7 @@ export function MyProfile({
             Auto-generated from your application. Click any tag to hide/show its category on your
             profile.
           </p>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap justify-center gap-2 md:justify-start">
             {allTags.length > 0 ? (
               allTags.map((tag, index) => {
                 const isHidden = watchedTagsToHide.includes(tag.category);
@@ -418,6 +411,23 @@ export function MyProfile({
                 </p>
               )}
             </div>
+          </div>
+        </div>
+
+        <div>
+          <h4 className="mb-3 font-medium text-md text-text-primary">Privacy</h4>
+          <div className="flex items-center gap-3">
+            <Checkbox
+              id="hide-recently-viewed"
+              checked={watchedHideRecentlyViewed}
+              onCheckedChange={(checked) => setValue("hideRecentlyViewed", checked === true)}
+            />
+            <label
+              htmlFor="hide-recently-viewed"
+              className="cursor-pointer text-sm text-text-primary"
+            >
+              Hide my profile from others' recently viewed
+            </label>
           </div>
         </div>
       </div>

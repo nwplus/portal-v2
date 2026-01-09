@@ -1,14 +1,16 @@
 import { GradientBackground } from "@/components/layout/gradient-background";
 import { MyProfile } from "@/components/social-profile/my-profile";
 import { RecentlyViewed } from "@/components/social-profile/recently-viewed";
+import { ViewProfile } from "@/components/social-profile/view-profile";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Social } from "@/lib/firebase/types/socials";
+import { useHackathon } from "@/hooks/use-hackathon";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useHackerStore } from "@/lib/stores/hacker-store";
 import { getPreferredName } from "@/lib/utils";
-import { fetchOrCreateSocial } from "@/services/socials";
-import { createFileRoute, notFound } from "@tanstack/react-router";
-import { useState } from "react";
+import { addToRecentlyViewed, fetchOrCreateSocial, fetchSocial } from "@/services/socials";
+import { Link, createFileRoute, notFound } from "@tanstack/react-router";
+import { ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/$activeHackathon/_auth/(account)/social-profile/$userId")({
   loader: async ({ context, params }) => {
@@ -16,38 +18,77 @@ export const Route = createFileRoute("/$activeHackathon/_auth/(account)/social-p
     const { user } = useAuthStore.getState();
     const getOrFetchHacker = useHackerStore.getState().getOrFetch;
 
-    // TODO: only allow viewing own profile for now; change in recently-viewed PR
-    if (params.userId !== user?.uid) {
+    const isOwnProfile = params.userId === user?.uid;
+
+    if (isOwnProfile) {
+      // Own profile: fetch/create social profile and hacker data
+      if (!user?.uid || !user?.email || !dbCollectionName) {
+        return { socialProfile: null, hacker: null, isOwnProfile: true };
+      }
+
+      const hacker = await getOrFetchHacker(dbCollectionName, user.uid);
+      const socialProfile = await fetchOrCreateSocial(user.uid, user.email, hacker);
+
+      return { socialProfile, hacker, isOwnProfile: true };
+    }
+    if (!user?.uid || !user?.email) {
+      return { socialProfile: null, hacker: null, isOwnProfile: false };
+    }
+
+    const targetProfile = await fetchSocial(params.userId);
+
+    if (!targetProfile) {
       throw notFound();
     }
 
-    if (!user?.uid || !user?.email || !dbCollectionName) {
-      return { socialProfile: null };
-    }
+    addToRecentlyViewed(user.uid, user.email, params.userId, targetProfile.preferredName).catch(
+      (err) => console.error("Error adding to recently viewed:", err),
+    );
 
-    const hacker = await getOrFetchHacker(dbCollectionName, user.uid);
-    const socialProfile = await fetchOrCreateSocial(user.uid, user.email, hacker);
-
-    return { socialProfile, hacker };
+    return { socialProfile: targetProfile, hacker: null, isOwnProfile: false };
   },
   component: RouteComponent,
 });
 
 function RouteComponent() {
   const user = useAuthStore((state) => state.user);
-  const { socialProfile: loaderProfile, hacker } = Route.useLoaderData();
+  const { activeHackathon } = useHackathon();
+  const { socialProfile, hacker, isOwnProfile } = Route.useLoaderData();
 
-  // for profile updates made by the user
-  const [updatedProfile, setUpdatedProfile] = useState<Social | null>(loaderProfile);
+  if (!isOwnProfile) {
+    return (
+      <GradientBackground
+        gradientPosition="bottomMiddle"
+        className="scrollbar-hidden max-h-screen overflow-y-auto"
+      >
+        <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-6">
+          <div className="w-full max-w-3xl">
+            <div className="mb-6">
+              {user?.uid && (
+                <Link
+                  to="/$activeHackathon/social-profile/$userId"
+                  params={{ activeHackathon, userId: user.uid }}
+                >
+                  <Button variant="ghost" size="sm" className="gap-2">
+                    <ArrowLeft className="size-4" />
+                    Back
+                  </Button>
+                </Link>
+              )}
+            </div>
 
-  const socialProfile = updatedProfile ?? loaderProfile;
+            {socialProfile && <ViewProfile socialProfile={socialProfile} />}
+          </div>
+        </div>
+      </GradientBackground>
+    );
+  }
+
+  // Show editable view for own profile
   const displayName = hacker ? getPreferredName(hacker) : "User";
 
   return (
-    <GradientBackground
-      gradientPosition="bottomMiddle"
-      className="scrollbar-hidden max-h-screen overflow-y-auto"
-    >
+    <GradientBackground gradientPosition="bottomMiddle">
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-6">
         <div className="w-full max-w-3xl">
           <Tabs defaultValue="profile" className="flex flex-col items-center">
@@ -63,7 +104,6 @@ function RouteComponent() {
               {user?.uid && user?.email && socialProfile ? (
                 <MyProfile
                   socialProfile={socialProfile}
-                  onProfileUpdate={setUpdatedProfile}
                   uid={user.uid}
                   email={user.email}
                   displayName={displayName}
@@ -76,7 +116,7 @@ function RouteComponent() {
               )}
             </TabsContent>
             <TabsContent value="recently-viewed" className="w-full">
-              <RecentlyViewed />
+              <RecentlyViewed socialProfile={socialProfile} />
             </TabsContent>
           </Tabs>
         </div>
