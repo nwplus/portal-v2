@@ -6,7 +6,6 @@ import { arrayUnion, collection, doc, getDoc, getDocs, setDoc } from "firebase/f
 
 /**
  * Load stampbook with computed unlock states; returns active stamps and whether they are unlocked for a given user
- * Called on stampbook page load
  */
 export async function loadStampbook(
   uid: string,

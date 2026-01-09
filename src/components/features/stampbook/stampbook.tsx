@@ -29,7 +29,6 @@ export function Stampbook({ stamps, displayName }: StampbookProps) {
   const pageWidth = isMobile ? MOBILE_PAGE_WIDTH : DESKTOP_PAGE_WIDTH;
   const pageHeight = isMobile ? MOBILE_PAGE_HEIGHT : DESKTOP_PAGE_HEIGHT;
 
-  // Should not display isHidden stamps that are not unlocked
   const stampsToDisplay = stamps.filter((stamp) => !stamp.isHidden || stamp.isUnlocked);
   const spreads = organizeIntoSpreads(stampsToDisplay);
 
