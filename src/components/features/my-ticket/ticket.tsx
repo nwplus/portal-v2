@@ -1,4 +1,5 @@
 import { useElementDimension } from "@/hooks/use-element-dimension";
+import { useHackathon } from "@/hooks/use-hackathon";
 import type { Applicant } from "@/lib/firebase/types/applicants";
 import { cn, getFullName } from "@/lib/utils";
 import QRCode from "react-qr-code";
@@ -29,7 +30,10 @@ export function Ticket({
   radius = 18,
   notchRadius = 26,
 }: TicketProps) {
-  const qrData = applicant?._id;
+  const { activeHackathon } = useHackathon();
+  const qrData = applicant?._id
+    ? `${window.location.origin}/${activeHackathon}/social-profile/${applicant._id}`
+    : "";
 
   // We use manual breakpoints for styles using `isMobile` below instead of
   // TailwindCSS breakpoints so that breakpoints are based on relevant (parent)
@@ -124,7 +128,7 @@ export function Ticket({
                 <img
                   className={cn("h-full", isMobile ? "hidden" : "block")}
                   draggable={false}
-                  src="/assets/ticket/ticket-decal.svg"
+                  src={`/assets/${activeHackathon}/ticket/ticket-decal.svg`}
                 />
                 <div
                   className={cn(

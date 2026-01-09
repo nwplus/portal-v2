@@ -88,6 +88,12 @@ function RouteComponent() {
                     </>
                   )}
 
+                  {applicationStatus === "pendingWaitlist" && (
+                    <>
+                      <Clock className="size-3 md:size-5" strokeWidth={2} />
+                      Pending waitlist
+                    </>
+                  )}
                   {(applicationStatus === "acceptedNoResponseYet" ||
                     applicationStatus === "acceptedAndAttending") && (
                     <>

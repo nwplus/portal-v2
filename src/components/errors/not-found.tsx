@@ -1,23 +1,25 @@
+import { useHackathon } from "@/hooks/use-hackathon";
 import { usePortalTheme } from "@/hooks/use-portal-theme";
-import { cn } from "@/lib/utils";
+import { cn, getColouredHackathonIcon } from "@/lib/utils";
 import { Link, useCanGoBack, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { NwHacksColouredIcon } from "../icons";
 import { Button, buttonVariants } from "../ui/button";
 
 /**
- * NOTE: Icon and assets may need to be replaced on each reskin:
- *  - `public/assets/not-found`
- *  - `src/components/nwhacks-coloured.svg.tsx`
+ * NOTE: Assets may need to be updated on each reskin:
+ *  - `public/assets/{activeHackathon}/not-found`
  */
 
 export default function NotFound() {
+  const { activeHackathon } = useHackathon();
   const router = useRouter();
   const canGoBack = useCanGoBack(); // true when user navigates here, false when user directly enters a bad URL
   const [cursorRatio, setCursorRatio] = useState({ x: 0, y: 0 });
 
   const portalTheme = usePortalTheme();
-  const gradientStyle = portalTheme?.nwhacks?.backgroundGradients?.bottomMiddle;
+  const gradientStyle = portalTheme?.[activeHackathon]?.backgroundGradients?.bottomMiddle;
+
+  const HackathonIcon = getColouredHackathonIcon(activeHackathon);
 
   useEffect(() => {
     let rafId = 0;
@@ -60,8 +62,8 @@ export default function NotFound() {
             }}
           >
             <div className="flex flex-col gap-3 pb-3">
-              <div className="flex justify-center aspect-square h-fit mx-auto md:h-12 md:mx-0">
-                <NwHacksColouredIcon />
+              <div className="mx-auto flex aspect-square h-fit justify-center md:mx-0 md:h-12">
+                <HackathonIcon />
               </div>
               <h1 className="pt-2 font-semibold text-5xl">404</h1>
               <h1 className="font-medium text-3xl">Page not found</h1>
@@ -91,12 +93,12 @@ export default function NotFound() {
 
           {/* These "lost in space" assets are positioned relative to the center content;
               this means '%' takes a percentage of the center content's dimensions */}
-          <div className="-bottom-[100%] absolute translate-x-[70%] -translate-y-[25%] md:translate-x-[100%] md:translate-y-[0%]">
+          <div className="-bottom-[100%] -translate-y-[25%] absolute translate-x-[70%] md:translate-x-[100%] md:translate-y-[0%]">
             <img
               aria-hidden
               alt=""
               className="pointer-events-none select-none"
-              src="/assets/not-found/bear.svg"
+              src={`/assets/${activeHackathon}/not-found/bear.svg`}
               style={{
                 transform: `translate3d(${bearOffset.x}px, ${bearOffset.y}px, 0)`,
                 transition: "transform 120ms ease-out",
@@ -108,7 +110,7 @@ export default function NotFound() {
               aria-hidden
               alt=""
               className="pointer-events-none select-none"
-              src="/assets/not-found/nugget.svg"
+              src={`/assets/${activeHackathon}/not-found/nugget.svg`}
               style={{
                 transform: `translate3d(${nuggetOffset.x}px, ${nuggetOffset.y}px, 0)`,
                 transition: "transform 120ms ease-out",
@@ -120,7 +122,7 @@ export default function NotFound() {
               aria-hidden
               alt=""
               className="pointer-events-none select-none"
-              src="/assets/not-found/deer.svg"
+              src={`/assets/${activeHackathon}/not-found/deer.svg`}
               style={{
                 transform: `translate3d(${deerOffset.x}px, ${deerOffset.y}px, 0)`,
                 transition: "transform 120ms ease-out",
@@ -134,7 +136,7 @@ export default function NotFound() {
           aria-hidden
           alt=""
           className="-left-10 pointer-events-none absolute bottom-20 hidden w-[30vw] select-none md:block"
-          src="/assets/not-found/train.png"
+          src={`/assets/${activeHackathon}/not-found/train.png`}
           style={{
             transform: `translate3d(${trainOffset.x}px, ${trainOffset.y}px, 0)`,
             transition: "transform 140ms ease-out",
