@@ -307,7 +307,7 @@ declare module '@tanstack/react-router' {
       fullPath: '/$activeHackathon/stampbook'
       preLoaderRoute: typeof ActiveHackathonAuthaccountStampbookImport
       parentRoute: typeof ActiveHackathonAuthImport
-    }v
+    }
     '/$activeHackathon/_auth/(internal)/charcuterie': {
       id: '/$activeHackathon/_auth/(internal)/charcuterie'
       path: '/charcuterie'
