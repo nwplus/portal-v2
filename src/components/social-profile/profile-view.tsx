@@ -115,7 +115,7 @@ export default function ProfileView({ socialProfile, onEdit, allTags }: ProfileV
 
         <div className="mb-6 w-full">
           <h3 className="mb-3 font-medium text-md text-text-primary">Tags</h3>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap justify-center gap-2 md:justify-start">
             {visibleTags.length > 0 ? (
               visibleTags.map((tag, index) => (
                 <span

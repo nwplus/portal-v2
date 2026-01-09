@@ -1,5 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { Social, TagCategory } from "@/lib/firebase/types/socials";
@@ -57,6 +58,7 @@ export function MyProfile({ socialProfile, uid, email, displayName }: MyProfileP
   const watchedPronouns = watch("pronouns") ?? "";
   const watchedProfilePictureIndex = watch("profilePictureIndex");
   const watchedTagsToHide = watch("tagsToHide");
+  const watchedHideRecentlyViewed = watch("hideRecentlyViewed");
 
   const bioWordCount = watchedBio.trim().split(/\s+/).filter(Boolean).length;
 
@@ -85,7 +87,7 @@ export function MyProfile({ socialProfile, uid, email, displayName }: MyProfileP
         school: socialProfile?.school,
         year: socialProfile?.year,
         role: socialProfile?.role,
-        hideRecentlyViewed: socialProfile?.hideRecentlyViewed ?? false,
+        hideRecentlyViewed: data.hideRecentlyViewed,
         tagsToHide: data.tagsToHide.length > 0 ? data.tagsToHide : [],
         socialLinks: {
           linkedin: data.socialLinks.linkedin?.trim() || "",
@@ -291,7 +293,7 @@ export function MyProfile({ socialProfile, uid, email, displayName }: MyProfileP
             Auto-generated from your application. Click any tag to hide/show its category on your
             profile.
           </p>
-          <div className="flex justify-center flex-wrap gap-2">
+          <div className="flex flex-wrap justify-center gap-2 md:justify-start">
             {allTags.length > 0 ? (
               allTags.map((tag, index) => {
                 const isHidden = watchedTagsToHide.includes(tag.category);
@@ -409,6 +411,23 @@ export function MyProfile({ socialProfile, uid, email, displayName }: MyProfileP
                 </p>
               )}
             </div>
+          </div>
+        </div>
+
+        <div>
+          <h4 className="mb-3 font-medium text-md text-text-primary">Privacy</h4>
+          <div className="flex items-center gap-3">
+            <Checkbox
+              id="hide-recently-viewed"
+              checked={watchedHideRecentlyViewed}
+              onCheckedChange={(checked) => setValue("hideRecentlyViewed", checked === true)}
+            />
+            <label
+              htmlFor="hide-recently-viewed"
+              className="cursor-pointer text-sm text-text-primary"
+            >
+              Hide my profile from others' recently viewed
+            </label>
           </div>
         </div>
       </div>
