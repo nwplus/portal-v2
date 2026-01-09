@@ -31,6 +31,7 @@ import {
   Map as MapIcon,
   PackageOpen,
   Share2,
+  Stamp,
   Ticket,
   Trophy,
 } from "lucide-react";
@@ -61,6 +62,11 @@ const ACCOUNT_MENU_ITEMS: MenuItem[] = [
     label: "Rewards",
     to: "/$activeHackathon/rewards",
     icon: Trophy,
+  },
+  {
+    label: "Stamps",
+    to: "/$activeHackathon/stampbook",
+    icon: Stamp,
   },
 ];
 

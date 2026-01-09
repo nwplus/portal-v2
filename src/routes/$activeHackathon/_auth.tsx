@@ -14,7 +14,8 @@ export const Route = createFileRoute("/$activeHackathon/_auth")({
           activeHackathon: params.activeHackathon,
         },
         search: {
-          redirect: location.pathname,
+          // preserve full URL for post-auth redirect (e.g. ?unlockStamp=xxx)
+          redirect: location.href,
         },
       });
     }

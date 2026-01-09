@@ -1,3 +1,4 @@
+import { Toaster } from "@/components/ui/sonner";
 import { NoisyBackground } from "@/components/visual/noisy-background";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { usePortalStore } from "@/lib/stores/portal-store";
@@ -24,6 +25,7 @@ export const Route = createRootRoute({
     return (
       <div className="relative h-dvh bg-background">
         <Outlet />
+        <Toaster position="top-center" />
         {import.meta.env.DEV && <TanStackRouterDevtools position="bottom-right" />}
         <NoisyBackground className="pointer-events-none z-50" opacity={0.15} />
       </div>
