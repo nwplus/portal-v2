@@ -31,7 +31,7 @@ export function StampbookPage({
   return (
     // TODO: only used in stampbook for now; add as stylesheet token if re-used
     <div
-      className={cn("relative flex flex-col bg-[#F3EBEA]", isMobile ? "p-4" : "p-6", className)}
+      className={cn("relative flex flex-col border-[0.5px] border-border-stampbook bg-[#F3EBEA]", isMobile ? "p-4" : "p-6", className)}
       style={{ width, height }}
     >
       <div className="relative flex flex-1 flex-col items-center justify-center">

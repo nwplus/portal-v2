@@ -200,7 +200,7 @@ export function Stampbook({ stamps, displayName }: StampbookProps) {
               title={page.title}
               width={pageWidth}
               height={pageHeight}
-              className={page.isLeft ? "rounded-r-sm rounded-l-lg" : "rounded-r-lg rounded-l-sm"}
+              className={page.isLeft ? "rounded-r-md rounded-l-lg" : "rounded-r-lg rounded-l-md"}
             />
           </Page>
         ))}

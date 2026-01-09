@@ -78,7 +78,9 @@ export function StampDisplay({ stamp, showDetails = true, size = "md" }: StampDi
                   <TooltipTrigger>
                     <PartyPopperIcon className="inline-block h-4 w-4" />
                   </TooltipTrigger>
-                  <TooltipContent>Get an organizer to scan your QR after completing this activity!</TooltipContent>
+                  <TooltipContent>
+                    Get an organizer to scan your QR after completing this activity!
+                  </TooltipContent>
                 </Tooltip>
               </span>
             )}
