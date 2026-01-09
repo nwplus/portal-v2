@@ -55,12 +55,19 @@ export function StampDisplay({ stamp, showDetails = true, size = "md" }: StampDi
             styles.details,
           )}
         >
-          <div className={cn("flex items-center gap-2 text-center font-semibold leading-tight", styles.name)}>
+          <div
+            className={cn(
+              "flex items-center gap-2 text-center font-semibold leading-tight",
+              styles.name,
+            )}
+          >
             {stamp.name}
             {stamp.isQRUnlockable && (
               <span className={cn("text-center leading-tight", styles.description)}>
                 <Tooltip>
-                  <TooltipTrigger><QrCodeIcon className="inline-block h-4 w-4" /></TooltipTrigger>
+                  <TooltipTrigger>
+                    <QrCodeIcon className="inline-block h-4 w-4" />
+                  </TooltipTrigger>
                   <TooltipContent>This stamp can be unlocked by scanning a QR code</TooltipContent>
                 </Tooltip>
               </span>
@@ -68,13 +75,15 @@ export function StampDisplay({ stamp, showDetails = true, size = "md" }: StampDi
             {stamp.isEventUnlockable && (
               <span className={cn("text-center leading-tight", styles.description)}>
                 <Tooltip>
-                  <TooltipTrigger><PartyPopperIcon className="inline-block h-4 w-4" /></TooltipTrigger>
+                  <TooltipTrigger>
+                    <PartyPopperIcon className="inline-block h-4 w-4" />
+                  </TooltipTrigger>
                   <TooltipContent>This stamp can be unlocked by attending an event</TooltipContent>
                 </Tooltip>
               </span>
             )}
           </div>
-          
+
           <span className={cn("text-center leading-tight", styles.description)}>
             {stamp.description}
           </span>
