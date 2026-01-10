@@ -15,15 +15,15 @@ export async function fetchSchedule(
   const q = query(ref);
 
   const querySnapshot = await getDocs(q);
-  const faqs: (DayOfEvent & { _id: string })[] = [];
+  const events: (DayOfEvent & { _id: string })[] = [];
 
   for (const doc of querySnapshot.docs) {
     const data = doc.data() as DayOfEvent;
-    faqs.push({
+    events.push({
       _id: doc.id,
       ...data,
     });
   }
 
-  return faqs;
+  return events;
 }
