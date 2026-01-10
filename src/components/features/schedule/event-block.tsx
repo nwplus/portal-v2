@@ -168,14 +168,14 @@ export function EventBlock({ id, position, startLabel, endLabel, event }: EventB
         {points && <div>{points} points</div>}
         {type && (
           <Tooltip>
-            <TooltipTrigger>
-              {type === "workshops" ? (
-                <Wrench className="h-4 w-4 text-[#059669]" />
-              ) : type === "minievents" ? (
-                <Puzzle className="h-4 w-4 text-[#D97706]" />
-              ) : (
-                <></>
-              )}
+            <TooltipTrigger asChild>
+              <span className="cursor-default">
+                {type === "workshops" ? (
+                  <Wrench className="h-4 w-4 text-[#059669]" />
+                ) : type === "minievents" ? (
+                  <Puzzle className="h-4 w-4 text-[#D97706]" />
+                ) : null}
+              </span>
             </TooltipTrigger>
             <TooltipContent className="z-100">{getEventName(type)}</TooltipContent>
           </Tooltip>
