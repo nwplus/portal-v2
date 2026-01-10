@@ -26,7 +26,6 @@ import { Route as ActiveHackathonAuthApplicationIndexImport } from './routes/$ac
 import { Route as ActiveHackathonAuthApplicationRsvpImport } from './routes/$activeHackathon/_auth/application/rsvp'
 import { Route as ActiveHackathonAuthApplicationStepLayoutImport } from './routes/$activeHackathon/_auth/application/_step-layout'
 import { Route as ActiveHackathonAuthinternalCharcuterieImport } from './routes/$activeHackathon/_auth/(internal)/charcuterie'
-import { Route as ActiveHackathonAuthaccountRewardsImport } from './routes/$activeHackathon/_auth/(account)/rewards'
 import { Route as ActiveHackathonAuthaccountMyTicketImport } from './routes/$activeHackathon/_auth/(account)/my-ticket'
 import { Route as ActiveHackathonAuthApplicationStepLayoutSkillsImport } from './routes/$activeHackathon/_auth/application/_step-layout/skills'
 import { Route as ActiveHackathonAuthApplicationStepLayoutReviewImport } from './routes/$activeHackathon/_auth/application/_step-layout/review'
@@ -131,13 +130,6 @@ const ActiveHackathonAuthinternalCharcuterieRoute =
   ActiveHackathonAuthinternalCharcuterieImport.update({
     id: '/(internal)/charcuterie',
     path: '/charcuterie',
-    getParentRoute: () => ActiveHackathonAuthRoute,
-  } as any)
-
-const ActiveHackathonAuthaccountRewardsRoute =
-  ActiveHackathonAuthaccountRewardsImport.update({
-    id: '/(account)/rewards',
-    path: '/rewards',
     getParentRoute: () => ActiveHackathonAuthRoute,
   } as any)
 
@@ -271,13 +263,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ActiveHackathonAuthaccountMyTicketImport
       parentRoute: typeof ActiveHackathonAuthImport
     }
-    '/$activeHackathon/_auth/(account)/rewards': {
-      id: '/$activeHackathon/_auth/(account)/rewards'
-      path: '/rewards'
-      fullPath: '/$activeHackathon/rewards'
-      preLoaderRoute: typeof ActiveHackathonAuthaccountRewardsImport
-      parentRoute: typeof ActiveHackathonAuthImport
-    }
     '/$activeHackathon/_auth/(internal)/charcuterie': {
       id: '/$activeHackathon/_auth/(internal)/charcuterie'
       path: '/charcuterie'
@@ -394,7 +379,6 @@ const ActiveHackathonAuthApplicationRouteWithChildren =
 interface ActiveHackathonAuthRouteChildren {
   ActiveHackathonAuthApplicationRoute: typeof ActiveHackathonAuthApplicationRouteWithChildren
   ActiveHackathonAuthaccountMyTicketRoute: typeof ActiveHackathonAuthaccountMyTicketRoute
-  ActiveHackathonAuthaccountRewardsRoute: typeof ActiveHackathonAuthaccountRewardsRoute
   ActiveHackathonAuthinternalCharcuterieRoute: typeof ActiveHackathonAuthinternalCharcuterieRoute
   ActiveHackathonAuthaccountSocialProfileUserIdRoute: typeof ActiveHackathonAuthaccountSocialProfileUserIdRoute
 }
@@ -404,8 +388,6 @@ const ActiveHackathonAuthRouteChildren: ActiveHackathonAuthRouteChildren = {
     ActiveHackathonAuthApplicationRouteWithChildren,
   ActiveHackathonAuthaccountMyTicketRoute:
     ActiveHackathonAuthaccountMyTicketRoute,
-  ActiveHackathonAuthaccountRewardsRoute:
-    ActiveHackathonAuthaccountRewardsRoute,
   ActiveHackathonAuthinternalCharcuterieRoute:
     ActiveHackathonAuthinternalCharcuterieRoute,
   ActiveHackathonAuthaccountSocialProfileUserIdRoute:
@@ -456,7 +438,6 @@ export interface FileRoutesByFullPath {
   '/$activeHackathon/venue-map': typeof ActiveHackathoninformationVenueMapRoute
   '/$activeHackathon/application': typeof ActiveHackathonAuthApplicationStepLayoutRouteWithChildren
   '/$activeHackathon/my-ticket': typeof ActiveHackathonAuthaccountMyTicketRoute
-  '/$activeHackathon/rewards': typeof ActiveHackathonAuthaccountRewardsRoute
   '/$activeHackathon/charcuterie': typeof ActiveHackathonAuthinternalCharcuterieRoute
   '/$activeHackathon/application/rsvp': typeof ActiveHackathonAuthApplicationRsvpRoute
   '/$activeHackathon/application/': typeof ActiveHackathonAuthApplicationIndexRoute
@@ -477,7 +458,6 @@ export interface FileRoutesByTo {
   '/$activeHackathon/schedule': typeof ActiveHackathoninformationScheduleRoute
   '/$activeHackathon/venue-map': typeof ActiveHackathoninformationVenueMapRoute
   '/$activeHackathon/my-ticket': typeof ActiveHackathonAuthaccountMyTicketRoute
-  '/$activeHackathon/rewards': typeof ActiveHackathonAuthaccountRewardsRoute
   '/$activeHackathon/charcuterie': typeof ActiveHackathonAuthinternalCharcuterieRoute
   '/$activeHackathon/application': typeof ActiveHackathonAuthApplicationIndexRoute
   '/$activeHackathon/application/rsvp': typeof ActiveHackathonAuthApplicationRsvpRoute
@@ -502,7 +482,6 @@ export interface FileRoutesById {
   '/$activeHackathon/(information)/venue-map': typeof ActiveHackathoninformationVenueMapRoute
   '/$activeHackathon/_auth/application': typeof ActiveHackathonAuthApplicationRouteWithChildren
   '/$activeHackathon/_auth/(account)/my-ticket': typeof ActiveHackathonAuthaccountMyTicketRoute
-  '/$activeHackathon/_auth/(account)/rewards': typeof ActiveHackathonAuthaccountRewardsRoute
   '/$activeHackathon/_auth/(internal)/charcuterie': typeof ActiveHackathonAuthinternalCharcuterieRoute
   '/$activeHackathon/_auth/application/_step-layout': typeof ActiveHackathonAuthApplicationStepLayoutRouteWithChildren
   '/$activeHackathon/_auth/application/rsvp': typeof ActiveHackathonAuthApplicationRsvpRoute
@@ -528,7 +507,6 @@ export interface FileRouteTypes {
     | '/$activeHackathon/venue-map'
     | '/$activeHackathon/application'
     | '/$activeHackathon/my-ticket'
-    | '/$activeHackathon/rewards'
     | '/$activeHackathon/charcuterie'
     | '/$activeHackathon/application/rsvp'
     | '/$activeHackathon/application/'
@@ -548,7 +526,6 @@ export interface FileRouteTypes {
     | '/$activeHackathon/schedule'
     | '/$activeHackathon/venue-map'
     | '/$activeHackathon/my-ticket'
-    | '/$activeHackathon/rewards'
     | '/$activeHackathon/charcuterie'
     | '/$activeHackathon/application'
     | '/$activeHackathon/application/rsvp'
@@ -571,7 +548,6 @@ export interface FileRouteTypes {
     | '/$activeHackathon/(information)/venue-map'
     | '/$activeHackathon/_auth/application'
     | '/$activeHackathon/_auth/(account)/my-ticket'
-    | '/$activeHackathon/_auth/(account)/rewards'
     | '/$activeHackathon/_auth/(internal)/charcuterie'
     | '/$activeHackathon/_auth/application/_step-layout'
     | '/$activeHackathon/_auth/application/rsvp'
@@ -630,7 +606,6 @@ export const routeTree = rootRoute
       "children": [
         "/$activeHackathon/_auth/application",
         "/$activeHackathon/_auth/(account)/my-ticket",
-        "/$activeHackathon/_auth/(account)/rewards",
         "/$activeHackathon/_auth/(internal)/charcuterie",
         "/$activeHackathon/_auth/(account)/social-profile/$userId"
       ]
@@ -674,10 +649,6 @@ export const routeTree = rootRoute
     },
     "/$activeHackathon/_auth/(account)/my-ticket": {
       "filePath": "$activeHackathon/_auth/(account)/my-ticket.tsx",
-      "parent": "/$activeHackathon/_auth"
-    },
-    "/$activeHackathon/_auth/(account)/rewards": {
-      "filePath": "$activeHackathon/_auth/(account)/rewards.tsx",
       "parent": "/$activeHackathon/_auth"
     },
     "/$activeHackathon/_auth/(internal)/charcuterie": {

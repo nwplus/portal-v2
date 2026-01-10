@@ -57,11 +57,6 @@ const ACCOUNT_MENU_ITEMS: MenuItem[] = [
     to: "/$activeHackathon/social-profile/$userId",
     icon: Share2,
   },
-  {
-    label: "Rewards",
-    to: "/$activeHackathon/rewards",
-    icon: Trophy,
-  },
 ];
 
 const INFORMATION_MENU_ITEMS: MenuItem[] = [
