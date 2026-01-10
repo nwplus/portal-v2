@@ -8,6 +8,7 @@ import {
 import confetti from "canvas-confetti";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import type { DayOfEventType } from "./firebase/types";
 import type { Applicant } from "./firebase/types/applicants";
 import { useAuthStore } from "./stores/auth-store";
 import { usePortalStore } from "./stores/portal-store";
@@ -180,4 +181,13 @@ export const getFullName = (applicant: Applicant): string => {
   const firstName = applicant.basicInfo?.preferredName || applicant.basicInfo.legalFirstName;
   const lastName = applicant.basicInfo.legalLastName;
   return `${firstName} ${lastName}`.trim();
+};
+
+export const getEventName = (event: DayOfEventType): string => {
+  return (
+    { minievents: "Mini-Event", main: "Main", workshops: "Workshop" } as Record<
+      DayOfEventType,
+      string
+    >
+  )[event];
 };
