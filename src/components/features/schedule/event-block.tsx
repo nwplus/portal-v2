@@ -151,9 +151,15 @@ export function EventBlock({ id, position, startLabel, endLabel, event }: EventB
 
   const eventContent = () => (
     <>
-      <div className="flex w-full items-center justify-between gap-2">
-        <div className="font-semibold text-text-primary">{name ?? "Untitled event"}</div>
-        {isDelayed && <Badge variant="destructive">Delayed</Badge>}
+      <div className="flex w-full flex-col items-start justify-between gap-2 md:flex-row md:items-center">
+        <div className="order-2 font-semibold text-text-primary md:order-1">
+          {name ?? "Untitled event"}
+        </div>
+        {isDelayed && (
+          <Badge variant="destructive" className="-ml-0.5 order-1 md:order-2 md:ml-0 ">
+            Delayed
+          </Badge>
+        )}
       </div>
       <div className="flex-grow text-sm text-text-secondary">{description ?? ""}</div>
       <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-text-primary text-xs md:text-sm">

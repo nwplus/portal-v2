@@ -85,7 +85,7 @@ function RouteComponent() {
 
   return (
     <TooltipProvider>
-      {/* ToolTip is used in the event-block.tsx */}
+      {/* Tooltip is used in the event-block.tsx */}
       <GradientBackground
         gradientPosition={isMobile ? "bottomMiddle" : "topLeft"}
         className="py-10"
@@ -112,6 +112,7 @@ function RouteComponent() {
                   dayLabel={day.label}
                   events={day.events}
                   dayDate={new Date(day.dayValue)}
+                  fullHeight
                 />
               </TabsContent>
             ))}

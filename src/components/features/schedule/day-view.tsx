@@ -7,6 +7,7 @@ interface DayViewProps {
   events: (DayOfEvent & { location?: string })[];
   hideTitle?: boolean;
   dayDate: Date;
+  fullHeight?: boolean;
 }
 
 type PositionedEvent = {
@@ -89,7 +90,11 @@ function assignOverlapColumns(segments: EventSegment[]): {
   return { segments: segmentsWithColumns, clusterMax };
 }
 
-function buildTimeline(events: (DayOfEvent & { location?: string })[], dayDate: Date) {
+function buildTimeline(
+  events: (DayOfEvent & { location?: string })[],
+  dayDate: Date,
+  fullHeight = false,
+) {
   // 1. parse and validate event times
   const parsed = events
     .map((event) => {
@@ -107,7 +112,16 @@ function buildTimeline(events: (DayOfEvent & { location?: string })[], dayDate: 
     })
     .filter(Boolean) as { event: DayOfEvent & { location?: string }; start: Date; end: Date }[];
 
-  if (parsed.length === 0) {
+  const resolvedDayDate = getLocalDayStart(dayDate);
+  const dayStartMs = resolvedDayDate.getTime();
+  const dayEndMs = new Date(
+    resolvedDayDate.getFullYear(),
+    resolvedDayDate.getMonth(),
+    resolvedDayDate.getDate() + 1,
+  ).getTime();
+  const minutesInDay = Math.round((dayEndMs - dayStartMs) / 60_000);
+
+  if (parsed.length === 0 && !fullHeight) {
     return {
       positioned: [] as PositionedEvent[],
       labels: [] as TimeLabel[],
@@ -119,16 +133,6 @@ function buildTimeline(events: (DayOfEvent & { location?: string })[], dayDate: 
   }
 
   parsed.sort((a, b) => a.start.getTime() - b.start.getTime());
-
-  // 2. determine which day we're rendering
-  const resolvedDayDate = getLocalDayStart(dayDate);
-  const dayStartMs = resolvedDayDate.getTime();
-  const dayEndMs = new Date(
-    resolvedDayDate.getFullYear(),
-    resolvedDayDate.getMonth(),
-    resolvedDayDate.getDate() + 1,
-  ).getTime();
-  const minutesInDay = Math.round((dayEndMs - dayStartMs) / 60_000);
 
   // 3. clip events to day boundaries
   const clipped = parsed
@@ -168,7 +172,7 @@ function buildTimeline(events: (DayOfEvent & { location?: string })[], dayDate: 
     endMinutes: number;
   }[];
 
-  if (clipped.length === 0) {
+  if (clipped.length === 0 && !fullHeight) {
     return {
       positioned: [] as PositionedEvent[],
       labels: [] as TimeLabel[],
@@ -180,11 +184,17 @@ function buildTimeline(events: (DayOfEvent & { location?: string })[], dayDate: 
   }
 
   // 4. calculate timeline bounds
-  const minStart = Math.min(...clipped.map(({ startMinutes }) => Math.round(startMinutes)));
-  const maxEnd = Math.max(...clipped.map(({ endMinutes }) => Math.round(endMinutes)));
+  const minStart =
+    clipped.length > 0
+      ? Math.min(...clipped.map(({ startMinutes }) => Math.round(startMinutes)))
+      : 0;
+  const maxEnd =
+    clipped.length > 0
+      ? Math.max(...clipped.map(({ endMinutes }) => Math.round(endMinutes)))
+      : minutesInDay;
 
-  const timelineStart = Math.floor(minStart / 60) * 60;
-  const timelineEnd = Math.ceil(maxEnd / 60) * 60;
+  const timelineStart = fullHeight ? 0 : Math.floor(minStart / 60) * 60;
+  const timelineEnd = fullHeight ? minutesInDay : Math.ceil(maxEnd / 60) * 60;
   const timelineHeight = Math.max((timelineEnd - timelineStart) * PIXELS_PER_MINUTE, 1);
 
   // 5. generate hour labels
@@ -252,8 +262,17 @@ function buildTimeline(events: (DayOfEvent & { location?: string })[], dayDate: 
   };
 }
 
-export function DayView({ dayLabel, events, hideTitle = false, dayDate }: DayViewProps) {
-  const timeline = useMemo(() => buildTimeline(events, dayDate), [events, dayDate]);
+export function DayView({
+  dayLabel,
+  events,
+  hideTitle = false,
+  dayDate,
+  fullHeight = false,
+}: DayViewProps) {
+  const timeline = useMemo(
+    () => buildTimeline(events, dayDate, fullHeight),
+    [events, dayDate, fullHeight],
+  );
   const [now, setNow] = useState<Date>(() => new Date());
 
   useEffect(() => {
@@ -284,7 +303,7 @@ export function DayView({ dayLabel, events, hideTitle = false, dayDate }: DayVie
     currentTop <= timeline.height;
 
   return (
-    <section className="flex flex-col gap-2 py-4 pr-2">
+    <section className={"flex flex-col gap-2 py-4 pr-2"}>
       {!hideTitle && <div className="pl-16 text-text-primary text-xl md:pl-28">{dayLabel}</div>}
       <div className="flex gap-0 md:gap-4">
         <div className="relative w-16 md:w-24" style={{ minHeight: timeline.height }}>
