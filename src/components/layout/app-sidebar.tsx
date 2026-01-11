@@ -32,7 +32,7 @@ import {
   PackageOpen,
   Share2,
   Ticket,
-  Trophy,
+  Trophy as TrophyIcon,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { PropsWithChildren } from "react";
@@ -56,6 +56,11 @@ const ACCOUNT_MENU_ITEMS: MenuItem[] = [
     label: "Social profile",
     to: "/$activeHackathon/social-profile/$userId",
     icon: Share2,
+  },
+  {
+    label: "Rewards",
+    to: "/$activeHackathon/rewards",
+    icon: TrophyIcon,
   },
 ];
 
