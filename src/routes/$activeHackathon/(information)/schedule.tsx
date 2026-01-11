@@ -30,29 +30,39 @@ function groupEventsByLocalDay(events: DayOfEvent[] = []): DayGroup[] {
     const startDate = new Date(event.startTime);
     if (Number.isNaN(startDate.getTime())) continue;
 
-    const dayKey = [
-      startDate.getFullYear(),
-      String(startDate.getMonth() + 1).padStart(2, "0"),
-      String(startDate.getDate()).padStart(2, "0"),
-    ].join("-");
+    const parsedEndDate = event.endTime ? new Date(event.endTime) : null;
+    const resolvedEndDate =
+      parsedEndDate && !Number.isNaN(parsedEndDate.getTime()) ? parsedEndDate : startDate;
+    const safeEndDate =
+      resolvedEndDate.getTime() < startDate.getTime() ? startDate : resolvedEndDate;
 
-    const dayValue = new Date(
-      startDate.getFullYear(),
-      startDate.getMonth(),
-      startDate.getDate(),
-    ).getTime();
-    const label = formatter.format(new Date(dayValue));
+    const currentDay = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+    const lastDay = new Date(
+      safeEndDate.getFullYear(),
+      safeEndDate.getMonth(),
+      safeEndDate.getDate(),
+    );
 
-    if (!groups.has(dayKey)) {
-      groups.set(dayKey, { dayKey, label, dayValue, events: [] });
+    while (currentDay <= lastDay) {
+      const year = currentDay.getFullYear();
+      const month = currentDay.getMonth() + 1;
+      const day = currentDay.getDate();
+
+      const dayKey = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      const dayValue = currentDay.getTime();
+      const label = formatter.format(currentDay);
+
+      if (!groups.has(dayKey)) {
+        groups.set(dayKey, { dayKey, label, dayValue, events: [] });
+      }
+
+      groups.get(dayKey)?.events.push(event);
+
+      currentDay.setDate(currentDay.getDate() + 1);
     }
-
-    groups.get(dayKey)?.events.push(event);
   }
 
-  return Array.from(groups.values()).sort((a, b) => {
-    return a.dayValue - b.dayValue;
-  });
+  return Array.from(groups.values()).sort((a, b) => a.dayValue - b.dayValue);
 }
 
 export const Route = createFileRoute("/$activeHackathon/(information)/schedule")({
@@ -73,8 +83,6 @@ function RouteComponent() {
   const isMobile = useIsMobile();
   const groupedDays = useMemo(() => groupEventsByLocalDay(dayOfEvents ?? []), [dayOfEvents]);
 
-  console.log(groupedDays);
-
   return (
     <TooltipProvider>
       {/* ToolTip is used in the event-block.tsx */}
@@ -82,7 +90,7 @@ function RouteComponent() {
         gradientPosition={isMobile ? "bottomMiddle" : "topLeft"}
         className="py-10"
       >
-        {groupedDays ? (
+        {groupedDays.length > 0 ? (
           <Tabs defaultValue={groupedDays[0].label}>
             {/* NOTE: manually added styles here, another PR will add default styles to tabs */}
             <TabsList className="ml-16 border border-border-subtle bg-border-active/10 md:ml-28">
@@ -98,7 +106,13 @@ function RouteComponent() {
             </TabsList>
             {groupedDays.map((day) => (
               <TabsContent key={day.dayKey} value={day.label}>
-                <DayView hideTitle key={day.dayKey} dayLabel={day.label} events={day.events} />
+                <DayView
+                  hideTitle
+                  key={day.dayKey}
+                  dayLabel={day.label}
+                  events={day.events}
+                  dayDate={new Date(day.dayValue)}
+                />
               </TabsContent>
             ))}
           </Tabs>

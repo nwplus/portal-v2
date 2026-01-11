@@ -168,14 +168,14 @@ export function EventBlock({ id, position, startLabel, endLabel, event }: EventB
         {points && <div>{points} points</div>}
         {type && (
           <Tooltip>
-            <TooltipTrigger>
-              {type === "workshops" ? (
-                <Wrench className="h-4 w-4 text-[#059669]" />
-              ) : type === "minievents" ? (
-                <Puzzle className="h-4 w-4 text-[#D97706]" />
-              ) : (
-                <></>
-              )}
+            <TooltipTrigger asChild>
+              <span className="cursor-default">
+                {type === "workshops" ? (
+                  <Wrench className="h-4 w-4 text-[#059669]" />
+                ) : type === "minievents" ? (
+                  <Puzzle className="h-4 w-4 text-[#D97706]" />
+                ) : null}
+              </span>
             </TooltipTrigger>
             <TooltipContent className="z-100">{getEventName(type)}</TooltipContent>
           </Tooltip>
@@ -212,7 +212,7 @@ export function EventBlock({ id, position, startLabel, endLabel, event }: EventB
         >
           <div
             ref={contentRef}
-            className="grid-1 background:var(--background-translucent-card) relative flex h-full w-full cursor-pointer flex-col items-start gap-1 overflow-hidden rounded-xl border border-border-subtle px-3 py-2.5 backdrop-blur-lg transition-shadow duration-200 hover:shadow-xl"
+            className="grid-1 relative flex h-full w-full cursor-pointer flex-col items-start gap-1 overflow-hidden rounded-xl border border-border-subtle px-3 py-2.5 backdrop-blur-lg transition-shadow duration-200 [background:var(--background-translucent-card)] hover:shadow-xl"
           >
             {eventContent()}
             {hasOverflow && !isFocused && (
@@ -250,7 +250,7 @@ export function EventBlock({ id, position, startLabel, endLabel, event }: EventB
 
           {/* Focused card */}
           <div
-            className="background:var(--background-translucent-card) fixed z-50 overflow-hidden rounded-2xl border border-border-subtle shadow-xl backdrop-blur-lg transition-all duration-250 ease-out"
+            className="fixed z-50 overflow-hidden rounded-2xl border border-border-subtle shadow-xl backdrop-blur-lg transition-all duration-250 ease-out [background:var(--background-translucent-card)]"
             style={{
               top: floatingStyle.top,
               left: floatingStyle.left,
