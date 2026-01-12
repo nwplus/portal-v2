@@ -122,12 +122,17 @@ export function EventBlock({ id, position, startLabel, endLabel, event }: EventB
   // lock scroll while focused
   useEffect(() => {
     if (!isFocused) return;
-    const { overflow, touchAction } = document.body.style;
-    document.body.style.overflow = "hidden";
+    const { overflowY, touchAction } = document.body.style;
+    document.body.style.overflowY = "scroll";
     document.body.style.touchAction = "none";
+
+    const preventScroll = (e: WheelEvent) => e.preventDefault();
+    window.addEventListener("wheel", preventScroll, { passive: false });
+
     return () => {
-      document.body.style.overflow = overflow;
+      document.body.style.overflowY = overflowY;
       document.body.style.touchAction = touchAction;
+      window.removeEventListener("wheel", preventScroll);
     };
   }, [isFocused]);
 
