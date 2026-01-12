@@ -61,126 +61,124 @@ export function Ticket({
           height: svgHeight,
         }}
       >
-        <svg
-          className="mx-auto block"
-          width={svgWidth}
-          height={svgHeight}
-          viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-        >
-          <defs>
-            <mask id={maskId}>
-              <rect width="100%" height="100%" fill="white" rx={radius} />
-              {isMobile ? (
-                <>
-                  {/* Vertical layout: notches on left and right sides at foldY */}
-                  <circle cx={0} cy={foldY} r={notchRadius} fill="black" />
-                  <circle cx={svgWidth} cy={foldY} r={notchRadius} fill="black" />
-                </>
-              ) : (
-                (() => {
-                  const foldXRatio = foldX / width;
-                  const scaledFoldX = foldXRatio * svgWidth;
-                  return (
-                    <>
-                      {/* Horizontal layout: notches on top and bottom at foldX */}
-                      <circle cx={scaledFoldX} cy={0} r={notchRadius} fill="black" />
-                      <circle cx={scaledFoldX} cy={svgHeight} r={notchRadius} fill="black" />
-                    </>
-                  );
-                })()
-              )}
-            </mask>
-          </defs>
+        <div className="relative mx-auto" style={{ width: svgWidth, height: svgHeight }}>
+          <svg
+            className="mx-auto block"
+            width={svgWidth}
+            height={svgHeight}
+            viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+          >
+            <defs>
+              <mask id={maskId}>
+                <rect width="100%" height="100%" fill="white" rx={radius} />
+                {isMobile ? (
+                  <>
+                    <circle cx={0} cy={foldY} r={notchRadius} fill="black" />
+                    <circle cx={svgWidth} cy={foldY} r={notchRadius} fill="black" />
+                  </>
+                ) : (
+                  (() => {
+                    const foldXRatio = foldX / width;
+                    const scaledFoldX = foldXRatio * svgWidth;
+                    return (
+                      <>
+                        {/* Horizontal layout: notches on top and bottom at foldX */}
+                        <circle cx={scaledFoldX} cy={0} r={notchRadius} fill="black" />
+                        <circle cx={scaledFoldX} cy={svgHeight} r={notchRadius} fill="black" />
+                      </>
+                    );
+                  })()
+                )}
+              </mask>
+            </defs>
 
-          {/* Card background */}
-          <rect
-            width="100%"
-            height="100%"
-            rx={radius}
-            fill={`url(#ticket-gradient-${isMobile ? "vertical" : "horizontal"})`}
-            mask={`url(#${maskId})`}
-          />
-
-          {isMobile ? (
-            <line
-              x1={0}
-              y1={foldY}
-              x2={svgWidth}
-              y2={foldY}
-              stroke="rgba(0,0,0,1)"
-              strokeDasharray="6 6"
+            {/* Card background */}
+            <rect
+              width="100%"
+              height="100%"
+              rx={radius}
+              fill={`url(#ticket-gradient-${isMobile ? "vertical" : "horizontal"})`}
+              mask={`url(#${maskId})`}
             />
-          ) : (
-            <line
-              x1={(foldX / width) * svgWidth}
-              y1={notchRadius}
-              x2={(foldX / width) * svgWidth}
-              y2={svgHeight - notchRadius}
-              stroke="rgba(0,0,0,1)"
-              strokeDasharray="6 6"
-            />
-          )}
 
-          {/* Content slot */}
-          <foreignObject x={0} y={0} width={svgWidth} height={svgHeight} mask={`url(#${maskId})`}>
-            <div className="relative flex h-full w-full">
-              <div className="flex h-full items-center">
-                <img
-                  className={cn("h-full", isMobile ? "hidden" : "block")}
-                  draggable={false}
-                  src={`/assets/${activeHackathon}/ticket/ticket-decal.svg`}
-                />
-                <div
-                  className={cn(
-                    "flex flex-col gap-2 font-mono",
-                    isMobile ? "self-end p-10" : "self-center p-0",
-                  )}
-                >
-                  <Badge className="border-[#E4E4E730] bg-[#693F61] uppercase">Hacker</Badge>
-                  <div className="flex flex-col">
-                    <div className={cn("font-bold", isMobile ? "text-3xl" : "text-4xl")}>
-                      {getFullName(applicant)}
-                    </div>
-                    <div className="max-w-[75%] break-words">
-                      {formatPronouns(
-                        applicant?.basicInfo?.pronouns,
-                        applicant?.basicInfo?.otherPronouns,
-                      )}
-                    </div>
-                  </div>
-                  <div>{applicant?.basicInfo?.email ?? "No email"}</div>
-                </div>
-              </div>
+            {isMobile ? (
+              <line
+                x1={0}
+                y1={foldY}
+                x2={svgWidth}
+                y2={foldY}
+                stroke="rgba(0,0,0,1)"
+                strokeDasharray="6 6"
+              />
+            ) : (
+              <line
+                x1={(foldX / width) * svgWidth}
+                y1={notchRadius}
+                x2={(foldX / width) * svgWidth}
+                y2={svgHeight - notchRadius}
+                stroke="rgba(0,0,0,1)"
+                strokeDasharray="6 6"
+              />
+            )}
+
+            {/* Content slot */}
+            <defs>
+              <linearGradient id="ticket-gradient-horizontal" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#140423" />
+                <stop offset="100%" stopColor="#693F61" />
+              </linearGradient>
+              <linearGradient id="ticket-gradient-vertical" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#693F61" />
+                <stop offset="100%" stopColor="#140423" />
+              </linearGradient>
+            </defs>
+          </svg>
+
+          <div className="absolute inset-0 flex">
+            <div className="flex h-full items-center">
+              <img
+                className={cn("h-full", isMobile ? "hidden" : "block")}
+                draggable={false}
+                src={`/assets/${activeHackathon}/ticket/ticket-decal.svg`}
+              />
               <div
                 className={cn(
-                  "absolute top-0 right-0 flex aspect-square items-center justify-center ",
-                  isMobile ? "h-auto w-full p-10" : "h-full w-auto p-14",
+                  "flex flex-col gap-2 font-mono",
+                  isMobile ? "self-end p-10" : "self-center p-0",
                 )}
               >
-                <QRCode
-                  size={256}
-                  style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-                  viewBox="0 0 256 256"
-                  value={qrData ?? ""}
-                  bgColor="rgba(0,0,0,0)"
-                  fgColor="white"
-                />
+                <Badge className="border-[#E4E4E730] bg-[#693F61] uppercase">Hacker</Badge>
+                <div className="flex flex-col">
+                  <div className={cn("font-bold", isMobile ? "text-3xl" : "text-4xl")}>
+                    {getFullName(applicant)}
+                  </div>
+                  <div className="max-w-[75%] break-words">
+                    {formatPronouns(
+                      applicant?.basicInfo?.pronouns,
+                      applicant?.basicInfo?.otherPronouns,
+                    )}
+                  </div>
+                </div>
+                <div>{applicant?.basicInfo?.email ?? "No email"}</div>
               </div>
             </div>
-          </foreignObject>
-          <defs>
-            {/* Horizontal gradient (desktop) */}
-            <linearGradient id="ticket-gradient-horizontal" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#140423" />
-              <stop offset="100%" stopColor="#693F61" />
-            </linearGradient>
-            {/* Vertical gradient (mobile) */}
-            <linearGradient id="ticket-gradient-vertical" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#693F61" />
-              <stop offset="100%" stopColor="#140423" />
-            </linearGradient>
-          </defs>
-        </svg>
+            <div
+              className={cn(
+                "absolute top-0 right-0 flex aspect-square items-center justify-center ",
+                isMobile ? "h-auto w-full p-10" : "h-full w-auto p-14",
+              )}
+            >
+              <QRCode
+                size={256}
+                style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                viewBox="0 0 256 256"
+                value={qrData ?? ""}
+                bgColor="rgba(0,0,0,0)"
+                fgColor="white"
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
