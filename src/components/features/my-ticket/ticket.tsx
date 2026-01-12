@@ -7,7 +7,7 @@ import { Badge } from "../../ui/badge";
 
 const formatPronouns = (pronouns?: Record<string, boolean>, otherPronouns?: string) => {
   const selected = Object.keys(pronouns ?? {})
-    .filter((key) => pronouns?.[key] === true)
+    .filter((key) => key !== "other" && pronouns?.[key] === true)
     .map((p) => p.replace(/\b\w/g, (c) => c.toUpperCase()));
   if (otherPronouns?.trim()) selected.push(otherPronouns.trim());
   return selected.length > 0 ? selected.join(", ") : null;
