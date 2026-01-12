@@ -103,9 +103,9 @@ export function Ticket({
 
             {isMobile ? (
               <line
-                x1={0}
+                x1={notchRadius}
                 y1={foldY}
-                x2={svgWidth}
+                x2={svgWidth - notchRadius}
                 y2={foldY}
                 stroke="rgba(0,0,0,1)"
                 strokeDasharray="6 6"
@@ -134,8 +134,8 @@ export function Ticket({
             </defs>
           </svg>
 
-          <div className="absolute inset-0 flex">
-            <div className="flex h-full items-center">
+          <div className={cn("absolute inset-0 flex", isMobile ? "flex-col" : "flex-row")}>
+            <div className={cn("flex h-full items-center", isMobile && "items-end")}>
               <img
                 className={cn("h-full", isMobile ? "hidden" : "block")}
                 draggable={false}

@@ -23,7 +23,7 @@ function RouteComponent() {
 
     const dataUrl = await toPng(ticketRef.current);
     const link = document.createElement("a");
-    link.download = `${hacker.basicInfo.legalFirstName}${hacker.basicInfo.legalLastName}-QRCode.png`;
+    link.download = `${hacker.basicInfo.preferredName || hacker.basicInfo.legalFirstName}${hacker.basicInfo.legalLastName}-QRCode.png`;
     link.href = dataUrl;
     link.click();
   };
