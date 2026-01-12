@@ -36,6 +36,7 @@
     "lucide-react": "^0.476.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-draggable": "^4.4.6",
     "react-hook-form": "^7.66.0",
     "react-markdown": "^10.1.0",
     "react-qr-code": "^2.0.18",
