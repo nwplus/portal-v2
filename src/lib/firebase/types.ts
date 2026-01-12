@@ -1,5 +1,7 @@
 // aligns with https://github.com/nwplus/admin-v2/blob/dev/src/lib/firebase/types.ts
 
+import type { Timestamp } from "firebase/firestore";
+
 export type ApplicantMajor =
   | "computerScience"
   | "otherEngineering"
@@ -64,6 +66,25 @@ export type HackathonPortalThemeEntry = {
   backgroundGradients?: Partial<Record<BackgroundGradientPosition, string>>;
 };
 export type HackathonPortalTheme = Record<string, HackathonPortalThemeEntry>;
+
+export type DayOfEventType = "main" | "workshops" | "minievents";
+
+export type DayOfEvent = {
+  // `key` == `eventID` == doc ID
+  key: string;
+  eventID: string;
+
+  description?: string;
+  location?: string;
+  endTime?: string; // ISOTimestampZ
+  startTime?: string; // ISOTimestampZ
+  isDelayed?: boolean;
+  lastModified?: Timestamp;
+  lastModifiedBy?: string;
+  name?: string;
+  type?: DayOfEventType;
+  points?: string;
+};
 
 export interface FAQ {
   hackathonIDs: string[];

@@ -1,30 +1,28 @@
-import type { Social } from "@/lib/firebase/types/socials";
-import type { TagCategory } from "@/lib/firebase/types/socials";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import type { Social, TagCategory } from "@/lib/firebase/types/socials";
 import { Github, Globe, Instagram, Linkedin } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Button } from "../ui/button";
-import { PROFILE_PICTURES } from "./constants";
-import { DEFAULT_PROFILE_INDEX } from "./constants";
-import { getTagBackgroundColor } from "./constants";
+import { DEFAULT_PROFILE_INDEX, getProfilePicture, getTagBackgroundColor } from "./constants";
+import { HackathonBadges } from "./hackathon-badges";
 
-interface ProfileViewProps {
+interface ViewProfileProps {
   socialProfile: Social;
-  onEdit: () => void;
-  allTags: Array<{ text: string; category: TagCategory }>;
 }
 
-export default function ProfileView({ socialProfile, onEdit, allTags }: ProfileViewProps) {
-  const displayName = socialProfile?.preferredName ?? "Unknown User";
-  const pronouns = socialProfile?.pronouns;
-  const bio = socialProfile?.bio;
-  const profilePictureIndex = socialProfile?.profilePictureIndex ?? DEFAULT_PROFILE_INDEX;
-  const profilePicture = PROFILE_PICTURES[profilePictureIndex];
+/**
+ * Read-only view of another user's social profile; respects privacy settings (tagsToHide).
+ */
+export function ViewProfile({ socialProfile }: ViewProfileProps) {
+  const pronouns = socialProfile.pronouns;
+  const bio = socialProfile.bio;
+  const profilePictureIndex = socialProfile.profilePictureIndex ?? DEFAULT_PROFILE_INDEX;
+  const profilePicture = getProfilePicture(profilePictureIndex);
+  const displayName = socialProfile.preferredName || "Anonymous";
 
-  const linkedin = socialProfile?.socialLinks?.linkedin;
-  const github = socialProfile?.socialLinks?.github;
-  const website = socialProfile?.socialLinks?.website;
-  const instagram = socialProfile?.socialLinks?.instagram;
-  const devpost = socialProfile?.socialLinks?.devpost;
+  const linkedin = socialProfile.socialLinks?.linkedin;
+  const github = socialProfile.socialLinks?.github;
+  const website = socialProfile.socialLinks?.website;
+  const instagram = socialProfile.socialLinks?.instagram;
+  const devpost = socialProfile.socialLinks?.devpost;
 
   const formatSocialUrl = (platform: string, username: string): string => {
     if (username.startsWith("http://") || username.startsWith("https://")) {
@@ -43,7 +41,7 @@ export default function ProfileView({ socialProfile, onEdit, allTags }: ProfileV
       case "devpost":
         return `https://devpost.com/${cleanUsername}`;
       default:
-        return `https://${username}`;
+        return username.startsWith("www.") ? `https://${username}` : username;
     }
   };
 
@@ -90,14 +88,22 @@ export default function ProfileView({ socialProfile, onEdit, allTags }: ProfileV
       : null,
   ].filter((social): social is NonNullable<typeof social> => social !== null);
 
-  const hiddenCategories = new Set(socialProfile?.tagsToHide || []);
+  // Tags are populated from hackathon-specific application data
+  const allTags: Array<{ text: string; category: TagCategory }> = [];
+  if (socialProfile.school) allTags.push({ text: socialProfile.school, category: "school" });
+  if (socialProfile.areaOfStudy)
+    allTags.push({ text: socialProfile.areaOfStudy, category: "areaOfStudy" });
+  if (socialProfile.year) allTags.push({ text: socialProfile.year, category: "year" });
+  if (socialProfile.role) {
+    const roles = socialProfile.role.split(", ");
+    allTags.push(...roles.map((role) => ({ text: role, category: "role" as TagCategory })));
+  }
+
+  const hiddenCategories = new Set(socialProfile.tagsToHide || []);
   const visibleTags = allTags.filter((tag) => !hiddenCategories.has(tag.category));
+
   return (
     <div className="relative min-h-[500px] rounded-lg border border-border-subtle bg-[#292929]/30 px-6 py-10 backdrop-blur-md md:p-12">
-      <Button variant="secondary" size="sm" className="absolute top-4 right-4" onClick={onEdit}>
-        Edit <span className="hidden md:inline">Profile</span>
-      </Button>
-
       <div className="flex flex-col items-center text-center md:items-start md:text-left">
         <Avatar className="mb-4 size-30 md:size-36">
           <AvatarImage src={profilePicture ?? undefined} referrerPolicy="no-referrer" />
@@ -106,16 +112,18 @@ export default function ProfileView({ socialProfile, onEdit, allTags }: ProfileV
           </AvatarFallback>
         </Avatar>
 
-        <h2 className="mb-1 font-medium text-2xl text-text-primary">
-          {displayName}{" "}
-          {pronouns && <span className="text-text-secondary">({socialProfile?.pronouns})</span>}
-        </h2>
+        <div className="mb-1 flex flex-col items-center gap-2 md:flex-row md:items-center">
+          <h2 className="font-medium text-2xl text-text-primary">
+            {displayName} {pronouns && <span className="text-text-secondary">({pronouns})</span>}
+          </h2>
+          <HackathonBadges hackathonsAttended={socialProfile.hackathonsAttended} size="md" />
+        </div>
 
         <p className="mb-6 text-text-secondary">{bio || "No bio added"}</p>
 
         <div className="mb-6 w-full">
           <h3 className="mb-3 font-medium text-md text-text-primary">Tags</h3>
-          <div className="flex flex-wrap justify-center gap-2 md:justify-start">
+          <div className="flex flex-wrap gap-2">
             {visibleTags.length > 0 ? (
               visibleTags.map((tag, index) => (
                 <span

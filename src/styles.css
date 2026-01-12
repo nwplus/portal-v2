@@ -40,6 +40,8 @@ code {
   --border-accent: #4f263d;
   --border-stampbook: #c2bcbb;
 
+  --line-accent: #a65c97;
+
   --background-main: #111118;
   --background-pane-container: #0f0f15;
   --background-translucent-card: linear-gradient(
@@ -85,6 +87,8 @@ code {
   --color-border-danger: var(--border-danger);
   --color-border-accent: var(--border-accent);
   --color-border-stampbook: var(--border-stampbook);
+
+  --color-line-accent: var(--line-accent);
 
   --color-bg-main: var(--background-main);
   --color-bg-pane-container: var(--background-pane-container);
