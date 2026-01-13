@@ -25,7 +25,10 @@ export function StampbookPage({
   width = DEFAULT_WIDTH,
   height = DEFAULT_HEIGHT,
 }: StampbookPageProps) {
-  const titleIndex = Math.max(0, stamps.findIndex((stamp) => stamp.isTitle));
+  const titleIndex = Math.max(
+    0,
+    stamps.findIndex((stamp) => stamp.isTitle),
+  );
   const isMobile = width < MOBILE_THRESHOLD_WIDTH;
 
   return (

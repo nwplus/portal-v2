@@ -116,7 +116,11 @@ export function evaluateUnlockCriteria(criterion: StampCriteria[], hacker: Hacke
   if (!criterion || criterion.length === 0) return false;
 
   const first = criterion[0];
-  let result = checkCondition(getNestedValue(hacker, first.filterColumn), first.filterCondition, first.filterValue);
+  let result = checkCondition(
+    getNestedValue(hacker, first.filterColumn),
+    first.filterCondition,
+    first.filterValue,
+  );
 
   for (let i = 1; i < criterion.length; i++) {
     const criteria = criterion[i];

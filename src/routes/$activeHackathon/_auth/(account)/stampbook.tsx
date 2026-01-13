@@ -45,9 +45,7 @@ function RouteComponent() {
   // Show notification toast and clear URL param when stamp is unlocked
   useEffect(() => {
     if (unlockedStampName) {
-      toast.success(
-        `"🎉 ${unlockedStampName}" stamp unlocked!`,
-      );
+      toast.success(`"🎉 ${unlockedStampName}" stamp unlocked!`);
 
       navigate({
         to: "/$activeHackathon/stampbook",
