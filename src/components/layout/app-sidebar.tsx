@@ -31,6 +31,7 @@ import {
   Map as MapIcon,
   PackageOpen,
   Share2,
+  Stamp,
   Ticket,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -55,6 +56,11 @@ const ACCOUNT_MENU_ITEMS: MenuItem[] = [
     label: "Social profile",
     to: "/$activeHackathon/social-profile/$userId",
     icon: Share2,
+  },
+  {
+    label: "Stamps",
+    to: "/$activeHackathon/stampbook",
+    icon: Stamp,
   },
 ];
 

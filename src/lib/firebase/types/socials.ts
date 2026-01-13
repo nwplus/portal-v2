@@ -41,6 +41,7 @@ export interface Social {
   profilePictureIndex?: number;
   hideRecentlyViewed?: boolean;
   tagsToHide?: TagCategory[];
+  unlockedStamps?: string[]; // array of stamp IDs
   socialLinks?: {
     devpost?: string;
     github?: string;
