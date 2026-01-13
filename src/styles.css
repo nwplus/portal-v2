@@ -38,6 +38,7 @@ code {
   --border-tertiary: #fafafa;
   --border-danger: #f87171;
   --border-accent: #4f263d;
+  --border-stampbook: #c2bcbb;
 
   --line-accent: #a65c97;
 
@@ -85,6 +86,7 @@ code {
   --color-border-active: var(--border-active);
   --color-border-danger: var(--border-danger);
   --color-border-accent: var(--border-accent);
+  --color-border-stampbook: var(--border-stampbook);
 
   --color-line-accent: var(--line-accent);
 
