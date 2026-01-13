@@ -64,7 +64,7 @@ export function Customization({ onStickerSelect, onFontChange }: CustomizationPr
           </button>
 
           {/* Font picker */}
-          <div className="h-[46px] flex items-center gap-2 rounded-lg border-[1px] border-[#e4e4e740] bg-[#262626]">
+          <div className="flex h-[46px] items-center gap-2 rounded-lg border-[#e4e4e740] border-[1px] bg-[#262626]">
             <button
               type="button"
               aria-label="Caveat font"
@@ -96,12 +96,8 @@ export function Customization({ onStickerSelect, onFontChange }: CustomizationPr
             </button>
           </div>
           <div>
-            <Button variant="ghost">
-                Cancel
-            </Button>
-            <Button variant="primary">
-                Save changes
-            </Button>
+            <Button variant="ghost">Cancel</Button>
+            <Button variant="primary">Save changes</Button>
           </div>
         </div>
       </div>
