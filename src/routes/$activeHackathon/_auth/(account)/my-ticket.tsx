@@ -19,6 +19,8 @@ function RouteComponent() {
   // Persisted sticker storage key
   const STORAGE_KEY = "ticketPlacedStickers";
 
+  type FontKey = "caveat" | "ibm" | "space" | "default";
+
   // Initialize from localStorage (safe on SSR)
   const [placedStickers, setPlacedStickers] = useState<PlacedSticker[]>(() => {
     if (typeof window === "undefined") return [];
@@ -31,9 +33,15 @@ function RouteComponent() {
   });
 
   // persist selected font key in localStorage so customizations survive reload
-  const [selectedFontKey, setSelectedFontKey] = useState<"caveat" | "ibm" | "space" | "default">(
-    () => (typeof window !== "undefined" ? (localStorage.getItem("ticketFontKey") as any) ?? "default" : "default"),
-  );
+  const [selectedFontKey, setSelectedFontKey] = useState<FontKey>(() => {
+    if (typeof window === "undefined") return "default";
+    const raw = localStorage.getItem("ticketFontKey");
+    // Validate the stored value to ensure it's one of the allowed keys
+    if (raw === "caveat" || raw === "ibm" || raw === "space" || raw === "default") {
+      return raw;
+    }
+    return "default";
+  });
 
   useEffect(() => {
     localStorage.setItem("ticketFontKey", selectedFontKey);
@@ -83,10 +91,10 @@ function RouteComponent() {
     selectedFontKey === "caveat"
       ? "var(--font-caveat)"
       : selectedFontKey === "ibm"
-      ? "var(--font-ibm-plex-mono)"
-      : selectedFontKey === "space"
-      ? "var(--font-space-grotesk)"
-      : undefined;
+        ? "var(--font-ibm-plex-mono)"
+        : selectedFontKey === "space"
+          ? "var(--font-space-grotesk)"
+          : undefined;
 
   return (
     <GradientBackground gradientPosition="bottomMiddle">

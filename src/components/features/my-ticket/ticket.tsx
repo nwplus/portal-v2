@@ -282,7 +282,10 @@ export function Ticket({
                           const normY = svgHeight ? data.y / svgHeight : 0;
 
                           // Update local positions
-                          setStickerPositions((prev) => ({ ...prev, [sticker.id]: { x: normX, y: normY } }));
+                          setStickerPositions((prev) => ({
+                            ...prev,
+                            [sticker.id]: { x: normX, y: normY },
+                          }));
 
                           // Build deterministic next placedStickers for parent persistence
                           const nextPlaced = placedStickers.map((s) =>

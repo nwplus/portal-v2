@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { Sticker } from "lucide-react";
 import { useState } from "react";
 
@@ -63,51 +64,45 @@ export function Customization({ onStickerSelect, onFontChange }: CustomizationPr
           </button>
 
           {/* Font picker */}
-          <div className="flex items-center gap-2">
+          <div className="h-[46px] flex items-center gap-2 rounded-lg border-[1px] border-[#e4e4e740] bg-[#262626]">
             <button
               type="button"
               aria-label="Caveat font"
               onClick={() => handleFontClick("caveat")}
-              className={`rounded-md px-3 py-1 text-sm transition-shadow ${
-                selectedFont === "caveat" ? "ring-2 ring-offset-1 ring-[#f5f5f5]" : "border border-transparent"
-              }`}
+              className="rounded-md px-3 py-1 text-2xl transition-shadow"
               style={{ fontFamily: "var(--font-caveat)" }}
             >
               Aa
             </button>
-
+            |
             <button
               type="button"
               aria-label="IBM Plex Mono font"
               onClick={() => handleFontClick("ibm")}
-              className={`rounded-md px-3 py-1 text-sm transition-shadow ${
-                selectedFont === "ibm" ? "ring-2 ring-offset-1 ring-[#f5f5f5]" : "border border-transparent"
-              }`}
+              className="rounded-md px-3 py-1 text-2xl transition-shadow"
               style={{ fontFamily: "var(--font-ibm-plex-mono)" }}
             >
               Aa
             </button>
-
+            |
             <button
               type="button"
               aria-label="Space Grotesk font"
               onClick={() => handleFontClick("space")}
-              className={`rounded-md px-3 py-1 text-sm transition-shadow ${
-                selectedFont === "space" ? "ring-2 ring-offset-1 ring-[#f5f5f5]" : "border border-transparent"
-              }`}
+              className="rounded-md px-3 py-1 text-2xl transition-shadow"
               style={{ fontFamily: "var(--font-space-grotesk)" }}
             >
               Aa
             </button>
           </div>
-
-          <button type="button" className="ml-2 rounded-md px-3 py-1 text-sm" aria-label="Save">
-            Save
-          </button>
-
-          <button type="button" className="ml-2 rounded-md px-3 py-1 text-sm" aria-label="Save">
-            Cancel
-          </button>
+          <div>
+            <Button variant="ghost">
+                Cancel
+            </Button>
+            <Button variant="primary">
+                Save changes
+            </Button>
+          </div>
         </div>
       </div>
     </div>
