@@ -127,7 +127,7 @@ function RouteComponent() {
             <Message applicant={hacker} />
           </>
         )}
-        <div className="flex flex-col items-center justify-center gap-10 xl:flex-row">
+        <div className="flex justify-center gap-10">
           <div ref={ticketRef}>
             <Ticket
               applicant={hacker}

@@ -2,6 +2,7 @@ import { useElementDimension } from "@/hooks/use-element-dimension";
 import { useHackathon } from "@/hooks/use-hackathon";
 import type { Applicant } from "@/lib/firebase/types/applicants";
 import { cn, getFullName } from "@/lib/utils";
+import { X } from "lucide-react";
 import { createRef, useEffect, useRef, useState } from "react";
 import Draggable from "react-draggable";
 import QRCode from "react-qr-code";
@@ -76,29 +77,28 @@ export function Ticket({
   const [hoveredStickerId, setHoveredStickerId] = useState<number | null>(null);
 
   // refs for react-draggable to avoid findDOMNode (React 19 removed findDOMNode)
-  // allow the RefObject current to be null to match React's RefObject<T> definition
   const stickerNodeRefs = useRef<Record<number, React.RefObject<HTMLDivElement | null>>>({});
 
-  // initialize missing sticker positions (normalized coords) when placedStickers changes
+  // Sync sticker positions with placedStickers prop (handles cancel/restore)
   useEffect(() => {
     setStickerPositions((current) => {
-      const next = { ...current };
+      const next: Record<number, { x: number; y: number }> = {};
       placedStickers.forEach((s, idx) => {
-        if (next[s.id] === undefined) {
-          // use provided normalized coords if present, else default positions staggered near the center-right
-          const defaultX = s.x ?? 0.65 - (idx % 3) * 0.04;
-          const defaultY = s.y ?? 0.2 + (idx % 5) * 0.06;
+        // If sticker has x/y from props, use those; otherwise use current or default
+        if (s.x !== undefined && s.y !== undefined) {
+          next[s.id] = { x: s.x, y: s.y };
+        } else if (current[s.id] !== undefined) {
+          next[s.id] = current[s.id];
+        } else {
+          // default positions staggered near the center-right
+          const defaultX = 0.65 - (idx % 3) * 0.04;
+          const defaultY = 0.2 + (idx % 5) * 0.06;
           next[s.id] = {
             x: Math.min(Math.max(defaultX, 0), 1),
             y: Math.min(Math.max(defaultY, 0), 1),
           };
         }
       });
-      // Remove any positions for stickers that no longer exist
-      for (const key of Object.keys(next)) {
-        const idNum = Number(key);
-        if (!placedStickers.find((ps) => ps.id === idNum)) delete next[idNum];
-      }
 
       // Build the placedStickers array that would result if we persisted `next`
       const nextPlaced = placedStickers.map((s) => ({
@@ -128,6 +128,9 @@ export function Ticket({
       return next;
     });
   }, [placedStickers, onPlacedStickersChange]);
+
+  // exclusion boundary so stickers don't overlap with QR code
+  const qrZoneStartX = 0.7;
 
   // helper to convert normalized -> pixels
   const toPixel = (pos: { x: number; y: number }) => ({
@@ -220,8 +223,11 @@ export function Ticket({
           </svg>
 
           {/* Content overlay */}
-          <div className={cn("absolute inset-0 flex", isMobile ? "flex-col" : "flex-row")}>
-            <div className={cn("flex h-full items-center", isMobile && "items-end")}>
+          <div className={cn("absolute inset-0 flex", isMobile ? "flex-col-reverse" : "flex-row")}>
+            <div
+              className={cn("flex h-full items-center", isMobile && "items-end")}
+              style={{ zIndex: 20, pointerEvents: "none", height: isMobile ? `${svgHeight - (foldY ?? 0)}px` : "100%" }}
+            >
               <img
                 className={cn("h-full", isMobile ? "hidden" : "block")}
                 draggable={false}
@@ -248,121 +254,142 @@ export function Ticket({
                 </div>
                 <div>{applicant?.basicInfo?.email ?? "No email"}</div>
               </div>
+            </div>
 
-              {/* Sticker overlay */}
-              {!isMobile && (
-                <div
-                  aria-hidden
-                  className="absolute inset-0"
-                  style={{ zIndex: 60, pointerEvents: isCustomizing ? "auto" : "none" }}
-                >
-                  {placedStickers.map((sticker) => {
-                    const pos = stickerPositions[sticker.id];
-                    const pixel = pos
-                      ? toPixel(pos)
-                      : { x: Math.round(svgWidth * 0.6), y: Math.round(svgHeight * 0.2) };
-                    const stickerSize = Math.round(Math.max(40, Math.min(80, svgWidth * 0.07)));
+            {/* Sticker overlay - rendered below text/QR with zIndex: 10 */}
+            {!isMobile && (
+              <div
+                aria-hidden
+                className="absolute inset-0"
+                style={{ zIndex: 10, pointerEvents: isCustomizing ? "auto" : "none" }}
+              >
+                {placedStickers.map((sticker) => {
+                  const pos = stickerPositions[sticker.id];
+                  const pixel = pos
+                    ? toPixel(pos)
+                    : { x: Math.round(svgWidth * 0.6), y: Math.round(svgHeight * 0.2) };
+                  const stickerSize = Math.round(Math.max(40, Math.min(80, svgWidth * 0.07)));
 
-                    if (!stickerNodeRefs.current[sticker.id]) {
-                      stickerNodeRefs.current[sticker.id] = createRef<HTMLDivElement | null>();
+                  if (!stickerNodeRefs.current[sticker.id]) {
+                    stickerNodeRefs.current[sticker.id] = createRef<HTMLDivElement | null>();
+                  }
+                  const nodeRef = stickerNodeRefs.current[sticker.id];
+
+                  // Calculate notch exclusion zone
+                  const foldXRatio = foldX / width;
+                  const scaledFoldX = foldXRatio * svgWidth;
+                  const notchLeft = scaledFoldX - notchRadius - stickerSize;
+                  const notchRight = scaledFoldX + notchRadius;
+
+                  // Helper to clamp position away from notches
+                  const clampPosition = (x: number, y: number) => {
+                    let clampedX = x;
+                    const isNearNotchX = x + stickerSize > notchLeft && x < notchRight;
+                    if (isNearNotchX) {
+                      const isNearTopNotch = y < notchRadius;
+                      const isNearBottomNotch = y + stickerSize > svgHeight - notchRadius;
+                      if (isNearTopNotch || isNearBottomNotch) {
+                        // Push sticker away from notch area
+                        if (x + stickerSize / 2 < scaledFoldX) {
+                          clampedX = notchLeft;
+                        } else {
+                          clampedX = notchRight;
+                        }
+                      }
                     }
-                    const nodeRef = stickerNodeRefs.current[sticker.id];
+                    return { x: clampedX, y };
+                  };
 
-                    return (
-                      <Draggable
-                        key={sticker.id}
-                        nodeRef={nodeRef}
-                        bounds="parent"
-                        position={{ x: pixel.x, y: pixel.y }}
-                        disabled={!isCustomizing}
-                        onStop={(_, data) => {
-                          const normX = svgWidth ? data.x / svgWidth : 0;
-                          const normY = svgHeight ? data.y / svgHeight : 0;
+                  return (
+                    <Draggable
+                      key={sticker.id}
+                      nodeRef={nodeRef}
+                      bounds={{
+                        left: 0,
+                        top: 0,
+                        right: Math.round(svgWidth * qrZoneStartX) - stickerSize,
+                        bottom: svgHeight - stickerSize,
+                      }}
+                      position={{ x: pixel.x, y: pixel.y }}
+                      disabled={!isCustomizing}
+                      onDrag={(_, data) => {
+                        const normX = svgWidth ? data.x / svgWidth : 0;
+                        const normY = svgHeight ? data.y / svgHeight : 0;
+                        setStickerPositions((prev) => ({
+                          ...prev,
+                          [sticker.id]: { x: normX, y: normY },
+                        }));
+                      }}
+                      onStop={(_, data) => {
+                        const clamped = clampPosition(data.x, data.y);
+                        const normX = svgWidth ? clamped.x / svgWidth : 0;
+                        const normY = svgHeight ? clamped.y / svgHeight : 0;
 
-                          setStickerPositions((prev) => ({
-                            ...prev,
-                            [sticker.id]: { x: normX, y: normY },
-                          }));
+                        setStickerPositions((prev) => ({
+                          ...prev,
+                          [sticker.id]: { x: normX, y: normY },
+                        }));
 
-                          const nextPlaced = placedStickers.map((s) =>
-                            s.id === sticker.id ? { ...s, x: normX, y: normY } : s,
-                          );
-                          onPlacedStickersChange?.(nextPlaced);
+                        const nextPlaced = placedStickers.map((s) =>
+                          s.id === sticker.id ? { ...s, x: normX, y: normY } : s,
+                        );
+                        onPlacedStickersChange?.(nextPlaced);
+                      }}
+                    >
+                      <div
+                        ref={nodeRef}
+                        onMouseEnter={() => setHoveredStickerId(sticker.id)}
+                        onMouseLeave={() => setHoveredStickerId(null)}
+                        style={{
+                          position: "absolute",
+                          left: 0,
+                          top: 0,
+                          width: stickerSize,
+                          height: stickerSize,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          touchAction: "none",
+                          cursor: isCustomizing ? "grab" : "default",
                         }}
                       >
-                        <div
-                          ref={nodeRef}
-                          onMouseEnter={() => setHoveredStickerId(sticker.id)}
-                          onMouseLeave={() => setHoveredStickerId(null)}
+                        <img
+                          src={sticker.src}
+                          alt=""
+                          draggable={false}
                           style={{
-                            position: "absolute",
-                            left: 0,
-                            top: 0,
-                            width: stickerSize,
-                            height: stickerSize,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            touchAction: "none",
-                            cursor: isCustomizing ? "grab" : "default",
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "contain",
+                            pointerEvents: "auto",
+                            userSelect: "none",
                           }}
-                        >
-                          <img
-                            src={sticker.src}
-                            alt=""
-                            draggable={false}
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              objectFit: "contain",
-                              pointerEvents: "auto",
-                              userSelect: "none",
+                        />
+                        {isCustomizing && hoveredStickerId === sticker.id && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteSticker(sticker.id);
                             }}
-                          />
-                          {isCustomizing && hoveredStickerId === sticker.id && (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteSticker(sticker.id);
-                              }}
-                              style={{
-                                position: "absolute",
-                                top: -8,
-                                right: -8,
-                                width: 20,
-                                height: 20,
-                                borderRadius: "50%",
-                                border: "none",
-                                background: "#ef4444",
-                                color: "white",
-                                fontSize: 14,
-                                fontWeight: "bold",
-                                cursor: "pointer",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                padding: 0,
-                                lineHeight: 1,
-                                pointerEvents: "auto",
-                              }}
-                              aria-label="Delete sticker"
-                            >
-                              ×
-                            </button>
-                          )}
-                        </div>
-                      </Draggable>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                            className="-top-3 -right-3 absolute flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-red-500 text-white transition-transform hover:scale-110"
+                            aria-label="Delete sticker"
+                          >
+                            <X size={16} />
+                          </button>
+                        )}
+                      </div>
+                    </Draggable>
+                  );
+                })}
+              </div>
+            )}
             <div
               className={cn(
-                "absolute top-0 right-0 flex aspect-square items-center justify-center ",
-                isMobile ? "h-auto w-full p-10" : "h-full w-auto p-14",
+                "flex aspect-square items-center justify-center",
+                isMobile ? "h-auto w-full p-10" : "absolute top-0 right-0 h-full w-auto p-14",
               )}
+              style={{ zIndex: 20, pointerEvents: "none", height: isMobile ? foldY : undefined }}
             >
               <QRCode
                 size={256}
