@@ -73,6 +73,8 @@ export function Ticket({
     Record<number, { x: number; y: number }>
   >({});
 
+  const [hoveredStickerId, setHoveredStickerId] = useState<number | null>(null);
+
   // refs for react-draggable to avoid findDOMNode (React 19 removed findDOMNode)
   // allow the RefObject current to be null to match React's RefObject<T> definition
   const stickerNodeRefs = useRef<Record<number, React.RefObject<HTMLDivElement | null>>>({});
@@ -132,6 +134,11 @@ export function Ticket({
     x: Math.round((svgWidth || 1) * pos.x),
     y: Math.round((svgHeight || 1) * pos.y),
   });
+
+  const handleDeleteSticker = (stickerId: number) => {
+    const nextPlaced = placedStickers.filter((s) => s.id !== stickerId);
+    onPlacedStickersChange?.(nextPlaced);
+  };
 
   return (
     <div className="flex flex-col items-center">
@@ -296,6 +303,8 @@ export function Ticket({
                       >
                         <div
                           ref={nodeRef}
+                          onMouseEnter={() => setHoveredStickerId(sticker.id)}
+                          onMouseLeave={() => setHoveredStickerId(null)}
                           style={{
                             position: "absolute",
                             left: 0,
@@ -321,6 +330,38 @@ export function Ticket({
                               userSelect: "none",
                             }}
                           />
+                          {isCustomizing && hoveredStickerId === sticker.id && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteSticker(sticker.id);
+                              }}
+                              style={{
+                                position: "absolute",
+                                top: -8,
+                                right: -8,
+                                width: 20,
+                                height: 20,
+                                borderRadius: "50%",
+                                border: "none",
+                                background: "#ef4444",
+                                color: "white",
+                                fontSize: 14,
+                                fontWeight: "bold",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                padding: 0,
+                                lineHeight: 1,
+                                pointerEvents: "auto",
+                              }}
+                              aria-label="Delete sticker"
+                            >
+                              ×
+                            </button>
+                          )}
                         </div>
                       </Draggable>
                     );
