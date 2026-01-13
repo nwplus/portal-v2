@@ -6,7 +6,7 @@ import { GradientBackground } from "@/components/layout/gradient-background";
 import { useHackerStore } from "@/lib/stores/hacker-store";
 import { createFileRoute } from "@tanstack/react-router";
 import { Palette } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/$activeHackathon/_auth/(account)/my-ticket")({
   component: RouteComponent,
@@ -15,7 +15,29 @@ export const Route = createFileRoute("/$activeHackathon/_auth/(account)/my-ticke
 function RouteComponent() {
   const hacker = useHackerStore((state) => state.hacker);
   const [isCustomizing, setIsCustomizing] = useState(false);
-  const [placedStickers, setPlacedStickers] = useState<PlacedSticker[]>([]);
+
+  // Persisted sticker storage key
+  const STORAGE_KEY = "ticketPlacedStickers";
+
+  // Initialize from localStorage (safe on SSR)
+  const [placedStickers, setPlacedStickers] = useState<PlacedSticker[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? (JSON.parse(raw) as PlacedSticker[]) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // persist selected font key in localStorage so customizations survive reload
+  const [selectedFontKey, setSelectedFontKey] = useState<"caveat" | "ibm" | "space" | "default">(
+    () => (typeof window !== "undefined" ? (localStorage.getItem("ticketFontKey") as any) ?? "default" : "default"),
+  );
+
+  useEffect(() => {
+    localStorage.setItem("ticketFontKey", selectedFontKey);
+  }, [selectedFontKey]);
 
   if (!hacker) return null;
 
@@ -28,8 +50,43 @@ function RouteComponent() {
       id: Date.now(),
       src: stickerSrc,
     };
-    setPlacedStickers((prev) => [...prev, newSticker]);
+    setPlacedStickers((prev) => {
+      const next = [...prev, newSticker];
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+        } catch {
+          /* ignore */
+        }
+      }
+      return next;
+    });
   };
+
+  const handleFontChange = (fontKey: "caveat" | "ibm" | "space") => {
+    setSelectedFontKey(fontKey);
+  };
+
+  // Callback passed to Ticket to persist updated sticker positions (normalized x/y)
+  const handlePlacedStickersChange = (next: PlacedSticker[]) => {
+    setPlacedStickers(next);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+    }
+  };
+
+  const selectedFontCss =
+    selectedFontKey === "caveat"
+      ? "var(--font-caveat)"
+      : selectedFontKey === "ibm"
+      ? "var(--font-ibm-plex-mono)"
+      : selectedFontKey === "space"
+      ? "var(--font-space-grotesk)"
+      : undefined;
 
   return (
     <GradientBackground gradientPosition="bottomMiddle">
@@ -47,7 +104,13 @@ function RouteComponent() {
           </>
         )}
         <div className="flex justify-center gap-10">
-          <Ticket applicant={hacker} placedStickers={placedStickers} />
+          <Ticket
+            applicant={hacker}
+            placedStickers={placedStickers}
+            selectedFont={selectedFontCss}
+            onPlacedStickersChange={handlePlacedStickersChange}
+            isCustomizing={isCustomizing}
+          />
           <div className="flex flex-col justify-center gap-5">
             <button
               type="button"
@@ -60,7 +123,9 @@ function RouteComponent() {
             </button>
           </div>
         </div>
-        {isCustomizing && <Customization onStickerSelect={handleStickerSelect} />}
+        {isCustomizing && (
+          <Customization onStickerSelect={handleStickerSelect} onFontChange={handleFontChange} />
+        )}
       </div>
     </GradientBackground>
   );

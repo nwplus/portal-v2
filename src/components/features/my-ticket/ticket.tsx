@@ -30,6 +30,9 @@ interface TicketProps {
   foldX?: number;
   radius?: number;
   notchRadius?: number;
+  selectedFont?: string | undefined;
+  onPlacedStickersChange?: (placedStickers: PlacedSticker[]) => void;
+  isCustomizing?: boolean;
 }
 
 export function Ticket({
@@ -40,6 +43,9 @@ export function Ticket({
   foldX = 600,
   radius = 18,
   notchRadius = 26,
+  selectedFont,
+  onPlacedStickersChange,
+  isCustomizing = false,
 }: TicketProps) {
   const { activeHackathon } = useHackathon();
   const qrData = applicant?._id
@@ -91,9 +97,35 @@ export function Ticket({
         const idNum = Number(key);
         if (!placedStickers.find((ps) => ps.id === idNum)) delete next[idNum];
       }
+
+      // Build the placedStickers array that would result if we persisted `next`
+      const nextPlaced = placedStickers.map((s) => ({
+        ...s,
+        x: next[s.id]?.x,
+        y: next[s.id]?.y,
+      }));
+
+      // Only notify parent if something actually changed (prevents infinite loop)
+      let changed = false;
+      if (nextPlaced.length !== placedStickers.length) {
+        changed = true;
+      } else {
+        for (let i = 0; i < placedStickers.length; i++) {
+          const a = placedStickers[i];
+          const b = nextPlaced[i];
+          if (a.x !== b.x || a.y !== b.y) {
+            changed = true;
+            break;
+          }
+        }
+      }
+      if (changed) {
+        onPlacedStickersChange?.(nextPlaced);
+      }
+
       return next;
     });
-  }, [placedStickers]);
+  }, [placedStickers, onPlacedStickersChange]);
 
   // helper to convert normalized -> pixels
   const toPixel = (pos: { x: number; y: number }) => ({
@@ -181,10 +213,8 @@ export function Ticket({
                   src={`/assets/${activeHackathon}/ticket/ticket-decal.svg`}
                 />
                 <div
-                  className={cn(
-                    "flex flex-col gap-2 font-mono",
-                    isMobile ? "self-end p-10" : "self-center p-0",
-                  )}
+                  className={cn("flex flex-col gap-2")}
+                  style={{ fontFamily: selectedFont ?? "var(--font-mono)" }}
                 >
                   <Badge className="border-[#E4E4E730] bg-[#693F61] uppercase">Hacker</Badge>
                   <div className="flex flex-col">
@@ -217,73 +247,83 @@ export function Ticket({
                 />
               </div>
 
-              {/* Sticker overlay layer (absolute full-size) */}
-              <div
-                aria-hidden
-                className="pointer-events-auto absolute inset-0"
-                style={{ zIndex: 60 }}
-              >
-                {placedStickers.map((sticker) => {
-                  const pos = stickerPositions[sticker.id];
-                  const pixel = pos
-                    ? toPixel(pos)
-                    : { x: Math.round(svgWidth * 0.6), y: Math.round(svgHeight * 0.2) };
-                  const stickerSize = Math.round(Math.max(40, Math.min(80, svgWidth * 0.07))); // responsive size
+              {/* Sticker overlay */}
+              {!isMobile && (
+                // when not customizing, make overlay non-interactive
+                <div
+                  aria-hidden
+                  className="absolute inset-0"
+                  style={{ zIndex: 60, pointerEvents: isCustomizing ? "auto" : "none" }}
+                >
+                  {placedStickers.map((sticker) => {
+                    const pos = stickerPositions[sticker.id];
+                    const pixel = pos
+                      ? toPixel(pos)
+                      : { x: Math.round(svgWidth * 0.6), y: Math.round(svgHeight * 0.2) };
+                    const stickerSize = Math.round(Math.max(40, Math.min(80, svgWidth * 0.07))); // responsive size
 
-                  // ensure a RefObject exists for this sticker (used by react-draggable to avoid findDOMNode)
-                  if (!stickerNodeRefs.current[sticker.id]) {
-                    stickerNodeRefs.current[sticker.id] = createRef<HTMLDivElement | null>();
-                  }
-                  const nodeRef = stickerNodeRefs.current[sticker.id];
+                    // ensure a RefObject exists for this sticker (used by react-draggable to avoid findDOMNode)
+                    if (!stickerNodeRefs.current[sticker.id]) {
+                      stickerNodeRefs.current[sticker.id] = createRef<HTMLDivElement | null>();
+                    }
+                    const nodeRef = stickerNodeRefs.current[sticker.id];
 
-                  return (
-                    <Draggable
-                      key={sticker.id}
-                      nodeRef={nodeRef}
-                      bounds="parent"
-                      defaultPosition={{ x: pixel.x, y: pixel.y }}
-                      onStop={(_, data) => {
-                        // data.x / data.y are final pixel positions relative to parent
-                        const normX = svgWidth ? data.x / svgWidth : 0;
-                        const normY = svgHeight ? data.y / svgHeight : 0;
-                        setStickerPositions((prev) => ({
-                          ...prev,
-                          [sticker.id]: { x: normX, y: normY },
-                        }));
-                      }}
-                    >
-                      <div
-                        ref={nodeRef}
-                        style={{
-                          position: "absolute",
-                          left: 0,
-                          top: 0,
-                          width: stickerSize,
-                          height: stickerSize,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          touchAction: "none",
-                          cursor: "grab",
+                    return (
+                      <Draggable
+                        key={sticker.id}
+                        nodeRef={nodeRef}
+                        bounds="parent"
+                        position={{ x: pixel.x, y: pixel.y }}
+                        // only allow dragging when customization mode is active
+                        disabled={!isCustomizing}
+                        onStop={(_, data) => {
+                          // data.x / data.y are final pixel positions relative to parent
+                          const normX = svgWidth ? data.x / svgWidth : 0;
+                          const normY = svgHeight ? data.y / svgHeight : 0;
+
+                          // Update local positions
+                          setStickerPositions((prev) => ({ ...prev, [sticker.id]: { x: normX, y: normY } }));
+
+                          // Build deterministic next placedStickers for parent persistence
+                          const nextPlaced = placedStickers.map((s) =>
+                            s.id === sticker.id ? { ...s, x: normX, y: normY } : s,
+                          );
+                          onPlacedStickersChange?.(nextPlaced);
                         }}
                       >
-                        <img
-                          src={sticker.src}
-                          alt=""
-                          draggable={false}
+                        <div
+                          ref={nodeRef}
                           style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "contain",
-                            pointerEvents: "auto",
-                            userSelect: "none",
+                            position: "absolute",
+                            left: 0,
+                            top: 0,
+                            width: stickerSize,
+                            height: stickerSize,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            touchAction: "none",
+                            cursor: isCustomizing ? "grab" : "default",
                           }}
-                        />
-                      </div>
-                    </Draggable>
-                  );
-                })}
-              </div>
+                        >
+                          <img
+                            src={sticker.src}
+                            alt=""
+                            draggable={false}
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "contain",
+                              pointerEvents: "auto",
+                              userSelect: "none",
+                            }}
+                          />
+                        </div>
+                      </Draggable>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </foreignObject>
           <defs>
