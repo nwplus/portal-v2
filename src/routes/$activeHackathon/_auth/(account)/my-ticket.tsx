@@ -96,7 +96,6 @@ function RouteComponent() {
     if (!ticketRef.current) return;
 
     const dataUrl = await toPng(ticketRef.current, {
-      skipFonts: true,
       style: {
         borderRadius: "18px",
         overflow: "hidden",
