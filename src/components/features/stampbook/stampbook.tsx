@@ -233,7 +233,7 @@ export function Stampbook({ stamps, displayName }: StampbookProps) {
   return (
     <div className="flex flex-col items-center gap-6 py-8">
       {/* Off-screen share card for image generation */}
-      <div className="pointer-events-none fixed -left-[9999px] -top-[9999px]" aria-hidden="true">
+      <div className="-left-[9999px] -top-[9999px] pointer-events-none fixed" aria-hidden="true">
         <StampbookShareCard ref={shareCardRef} stamps={stampsToDisplay} displayName={displayName} />
       </div>
 
@@ -253,7 +253,7 @@ export function Stampbook({ stamps, displayName }: StampbookProps) {
         type="button"
         onClick={handleDownload}
         className={cn(
-          "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all",
+          "flex items-center gap-2 rounded-full px-4 py-2 font-medium text-sm transition-all",
           "bg-bg-button-secondary text-text-primary",
           "hover:bg-bg-button-secondary/80 active:scale-95",
         )}

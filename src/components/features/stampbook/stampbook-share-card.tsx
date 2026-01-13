@@ -30,7 +30,7 @@ export const StampbookShareCard = forwardRef<HTMLDivElement, StampbookShareCardP
     return (
       <div
         ref={ref}
-        className="bg-radial-gradient-bottom-middle relative flex h-[600px] w-[600px] flex-col overflow-hidden bg-bg-main font-sans"
+        className="relative flex h-[600px] w-[600px] flex-col overflow-hidden bg-bg-main bg-radial-gradient-bottom-middle font-sans"
       >
         <div className="relative z-10 flex flex-1 flex-col p-8">
           <div className="mb-6 flex items-center gap-3">
@@ -42,10 +42,10 @@ export const StampbookShareCard = forwardRef<HTMLDivElement, StampbookShareCardP
           </div>
 
           <div className="mb-6 flex flex-col items-center gap-4">
-            <h1 className="text-center text-4xl font-bold text-text-primary">
+            <h1 className="text-center font-bold text-4xl text-text-primary">
               {displayName}'s Stamps
             </h1>
-            <span className="text-lg text-text-secondary font-mono">
+            <span className="font-mono text-lg text-text-secondary">
               {unlockedStamps.length} of {totalStamps} collected
             </span>
           </div>
@@ -70,7 +70,7 @@ export const StampbookShareCard = forwardRef<HTMLDivElement, StampbookShareCardP
                         crossOrigin="anonymous"
                       />
                     </div>
-                    <span className="max-w-30 text-center text-xs font-medium text-text-primary leading-tight">
+                    <span className="max-w-30 text-center font-medium text-text-primary text-xs leading-tight">
                       {stamp.name}
                     </span>
                   </div>
@@ -85,10 +85,8 @@ export const StampbookShareCard = forwardRef<HTMLDivElement, StampbookShareCardP
             </p>
           )}
 
-          <div className="mt-6 flex items-center justify-center gap-3 border-t border-border-subtle pt-4">
-            <span className="text-sm font-medium text-text-primary">
-              {hackathonName}
-            </span>
+          <div className="mt-6 flex items-center justify-center gap-3 border-border-subtle border-t pt-4">
+            <span className="font-medium text-sm text-text-primary">{hackathonName}</span>
             <span className="text-text-primary">•</span>
             <span className="text-sm text-text-primary">{hackathonDomain}.io</span>
           </div>
