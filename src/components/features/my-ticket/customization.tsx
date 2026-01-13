@@ -9,7 +9,6 @@ interface CustomizationProps {
 
 export function Customization({ onStickerSelect, onFontChange }: CustomizationProps) {
   const [isStickerSelected, setStickerSelected] = useState(false);
-  const [selectedFont, setSelectedFont] = useState<"caveat" | "ibm" | "space" | null>(null);
   const handleStickerClick = () => {
     setStickerSelected(!isStickerSelected);
   };
@@ -27,7 +26,6 @@ export function Customization({ onStickerSelect, onFontChange }: CustomizationPr
   ];
 
   const handleFontClick = (key: "caveat" | "ibm" | "space") => {
-    setSelectedFont(key);
     onFontChange?.(key);
   };
 
