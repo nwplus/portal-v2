@@ -6,7 +6,7 @@ import { GradientBackground } from "@/components/layout/gradient-background";
 import { useHackerStore } from "@/lib/stores/hacker-store";
 import { createFileRoute } from "@tanstack/react-router";
 import { Palette } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export const Route = createFileRoute("/$activeHackathon/_auth/(account)/my-ticket")({
   component: RouteComponent,
@@ -43,13 +43,17 @@ function RouteComponent() {
     return "default";
   });
 
-  useEffect(() => {
-    localStorage.setItem("ticketFontKey", selectedFontKey);
-  }, [selectedFontKey]);
+  // Snapshot state for cancel functionality
+  const [snapshotStickers, setSnapshotStickers] = useState<PlacedSticker[]>([]);
+  const [snapshotFontKey, setSnapshotFontKey] = useState<FontKey>("default");
 
   if (!hacker) return null;
 
   const handleCustomizationClick = () => {
+    if (!isCustomizing) {
+      setSnapshotStickers(placedStickers);
+      setSnapshotFontKey(selectedFontKey);
+    }
     setIsCustomizing(!isCustomizing);
   };
 
@@ -58,33 +62,34 @@ function RouteComponent() {
       id: Date.now(),
       src: stickerSrc,
     };
-    setPlacedStickers((prev) => {
-      const next = [...prev, newSticker];
-      if (typeof window !== "undefined") {
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-        } catch {
-          /* ignore */
-        }
-      }
-      return next;
-    });
+    setPlacedStickers((prev) => [...prev, newSticker]);
   };
 
   const handleFontChange = (fontKey: "caveat" | "ibm" | "space") => {
     setSelectedFontKey(fontKey);
   };
 
-  // Callback passed to Ticket to persist updated sticker positions (normalized x/y)
+  // Callback passed to Ticket to update sticker positions (no immediate localStorage)
   const handlePlacedStickersChange = (next: PlacedSticker[]) => {
     setPlacedStickers(next);
+  };
+
+  const handleCancel = () => {
+    setPlacedStickers(snapshotStickers);
+    setSelectedFontKey(snapshotFontKey);
+    setIsCustomizing(false);
+  };
+
+  const handleSave = () => {
     if (typeof window !== "undefined") {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(placedStickers));
+        localStorage.setItem("ticketFontKey", selectedFontKey);
       } catch {
         /* ignore */
       }
     }
+    setIsCustomizing(false);
   };
 
   const selectedFontCss =
@@ -102,7 +107,8 @@ function RouteComponent() {
         {isCustomizing ? (
           <div className="mx-auto flex flex-col items-center gap-2 pt-4">
             <div className="px-5 text-center text-4xl leading-12 md:px-0">
-              Customize your ticket ✨
+              Customize <span className="font-[family-name:var(--font-playwrite)]">your</span>{" "}
+              ticket ✨
             </div>
           </div>
         ) : (
@@ -119,20 +125,25 @@ function RouteComponent() {
             onPlacedStickersChange={handlePlacedStickersChange}
             isCustomizing={isCustomizing}
           />
-          <div className="flex flex-col justify-center gap-5">
+          <div className="hidden flex-col justify-center gap-5 md:flex">
             <button
               type="button"
               onClick={handleCustomizationClick}
               className={`h-[46px] w-[46px] cursor-pointer rounded-lg border-[1px] px-3 py-2 transition-colors ${
-                isCustomizing ? "border-[#f5f5f5]" : "border-[#e4e4e740]"
-              } bg-[#262626]`}
+                isCustomizing ? "border-border-active" : "border-border-subtle"
+              } bg-bg-dropdown-selected`}
             >
               <Palette size={22} />
             </button>
           </div>
         </div>
         {isCustomizing && (
-          <Customization onStickerSelect={handleStickerSelect} onFontChange={handleFontChange} />
+          <Customization
+            onStickerSelect={handleStickerSelect}
+            onFontChange={handleFontChange}
+            onCancel={handleCancel}
+            onSave={handleSave}
+          />
         )}
       </div>
     </GradientBackground>
