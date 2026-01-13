@@ -95,7 +95,12 @@ function RouteComponent() {
   const downloadTicket = async () => {
     if (!ticketRef.current) return;
 
-    const dataUrl = await toPng(ticketRef.current);
+    const dataUrl = await toPng(ticketRef.current, {
+      style: {
+        borderRadius: "18px",
+        overflow: "hidden",
+      },
+    });
     const link = document.createElement("a");
     link.download = `${hacker.basicInfo.preferredName || hacker.basicInfo.legalFirstName}${hacker.basicInfo.legalLastName}-QRCode.png`;
     link.href = dataUrl;
@@ -156,6 +161,13 @@ function RouteComponent() {
             </button>
           </div>
         </div>
+        <button
+          type="button"
+          onClick={downloadTicket}
+          className="mx-auto h-[46px] w-[46px] cursor-pointer rounded-lg border border-border-subtle bg-bg-dropdown-selected px-3 py-2 md:hidden"
+        >
+          <Download size={22} />
+        </button>
         {isCustomizing && (
           <Customization
             onStickerSelect={handleStickerSelect}

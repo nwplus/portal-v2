@@ -226,7 +226,11 @@ export function Ticket({
           <div className={cn("absolute inset-0 flex", isMobile ? "flex-col-reverse" : "flex-row")}>
             <div
               className={cn("flex h-full items-center", isMobile && "items-end")}
-              style={{ zIndex: 20, pointerEvents: "none", height: isMobile ? `${svgHeight - (foldY ?? 0)}px` : "100%" }}
+              style={{
+                zIndex: 20,
+                pointerEvents: "none",
+                height: isMobile ? `${svgHeight - (foldY ?? 0)}px` : "100%",
+              }}
             >
               <img
                 className={cn("h-full", isMobile ? "hidden" : "block")}
