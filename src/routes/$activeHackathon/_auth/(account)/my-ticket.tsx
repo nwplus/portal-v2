@@ -5,8 +5,9 @@ import { type PlacedSticker, Ticket } from "@/components/features/my-ticket/tick
 import { GradientBackground } from "@/components/layout/gradient-background";
 import { useHackerStore } from "@/lib/stores/hacker-store";
 import { createFileRoute } from "@tanstack/react-router";
-import { Palette } from "lucide-react";
-import { useState } from "react";
+import { toPng } from "html-to-image";
+import { Download, Palette } from "lucide-react";
+import { useRef, useState } from "react";
 
 export const Route = createFileRoute("/$activeHackathon/_auth/(account)/my-ticket")({
   component: RouteComponent,
@@ -14,6 +15,7 @@ export const Route = createFileRoute("/$activeHackathon/_auth/(account)/my-ticke
 
 function RouteComponent() {
   const hacker = useHackerStore((state) => state.hacker);
+  const ticketRef = useRef<HTMLDivElement>(null);
   const [isCustomizing, setIsCustomizing] = useState(false);
 
   // Persisted sticker storage key
@@ -36,7 +38,6 @@ function RouteComponent() {
   const [selectedFontKey, setSelectedFontKey] = useState<FontKey>(() => {
     if (typeof window === "undefined") return "default";
     const raw = localStorage.getItem("ticketFontKey");
-    // Validate the stored value to ensure it's one of the allowed keys
     if (raw === "caveat" || raw === "ibm" || raw === "space" || raw === "default") {
       return raw;
     }
@@ -69,7 +70,6 @@ function RouteComponent() {
     setSelectedFontKey(fontKey);
   };
 
-  // Callback passed to Ticket to update sticker positions (no immediate localStorage)
   const handlePlacedStickersChange = (next: PlacedSticker[]) => {
     setPlacedStickers(next);
   };
@@ -90,6 +90,16 @@ function RouteComponent() {
       }
     }
     setIsCustomizing(false);
+  };
+
+  const downloadTicket = async () => {
+    if (!ticketRef.current) return;
+
+    const dataUrl = await toPng(ticketRef.current);
+    const link = document.createElement("a");
+    link.download = `${hacker.basicInfo.preferredName || hacker.basicInfo.legalFirstName}${hacker.basicInfo.legalLastName}-QRCode.png`;
+    link.href = dataUrl;
+    link.click();
   };
 
   const selectedFontCss =
@@ -117,14 +127,16 @@ function RouteComponent() {
             <Message applicant={hacker} />
           </>
         )}
-        <div className="flex justify-center gap-10">
-          <Ticket
-            applicant={hacker}
-            placedStickers={placedStickers}
-            selectedFont={selectedFontCss}
-            onPlacedStickersChange={handlePlacedStickersChange}
-            isCustomizing={isCustomizing}
-          />
+        <div className="flex flex-col items-center justify-center gap-10 xl:flex-row">
+          <div ref={ticketRef}>
+            <Ticket
+              applicant={hacker}
+              placedStickers={placedStickers}
+              selectedFont={selectedFontCss}
+              onPlacedStickersChange={handlePlacedStickersChange}
+              isCustomizing={isCustomizing}
+            />
+          </div>
           <div className="hidden flex-col justify-center gap-5 md:flex">
             <button
               type="button"
@@ -134,6 +146,13 @@ function RouteComponent() {
               } bg-bg-dropdown-selected`}
             >
               <Palette size={22} />
+            </button>
+            <button
+              type="button"
+              onClick={downloadTicket}
+              className="h-[46px] w-[46px] cursor-pointer rounded-lg border border-border-subtle bg-bg-dropdown-selected px-3 py-2"
+            >
+              <Download size={22} />
             </button>
           </div>
         </div>
