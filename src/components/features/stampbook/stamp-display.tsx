@@ -55,36 +55,27 @@ export function StampDisplay({ stamp, showDetails = true, size = "md" }: StampDi
             styles.details,
           )}
         >
-          <div
-            className={cn(
-              "flex items-center gap-2 text-center font-semibold leading-tight",
-              styles.name,
-            )}
-          >
+          <span className={cn("text-center font-semibold leading-tight", styles.name)}>
             {stamp.name}
             {stamp.isQRUnlockable && (
-              <span className={cn("text-center leading-tight", styles.description)}>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <QrCodeIcon className="inline-block h-4 w-4" />
-                  </TooltipTrigger>
-                  <TooltipContent>This stamp can be unlocked by scanning a QR code</TooltipContent>
-                </Tooltip>
-              </span>
+              <Tooltip>
+                <TooltipTrigger className="ml-2 inline-block align-middle">
+                  <QrCodeIcon className="h-4 w-4 text-text-secondary" />
+                </TooltipTrigger>
+                <TooltipContent>This stamp can be unlocked by scanning a QR code</TooltipContent>
+              </Tooltip>
             )}
             {stamp.isEventUnlockable && (
-              <span className={cn("text-center leading-tight", styles.description)}>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <PartyPopperIcon className="inline-block h-4 w-4" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    Get an organizer to scan your QR after completing this activity!
-                  </TooltipContent>
-                </Tooltip>
-              </span>
+              <Tooltip>
+                <TooltipTrigger className="ml-2 inline-block align-middle">
+                  <PartyPopperIcon className="h-4 w-4 text-text-secondary" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  Get an organizer to scan your QR after completing this activity!
+                </TooltipContent>
+              </Tooltip>
             )}
-          </div>
+          </span>
 
           <span className={cn("text-center leading-tight", styles.description)}>
             {stamp.description}
