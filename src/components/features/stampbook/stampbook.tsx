@@ -2,7 +2,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import type { StampWithUnlockState } from "@/lib/firebase/types/stamps";
 import { cn } from "@/lib/utils";
 import { toPng } from "html-to-image";
-import { ChevronLeft, ChevronRight, Download, HelpCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, HelpCircle, Share2 } from "lucide-react";
 import { forwardRef, useCallback, useRef, useState } from "react";
 import HTMLFlipBook from "react-pageflip";
 import { StampbookPage } from "./stampbook-page";
@@ -39,22 +39,37 @@ export function Stampbook({ stamps, displayName }: StampbookProps) {
   const shareCardRef = useRef<HTMLDivElement>(null);
   const [currentPage, setCurrentPage] = useState(0);
 
-  const handleDownload = async () => {
+  const handleShare = async () => {
     if (!shareCardRef.current) return;
 
     try {
       const dataUrl = await toPng(shareCardRef.current, {
         cacheBust: true,
         pixelRatio: 2,
-        // skipFonts: true, // skip font processing to avoid "font is undefined" error
       });
 
-      const link = document.createElement("a");
-      link.download = `${displayName.replace(/\s+/g, "-").toLowerCase()}-stampbook.png`;
-      link.href = dataUrl;
-      link.click();
+      const fileName = `${displayName.replace(/\s+/g, "-").toLowerCase()}-stampbook.png`;
+
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+      const file = new File([blob], fileName, { type: "image/png" });
+
+      // Use native share sheet on mobile if available, else fallback to download on desktop
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: `${displayName}'s Stampbook`,
+        });
+      } else {
+        const link = document.createElement("a");
+        link.download = fileName;
+        link.href = dataUrl;
+        link.click();
+      }
     } catch (err) {
-      console.error("Failed to generate stampbook image:", err);
+      // exclude user cancelling share as an error
+      if (err instanceof Error && err.name === "AbortError") return;
+      console.error("Failed to share stampbook image:", err);
     }
   };
 
@@ -251,15 +266,15 @@ export function Stampbook({ stamps, displayName }: StampbookProps) {
       </div>
       <button
         type="button"
-        onClick={handleDownload}
+        onClick={handleShare}
         className={cn(
           "flex items-center gap-2 rounded-full px-4 py-2 font-medium text-sm transition-all",
           "bg-bg-button-secondary text-text-primary",
           "hover:bg-bg-button-secondary/80 active:scale-95",
         )}
       >
-        <Download size={16} />
-        Share Stampbook
+        {isMobile ? <Share2 size={16} /> : <Download size={16} />}
+        {isMobile ? "Share Stampbook" : "Download Stampbook"}
       </button>
       {isMobile ? (
         <div className="flex flex-col items-center gap-6 py-4">

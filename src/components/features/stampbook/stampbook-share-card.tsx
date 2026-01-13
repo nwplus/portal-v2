@@ -50,7 +50,7 @@ export const StampbookShareCard = forwardRef<HTMLDivElement, StampbookShareCardP
             </span>
           </div>
 
-          <div className="flex flex-1 items-center justify-center rounded-2xl border border-border-subtle p-6 backdrop-blur-md [background:var(--background-translucent-card)]">
+          <div className="flex flex-1 items-center justify-center rounded-2xl border border-border-subtle bg-bg-translucent-card p-6 backdrop-blur-md">
             {displayStamps.length === 0 ? (
               <p className="text-text-secondary">No stamps unlocked yet!</p>
             ) : (
