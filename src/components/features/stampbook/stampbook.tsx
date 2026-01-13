@@ -1,10 +1,12 @@
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { StampWithUnlockState } from "@/lib/firebase/types/stamps";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, HelpCircle } from "lucide-react";
+import { toPng } from "html-to-image";
+import { ChevronLeft, ChevronRight, Download, HelpCircle } from "lucide-react";
 import { forwardRef, useCallback, useRef, useState } from "react";
 import HTMLFlipBook from "react-pageflip";
 import { StampbookPage } from "./stampbook-page";
+import { StampbookShareCard } from "./stampbook-share-card";
 import { organizeIntoSpreads } from "./utils";
 
 const DESKTOP_PAGE_WIDTH = 480;
@@ -34,7 +36,27 @@ export function Stampbook({ stamps, displayName }: StampbookProps) {
 
   // biome-ignore lint/suspicious/noExplicitAny: react-pageflip doesn't export proper types
   const bookRef = useRef<any>(null);
+  const shareCardRef = useRef<HTMLDivElement>(null);
   const [currentPage, setCurrentPage] = useState(0);
+
+  const handleDownload = async () => {
+    if (!shareCardRef.current) return;
+
+    try {
+      const dataUrl = await toPng(shareCardRef.current, {
+        cacheBust: true,
+        pixelRatio: 2,
+        // skipFonts: true, // skip font processing to avoid "font is undefined" error
+      });
+
+      const link = document.createElement("a");
+      link.download = `${displayName.replace(/\s+/g, "-").toLowerCase()}-stampbook.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error("Failed to generate stampbook image:", err);
+    }
+  };
 
   const allPages = spreads.flatMap((spread, spreadIndex) => [
     {
@@ -210,6 +232,11 @@ export function Stampbook({ stamps, displayName }: StampbookProps) {
 
   return (
     <div className="flex flex-col items-center gap-6 py-8">
+      {/* Off-screen share card for image generation */}
+      <div className="pointer-events-none fixed -left-[9999px] -top-[9999px]" aria-hidden="true">
+        <StampbookShareCard ref={shareCardRef} stamps={stampsToDisplay} displayName={displayName} />
+      </div>
+
       <div className="max-w-sm px-6 sm:px-10 md:max-w-4xl md:text-center">
         <p className="text-text-secondary text-xs md:text-sm">
           <HelpCircle className="mr-1 hidden h-4 w-4 md:inline-block" />
@@ -222,6 +249,18 @@ export function Stampbook({ stamps, displayName }: StampbookProps) {
           </span>
         </p>
       </div>
+      <button
+        type="button"
+        onClick={handleDownload}
+        className={cn(
+          "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all",
+          "bg-bg-button-secondary text-text-primary",
+          "hover:bg-bg-button-secondary/80 active:scale-95",
+        )}
+      >
+        <Download size={16} />
+        Share Stampbook
+      </button>
       {isMobile ? (
         <div className="flex flex-col items-center gap-6 py-4">
           {FlipBook}
