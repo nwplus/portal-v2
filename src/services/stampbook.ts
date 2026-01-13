@@ -17,12 +17,9 @@ export async function loadStampbook(
     fetchApplicant(dbCollectionName, uid),
   ]);
 
-  console.log("allStamps", allStamps);
-  console.log("unlockedStamps", unlockedStamps);
-
   return allStamps.map((stamp: Stamp) => {
-    // previosuly unlocked through QR or check-in app
-    if (unlockedStamps.has(stamp._id)) {
+    // previously unlocked through QR or check-in app
+    if (unlockedStamps.includes(stamp._id)) {
       return { ...stamp, isUnlocked: true };
     }
 
@@ -86,8 +83,6 @@ export async function fetchStamps(hackathonId?: string): Promise<Stamp[]> {
   const ref = collection(db, "Stamps");
   const querySnapshot = await getDocs(ref);
 
-  console.log("current hackathon", hackathonId);
-
   return querySnapshot.docs
     .map(
       (doc) =>
@@ -104,14 +99,14 @@ export async function fetchStamps(hackathonId?: string): Promise<Stamp[]> {
 /**
  * Utility to fetch user's already unlocked stamp (IDs)
  */
-export async function fetchUnlockedStampIds(uid: string): Promise<Set<string>> {
+export async function fetchUnlockedStampIds(uid: string): Promise<string[]> {
   const ref = doc(db, "Socials", uid);
   const snap = await getDoc(ref);
 
-  if (!snap.exists()) return new Set();
+  if (!snap.exists()) return [];
 
   const data = snap.data();
-  return new Set(data.unlockedStamps ?? []);
+  return data.unlockedStamps ?? [];
 }
 
 /**
@@ -120,9 +115,11 @@ export async function fetchUnlockedStampIds(uid: string): Promise<Set<string>> {
 export function evaluateUnlockCriteria(criterion: StampCriteria[], hacker: Hacker): boolean {
   if (!criterion || criterion.length === 0) return false;
 
-  let result = true;
+  const first = criterion[0];
+  let result = checkCondition(getNestedValue(hacker, first.filterColumn), first.filterCondition, first.filterValue);
 
-  for (const criteria of criterion) {
+  for (let i = 1; i < criterion.length; i++) {
+    const criteria = criterion[i];
     const fieldValue = getNestedValue(hacker, criteria.filterColumn);
     const conditionMet = checkCondition(fieldValue, criteria.filterCondition, criteria.filterValue);
 

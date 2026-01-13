@@ -25,13 +25,17 @@ export function StampbookPage({
   width = DEFAULT_WIDTH,
   height = DEFAULT_HEIGHT,
 }: StampbookPageProps) {
-  const titleIndex = stamps.findIndex((stamp) => stamp.isTitle) ?? 0;
+  const titleIndex = Math.max(0, stamps.findIndex((stamp) => stamp.isTitle));
   const isMobile = width < MOBILE_THRESHOLD_WIDTH;
 
   return (
     // TODO: only used in stampbook for now; add as stylesheet token if re-used
     <div
-      className={cn("relative flex flex-col border-[0.5px] border-border-stampbook bg-[#F3EBEA]", isMobile ? "p-4" : "p-6", className)}
+      className={cn(
+        "relative flex flex-col border-[0.5px] border-border-stampbook bg-[#F3EBEA]",
+        isMobile ? "p-4" : "p-6",
+        className,
+      )}
       style={{ width, height }}
     >
       <div className="relative flex flex-1 flex-col items-center justify-center">
