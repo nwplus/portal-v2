@@ -54,8 +54,8 @@ export function Stampbook({ stamps, displayName }: StampbookProps) {
       const blob = await response.blob();
       const file = new File([blob], fileName, { type: "image/png" });
 
-      // Use native share sheet on mobile if available, else fallback to download on desktop
-      if (navigator.canShare?.({ files: [file] })) {
+      // Use native share sheet only on mobile if available, else download
+      if (isMobile && navigator.canShare?.({ files: [file] })) {
         await navigator.share({
           files: [file],
           title: `${displayName}'s Stampbook`,

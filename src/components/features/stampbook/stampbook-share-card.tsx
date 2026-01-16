@@ -34,15 +34,15 @@ export const StampbookShareCard = forwardRef<HTMLDivElement, StampbookShareCardP
       >
         <div className="relative z-10 flex flex-1 flex-col p-8">
           <div className="mb-6 flex items-center gap-3">
-            <div className="h-0.5 flex-1 rounded-full bg-line-accent opacity-60" />
+            <div className="h-0.5 flex-1 rounded-full bg-border-subtle opacity-60" />
             <div className="flex h-6 w-8 shrink-0 items-center justify-center">
               <HackathonIcon />
             </div>
-            <div className="h-0.5 flex-1 rounded-full bg-line-accent opacity-60" />
+            <div className="h-0.5 flex-1 rounded-full bg-border-subtle opacity-60" />
           </div>
 
           <div className="mb-6 flex flex-col items-center gap-4">
-            <h1 className="text-center font-bold text-4xl text-text-primary">
+            <h1 className="text-center font-semibold text-4xl text-text-primary">
               {displayName}'s Stamps
             </h1>
             <span className="font-mono text-lg text-text-secondary">

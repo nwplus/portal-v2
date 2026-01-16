@@ -32,7 +32,9 @@ const sizeStyles = {
 } as const;
 
 export function StampDisplay({ stamp, showDetails = true, size = "md" }: StampDisplayProps) {
-  const imageSrc = stamp.isUnlocked ? stamp.imgURL : "/assets/stampbook/stamp-locked.svg";
+  const imageSrc = stamp.isUnlocked
+    ? stamp.imgURL
+    : (stamp.lockedImgURL ?? "/assets/stampbook/stamp-locked.svg");
   const styles = sizeStyles[size];
 
   return (
