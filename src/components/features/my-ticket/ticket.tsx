@@ -390,10 +390,15 @@ export function Ticket({
             )}
             <div
               className={cn(
-                "flex aspect-square items-center justify-center",
-                isMobile ? "h-auto w-full p-10" : "absolute top-0 right-0 h-full w-auto p-14",
+                "flex items-center justify-center",
+                isMobile ? "aspect-square h-auto w-full p-10" : "absolute top-0 right-0 p-14",
               )}
-              style={{ zIndex: 20, pointerEvents: "none", height: isMobile ? foldY : undefined }}
+              style={{
+                zIndex: 20,
+                pointerEvents: "none",
+                height: isMobile ? foldY : svgHeight,
+                width: isMobile ? undefined : svgHeight,
+              }}
             >
               <QRCode
                 size={256}
