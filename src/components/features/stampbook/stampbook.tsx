@@ -9,21 +9,20 @@ import { StampbookPage } from "./stampbook-page";
 import { StampbookShareCard } from "./stampbook-share-card";
 import { organizeIntoSpreads } from "./utils";
 
-/**
- * Waits for all images within an element to finish loading. Necessary for share card to be generated correctly on mobile
- * */
-const waitForImages = async (element: HTMLElement): Promise<void> => {
-  const images = element.querySelectorAll("img");
-  await Promise.all(
-    Array.from(images).map((img) =>
-      img.complete
-        ? Promise.resolve()
-        : new Promise<void>((resolve) => {
-            img.onload = () => resolve();
-            img.onerror = () => resolve();
-          }),
+// Preloads images by URL. Needed for share card to be generated correctly on mobile
+const preloadImages = (urls: string[]): Promise<void> => {
+  return Promise.all(
+    urls.map(
+      (url) =>
+        new Promise<void>((resolve) => {
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          img.onload = () => resolve();
+          img.onerror = () => resolve();
+          img.src = url;
+        }),
     ),
-  );
+  ).then(() => {});
 };
 
 const DESKTOP_PAGE_WIDTH = 480;
@@ -60,7 +59,11 @@ export function Stampbook({ stamps, displayName }: StampbookProps) {
     if (!shareCardRef.current) return;
 
     try {
-      await waitForImages(shareCardRef.current);
+      // preload stamp images for share card: some mobile browsers skip loading off-screen images
+      const imageUrls = stampsToDisplay
+        .filter((s) => s.isUnlocked && s.imgURL)
+        .map((s) => s.imgURL);
+      await preloadImages(imageUrls);
 
       const dataUrl = await toPng(shareCardRef.current, {
         cacheBust: true,
