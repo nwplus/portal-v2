@@ -18,7 +18,7 @@ const sizeStyles = {
     // allows for max 3 lines of description text on mobile
     details: "min-h-20 max-w-24",
     name: "text-xs",
-    description: "text-[10px]",
+    description: "text-[8px]",
     gap: "gap-1",
   },
   md: {
@@ -32,7 +32,9 @@ const sizeStyles = {
 } as const;
 
 export function StampDisplay({ stamp, showDetails = true, size = "md" }: StampDisplayProps) {
-  const imageSrc = stamp.isUnlocked ? stamp.imgURL : "/assets/stampbook/stamp-locked.svg";
+  const imageSrc = stamp.isUnlocked
+    ? stamp.imgURL
+    : (stamp.lockedImgURL ?? "/assets/stampbook/stamp-locked.svg");
   const styles = sizeStyles[size];
 
   return (
@@ -55,38 +57,29 @@ export function StampDisplay({ stamp, showDetails = true, size = "md" }: StampDi
             styles.details,
           )}
         >
-          <div
-            className={cn(
-              "flex items-center gap-2 text-center font-semibold leading-tight",
-              styles.name,
-            )}
-          >
+          <span className={cn("text-center font-semibold leading-none", styles.name)}>
             {stamp.name}
             {stamp.isQRUnlockable && (
-              <span className={cn("text-center leading-tight", styles.description)}>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <QrCodeIcon className="inline-block h-4 w-4" />
-                  </TooltipTrigger>
-                  <TooltipContent>This stamp can be unlocked by scanning a QR code</TooltipContent>
-                </Tooltip>
-              </span>
+              <Tooltip>
+                <TooltipTrigger className="ml-2 inline-block align-middle">
+                  <QrCodeIcon className="h-4 w-4 text-text-secondary" />
+                </TooltipTrigger>
+                <TooltipContent>This stamp can be unlocked by scanning a QR code</TooltipContent>
+              </Tooltip>
             )}
             {stamp.isEventUnlockable && (
-              <span className={cn("text-center leading-tight", styles.description)}>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <PartyPopperIcon className="inline-block h-4 w-4" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    Get an organizer to scan your QR after completing this activity!
-                  </TooltipContent>
-                </Tooltip>
-              </span>
+              <Tooltip>
+                <TooltipTrigger className="ml-2 inline-block align-middle">
+                  <PartyPopperIcon className="h-4 w-4 text-text-secondary" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  Get an organizer to scan your QR after completing this activity!
+                </TooltipContent>
+              </Tooltip>
             )}
-          </div>
+          </span>
 
-          <span className={cn("text-center leading-tight", styles.description)}>
+          <span className={cn("text-center leading-none", styles.description)}>
             {stamp.description}
           </span>
         </div>
