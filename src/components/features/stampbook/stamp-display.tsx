@@ -18,7 +18,7 @@ const sizeStyles = {
     // allows for max 3 lines of description text on mobile
     details: "min-h-20 max-w-24",
     name: "text-xs",
-    description: "text-[10px]",
+    description: "text-[8px]",
     gap: "gap-1",
   },
   md: {
@@ -57,7 +57,7 @@ export function StampDisplay({ stamp, showDetails = true, size = "md" }: StampDi
             styles.details,
           )}
         >
-          <span className={cn("text-center font-semibold leading-tight", styles.name)}>
+          <span className={cn("text-center font-semibold leading-none", styles.name)}>
             {stamp.name}
             {stamp.isQRUnlockable && (
               <Tooltip>
@@ -79,7 +79,7 @@ export function StampDisplay({ stamp, showDetails = true, size = "md" }: StampDi
             )}
           </span>
 
-          <span className={cn("text-center leading-tight", styles.description)}>
+          <span className={cn("text-center leading-none", styles.description)}>
             {stamp.description}
           </span>
         </div>
