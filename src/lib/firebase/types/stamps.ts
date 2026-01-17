@@ -22,6 +22,7 @@ export interface Stamp {
   description: string;
   imgName: string;
   imgURL: string;
+  lockedImgURL?: string;
   hackathon?: string; // optional: if hackathon-specific
   criteria?: StampCriteria[]; // optional: for portal-based stamps
   isHidden: boolean; // whether to hide if locked
