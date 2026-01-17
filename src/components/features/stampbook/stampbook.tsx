@@ -3,7 +3,7 @@ import type { StampWithUnlockState } from "@/lib/firebase/types/stamps";
 import { cn } from "@/lib/utils";
 import { toPng } from "html-to-image";
 import { ChevronLeft, ChevronRight, Download, HelpCircle, Share2 } from "lucide-react";
-import { forwardRef, useCallback, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import HTMLFlipBook from "react-pageflip";
 import { StampbookPage } from "./stampbook-page";
 import { StampbookShareCard } from "./stampbook-share-card";
@@ -14,11 +14,13 @@ const DESKTOP_PAGE_HEIGHT = 600;
 const MOBILE_PAGE_WIDTH = 320;
 const MOBILE_PAGE_HEIGHT = 420;
 
+// util to wait for stamp images to be fully loaded before opening share sheet
 const waitForShareCardAssets = async (node: HTMLElement) => {
   const images = Array.from(node.querySelectorAll("img"));
   await Promise.all(
     images.map((img) => {
-      if (img.complete) {
+      const isLoaded = img.complete && img.naturalWidth > 0;
+      if (isLoaded) {
         return img.decode?.().catch(() => undefined);
       }
 
@@ -65,11 +67,33 @@ export function Stampbook({ stamps, displayName }: StampbookProps) {
   const bookRef = useRef<any>(null);
   const shareCardRef = useRef<HTMLDivElement>(null);
   const [currentPage, setCurrentPage] = useState(0);
+  const [isShareCardReady, setIsShareCardReady] = useState(false);
+  const [isPreparingShare, setIsPreparingShare] = useState(false);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-run when stamps/name change
+  useEffect(() => {
+    let isMounted = true;
+    setIsShareCardReady(false);
+
+    const prepareShareCard = async () => {
+      if (!shareCardRef.current) return;
+      await waitForShareCardAssets(shareCardRef.current);
+      if (isMounted) {
+        setIsShareCardReady(true);
+      }
+    };
+
+    void prepareShareCard();
+    return () => {
+      isMounted = false;
+    };
+  }, [stamps, displayName]);
 
   const handleShare = async () => {
     if (!shareCardRef.current) return;
 
     try {
+      setIsPreparingShare(true);
       // on mobile, must wait for assets (img.decode()) to complete before saving
       await waitForShareCardAssets(shareCardRef.current);
       const dataUrl = await toPng(shareCardRef.current, {
@@ -99,6 +123,8 @@ export function Stampbook({ stamps, displayName }: StampbookProps) {
       // exclude user cancelling share as an error
       if (err instanceof Error && err.name === "AbortError") return;
       console.error("Failed to share stampbook image:", err);
+    } finally {
+      setIsPreparingShare(false);
     }
   };
 
@@ -295,14 +321,17 @@ export function Stampbook({ stamps, displayName }: StampbookProps) {
       <button
         type="button"
         onClick={handleShare}
+        disabled={!isShareCardReady || isPreparingShare}
         className={cn(
           "flex items-center gap-2 rounded-lg border border-border-subtle px-4 py-2 font-medium text-sm transition-all",
           "bg-bg-button-secondary text-text-primary",
           "hover:bg-bg-button-secondary/80 active:scale-98",
+          (!isShareCardReady || isPreparingShare) &&
+            "cursor-not-allowed opacity-60 hover:bg-bg-button-secondary",
         )}
       >
         {isMobile ? <Share2 size={16} /> : <Download size={16} />}
-        {isMobile ? "Share Stampbook" : "Download Stampbook"}
+        {isPreparingShare ? "Preparing..." : isMobile ? "Share Stampbook" : "Download Stampbook"}
       </button>
       {isMobile ? (
         <div className="flex flex-col items-center gap-6 py-4">
