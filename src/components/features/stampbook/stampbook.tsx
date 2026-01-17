@@ -14,6 +14,33 @@ const DESKTOP_PAGE_HEIGHT = 600;
 const MOBILE_PAGE_WIDTH = 320;
 const MOBILE_PAGE_HEIGHT = 420;
 
+const waitForShareCardAssets = async (node: HTMLElement) => {
+  const images = Array.from(node.querySelectorAll("img"));
+  await Promise.all(
+    images.map((img) => {
+      if (img.complete) {
+        return img.decode?.().catch(() => undefined);
+      }
+
+      return new Promise<void>((resolve) => {
+        const handleLoad = () => {
+          img.removeEventListener("load", handleLoad);
+          img.removeEventListener("error", handleLoad);
+          resolve();
+        };
+        img.addEventListener("load", handleLoad);
+        img.addEventListener("error", handleLoad);
+      });
+    }),
+  );
+
+  if ("fonts" in document) {
+    await document.fonts.ready;
+  }
+
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+};
+
 interface StampbookProps {
   stamps: StampWithUnlockState[];
   displayName: string;
@@ -43,6 +70,8 @@ export function Stampbook({ stamps, displayName }: StampbookProps) {
     if (!shareCardRef.current) return;
 
     try {
+      // on mobile, must wait for assets (img.decode()) to complete before saving
+      await waitForShareCardAssets(shareCardRef.current);
       const dataUrl = await toPng(shareCardRef.current, {
         cacheBust: true,
         pixelRatio: 2,

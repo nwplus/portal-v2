@@ -1,5 +1,12 @@
-export const NwHacksColouredIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 65 87">
+export const NwHacksColouredIcon = ({ className }: { className?: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 65 87"
+    width="100%"
+    height="100%"
+    className={className}
+  >
     <path
       fill="url(#a)"
       fillRule="evenodd"
