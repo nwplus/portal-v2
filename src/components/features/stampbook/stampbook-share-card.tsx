@@ -11,16 +11,12 @@ interface StampbookShareCardProps {
 
 const MAX_DISPLAY_STAMPS = 15;
 
-// Returns grid and stamp size config based on stamp count
+// Returns stamp size config based on stamp count
 const getLayoutConfig = (count: number) => {
-  if (count <= 4) {
-    return { cols: "grid-cols-4", size: "h-20 w-20", gap: "gap-5", textSize: "text-xs" };
-  }
   if (count <= 10) {
-    return { cols: "grid-cols-5", size: "h-20 w-20", gap: "gap-5", textSize: "text-xs" };
+    return { size: "h-20 w-20", gap: "gap-5", textSize: "text-xs" };
   }
-  // 11-15 stamps
-  return { cols: "grid-cols-7", size: "h-14 w-14", gap: "gap-3", textSize: "text-[9px]" };
+  return { size: "h-14 w-14", gap: "gap-3", textSize: "text-[9px]" };
 };
 
 /**
@@ -69,7 +65,7 @@ export const StampbookShareCard = forwardRef<HTMLDivElement, StampbookShareCardP
             {displayStamps.length === 0 ? (
               <p className="text-text-secondary">No stamps unlocked yet!</p>
             ) : (
-              <div className={cn("grid", layout.cols, layout.gap)}>
+              <div className={cn("flex flex-wrap justify-center", layout.gap)}>
                 {displayStamps.map((stamp) => (
                   <div key={stamp._id} className="flex flex-col items-center gap-1.5">
                     <div
