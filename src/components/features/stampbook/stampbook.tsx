@@ -3,7 +3,7 @@ import type { StampWithUnlockState } from "@/lib/firebase/types/stamps";
 import { cn } from "@/lib/utils";
 import { toPng } from "html-to-image";
 import { ChevronLeft, ChevronRight, Download, HelpCircle, Share2 } from "lucide-react";
-import { forwardRef, useCallback, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import HTMLFlipBook from "react-pageflip";
 import { StampbookPage } from "./stampbook-page";
 import { StampbookShareCard } from "./stampbook-share-card";
@@ -61,6 +61,19 @@ export function Stampbook({ stamps, displayName }: StampbookProps) {
   const bookRef = useRef<any>(null);
   const shareCardRef = useRef<HTMLDivElement>(null);
   const [currentPage, setCurrentPage] = useState(0);
+  // TODO: remove the timeout on mobile once pre-loading is fixed
+  const [canShare, setCanShare] = useState(!isMobile);
+
+  useEffect(() => {
+    if (!isMobile) {
+      setCanShare(true);
+      return;
+    }
+
+    setCanShare(false);
+    const timeout = setTimeout(() => setCanShare(true), 9_000);
+    return () => clearTimeout(timeout);
+  }, [isMobile]);
 
   const handleShare = async () => {
     if (!shareCardRef.current) return;
@@ -291,14 +304,17 @@ export function Stampbook({ stamps, displayName }: StampbookProps) {
       <button
         type="button"
         onClick={handleShare}
+        disabled={!canShare}
         className={cn(
           "flex items-center gap-2 rounded-lg border border-border-subtle px-4 py-2 font-medium text-sm transition-all",
           "bg-bg-button-secondary text-text-primary",
-          "hover:bg-bg-button-secondary/80 active:scale-98",
+          canShare
+            ? "hover:bg-bg-button-secondary/80 active:scale-98"
+            : "cursor-not-allowed opacity-50",
         )}
       >
         {isMobile ? <Share2 size={16} /> : <Download size={16} />}
-        {isMobile ? "Share Stampbook" : "Download Stampbook"}
+        {isMobile ? (canShare ? "Share Stampbook" : "Pre-loading...") : "Download Stampbook"}
       </button>
       {isMobile ? (
         <div className="flex flex-col items-center gap-6 py-4">
