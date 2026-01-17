@@ -9,27 +9,25 @@ import { StampbookPage } from "./stampbook-page";
 import { StampbookShareCard } from "./stampbook-share-card";
 import { organizeIntoSpreads } from "./utils";
 
-// Preloads images and forces DOM images to reload. Needed for share card on mobile.
-const preloadAndSyncImages = async (element: HTMLElement): Promise<void> => {
+/** Inlines all images as base64 and preloads them. Mobile browsers skip loading off-screen images. */
+const preloadImages = async (element: HTMLElement): Promise<void> => {
   const images = Array.from(element.querySelectorAll("img"));
 
   await Promise.all(
-    images.map((img) => {
-      if (img.complete && img.naturalHeight > 0) {
-        return Promise.resolve();
+    images.map(async (img) => {
+      if (img.src.startsWith("data:")) return;
+      try {
+        const res = await fetch(img.src);
+        const blob = await res.blob();
+        img.src = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      } catch {
+        console.warn("Failed to inline image:", img.src);
       }
-
-      return new Promise<void>((resolve) => {
-        const newImg = new Image();
-        newImg.crossOrigin = "anonymous";
-        newImg.onload = () => {
-          // test: force the DOM image to use the cached version
-          img.src = newImg.src;
-          resolve();
-        };
-        newImg.onerror = () => resolve();
-        newImg.src = img.src;
-      });
     }),
   );
 };
@@ -68,8 +66,8 @@ export function Stampbook({ stamps, displayName }: StampbookProps) {
     if (!shareCardRef.current) return;
 
     try {
-      // preload stamp images for share card: some mobile browsers skip loading off-screen images
-      await preloadAndSyncImages(shareCardRef.current);
+      // Cmobile browsers skip loading off-screen images
+      await preloadImages(shareCardRef.current);
 
       const dataUrl = await toPng(shareCardRef.current, {
         pixelRatio: 2,

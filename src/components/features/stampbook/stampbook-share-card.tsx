@@ -1,6 +1,5 @@
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
 import type { StampWithUnlockState } from "@/lib/firebase/types/stamps";
-import { useHackerStore } from "@/lib/stores/hacker-store";
 import { cn, getColouredHackathonIcon } from "@/lib/utils";
 import { forwardRef } from "react";
 
@@ -24,8 +23,7 @@ const getLayoutConfig = (count: number) => {
  * Designed for social media sharing (1:1 aspect ratio).
  */
 export const StampbookShareCard = forwardRef<HTMLDivElement, StampbookShareCardProps>(
-  ({ stamps }, ref) => {
-    const displayName = useHackerStore((state) => state.hacker?.basicInfo?.legalFirstName);
+  ({ displayName, stamps }, ref) => {
     const { displayNameFull, displayNameShort } = useHackathonInfo();
     const hackathonName = displayNameFull;
     const hackathonDomain = displayNameShort.toLowerCase();
