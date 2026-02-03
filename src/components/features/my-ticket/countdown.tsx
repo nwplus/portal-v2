@@ -63,9 +63,13 @@ export function Countdown() {
   }, [remainingMs]);
 
   if (!status) return null;
-  if (status === "POST") return <div className="text-text-primary">hacking ended</div>;
 
-  const label = status === "PRE" ? "Hacking starts in" : "Hacking ends in";
+  const label =
+    status === "PRE"
+      ? "Hacking starts in"
+      : status === "POST"
+        ? "Hacking ended"
+        : "Hacking ends in";
 
   const totalHours = Math.floor(remainingMs / 1000 / 3600);
   const showDays = totalHours > 100;
