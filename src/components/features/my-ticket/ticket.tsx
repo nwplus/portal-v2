@@ -225,6 +225,27 @@ export function Ticket({
 
           {/* Content overlay */}
           <div className={cn("absolute inset-0 flex", isMobile ? "flex-col-reverse" : "flex-row")}>
+            {!isMobile && (
+              <div
+                className="flex h-full flex-col justify-end"
+                style={{
+                  pointerEvents: "none",
+                  maxWidth: `${(foldX / width) * svgWidth}px`,
+                }}
+              >
+                <img
+                  className="block h-full"
+                  draggable={false}
+                  src={`/assets/${activeHackathon}/ticket/ticket-decal.svg`}
+                  style={{
+                    maxWidth: "100%",
+                    objectFit: "contain",
+                    objectPosition: "bottom left",
+                  }}
+                />
+              </div>
+            )}
+
             <div
               className={cn("flex h-full flex-col justify-end", isMobile && "items-end")}
               style={{
@@ -234,27 +255,19 @@ export function Ticket({
                 maxWidth: isMobile ? "100%" : `${(foldX / width) * svgWidth}px`,
               }}
             >
-              <img
-                className={cn("h-full", isMobile ? "hidden" : "block")}
-                draggable={false}
-                src={`/assets/${activeHackathon}/ticket/ticket-decal.svg`}
-                style={{
-                  maxWidth: "100%",
-                  objectFit: "contain",
-                  objectPosition: "bottom left",
-                }}
-              />
               <div
                 className={cn(
                   "absolute flex flex-col gap-2",
-                  isMobile ? "self-end p-14" : "bottom-20 left-50 p-8", // Changed from "bottom-0 left-0 p-14"
+                  isMobile ? "self-end p-14" : "bottom-20 left-50 p-8",
                 )}
                 style={{
                   fontFamily: selectedFont ?? "var(--font-mono)",
-                  color: "#0C2360",
+                  color: "var(--ticket-hacker-text)",
                 }}
               >
-                <Badge className="border-[#E4E4E740] bg-[#E76C79] uppercase">Hacker</Badge>
+                <Badge className="border-border-subtle bg-ticket-role-button-border text-ticket-role-text uppercase">
+                  Hacker
+                </Badge>
                 <div className="flex flex-col">
                   <div className={cn("font-bold", isMobile ? "text-3xl" : "text-4xl")}>
                     {getFullName(applicant)}
@@ -416,7 +429,7 @@ export function Ticket({
                 viewBox="0 0 256 256"
                 value={qrData ?? ""}
                 bgColor="rgba(0,0,0,0)"
-                fgColor="#18338D"
+                fgColor="var(--ticket-qr-code)"
               />
             </div>
           </div>
