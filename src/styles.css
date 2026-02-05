@@ -67,7 +67,7 @@ code {
   --background-dropdown: #171717;
   --background-dropdown-selected: #262626;
 
-  --progress-bar-complete: linear-gradient(90deg, #49244f 0%, #643b5e 100%);
+  --progress-bar-complete: linear-gradient(90deg, #381a22 0%, #753748 100%);
   --progress-bar-incomplete: #e4e4e740;
 
   --tag-active: #fafafa;
@@ -79,6 +79,12 @@ code {
   --background-button-tertiary: #fafafa;
   --background-button-disabled: #404040;
   --background-button-control: #fafafa;
+
+  --ticket-role-button: #e76c79;
+  --ticket-role-button-border: #e68a95;
+  --ticket-qr-code: #0c2360;
+  --ticket-role-text: #ffffff;
+  --ticket-hacker-text: #0c2360;
 }
 
 /* custom colours */
@@ -120,6 +126,12 @@ code {
   --color-bg-button-disabled: var(--background-button-disabled);
   --color-bg-button-control: var(--background-button-control);
   --color-button-tertiary: var(--text-tertiary-button); /* one-off, used for border and text colours */
+
+  --color-ticket-role-button: var(--ticket-role-button);
+  --color-ticket-role-button-border: var(--ticket-role-button-border);
+  --color-ticket-qr-code: var(--ticket-qr-code);
+  --color-ticket-role-text: var(--ticket-role-text);
+  --color-ticket-hacker-text: var(--ticket-hacker-text);
 
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);

@@ -153,7 +153,10 @@ export function Ticket({
           height: svgHeight,
         }}
       >
-        <div className="relative mx-auto" style={{ width: svgWidth, height: svgHeight }}>
+        <div
+          className="relative mx-auto"
+          style={{ width: svgWidth, height: svgHeight, overflow: "hidden", borderRadius: radius }}
+        >
           <svg
             className="mx-auto block"
             width={svgWidth}
@@ -181,14 +184,21 @@ export function Ticket({
                   })()
                 )}
               </mask>
-              <linearGradient id="ticket-gradient-horizontal" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="#140423" />
-                <stop offset="100%" stopColor="#693F61" />
-              </linearGradient>
-              <linearGradient id="ticket-gradient-vertical" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#693F61" />
-                <stop offset="100%" stopColor="#140423" />
-              </linearGradient>
+              <pattern
+                id="ticket-background"
+                patternUnits="userSpaceOnUse"
+                width={svgWidth}
+                height={svgHeight}
+              >
+                <image
+                  href={`/assets/${activeHackathon}/ticket/background.png`}
+                  x="0"
+                  y="0"
+                  width={svgWidth}
+                  height={svgHeight}
+                  preserveAspectRatio="xMidYMax slice"
+                />
+              </pattern>
             </defs>
 
             {/* Card background */}
@@ -196,7 +206,7 @@ export function Ticket({
               width="100%"
               height="100%"
               rx={radius}
-              fill={`url(#ticket-gradient-${isMobile ? "vertical" : "horizontal"})`}
+              fill="url(#ticket-background)"
               mask={`url(#${maskId})`}
             />
 
@@ -210,41 +220,54 @@ export function Ticket({
                 stroke="rgba(0,0,0,1)"
                 strokeDasharray="6 6"
               />
-            ) : (
-              <line
-                x1={(foldX / width) * svgWidth}
-                y1={notchRadius}
-                x2={(foldX / width) * svgWidth}
-                y2={svgHeight - notchRadius}
-                stroke="rgba(0,0,0,1)"
-                strokeDasharray="6 6"
-              />
-            )}
+            ) : null}
           </svg>
 
           {/* Content overlay */}
           <div className={cn("absolute inset-0 flex", isMobile ? "flex-col-reverse" : "flex-row")}>
+            {!isMobile && (
+              <div
+                className="flex h-full flex-col justify-end"
+                style={{
+                  pointerEvents: "none",
+                  maxWidth: `${(foldX / width) * svgWidth}px`,
+                }}
+              >
+                <img
+                  className="block h-full"
+                  draggable={false}
+                  src={`/assets/${activeHackathon}/ticket/ticket-decal.svg`}
+                  style={{
+                    maxWidth: "100%",
+                    objectFit: "contain",
+                    objectPosition: "bottom left",
+                  }}
+                />
+              </div>
+            )}
+
             <div
-              className={cn("flex h-full items-center", isMobile && "items-end")}
+              className={cn("flex h-full flex-col justify-end", isMobile && "items-end")}
               style={{
                 zIndex: 20,
                 pointerEvents: "none",
                 height: isMobile ? `${svgHeight - (foldY ?? 0)}px` : "100%",
+                maxWidth: isMobile ? "100%" : `${(foldX / width) * svgWidth}px`,
               }}
             >
-              <img
-                className={cn("h-full", isMobile ? "hidden" : "block")}
-                draggable={false}
-                src={`/assets/${activeHackathon}/ticket/ticket-decal.svg`}
-              />
               <div
                 className={cn(
-                  "flex flex-col gap-2",
-                  isMobile ? "self-end p-10" : "self-center p-0",
+                  "absolute flex flex-col gap-2",
+                  isMobile ? "self-end p-14" : "bottom-20 left-50 p-8",
                 )}
-                style={{ fontFamily: selectedFont ?? "var(--font-mono)" }}
+                style={{
+                  fontFamily: selectedFont ?? "var(--font-mono)",
+                  color: "var(--ticket-hacker-text)",
+                }}
               >
-                <Badge className="border-[#E4E4E730] bg-[#693F61] uppercase">Hacker</Badge>
+                <Badge className="border-border-subtle bg-ticket-role-button-border text-ticket-role-text uppercase">
+                  Hacker
+                </Badge>
                 <div className="flex flex-col">
                   <div className={cn("font-bold", isMobile ? "text-3xl" : "text-4xl")}>
                     {getFullName(applicant)}
@@ -406,7 +429,7 @@ export function Ticket({
                 viewBox="0 0 256 256"
                 value={qrData ?? ""}
                 bgColor="rgba(0,0,0,0)"
-                fgColor="white"
+                fgColor="var(--ticket-qr-code)"
               />
             </div>
           </div>
