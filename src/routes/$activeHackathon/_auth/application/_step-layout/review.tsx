@@ -327,7 +327,6 @@ function RouteComponent() {
       }
 
       setSubmitting(true);
-      useApplicantStore.getState().setSubmitting(true);
       setSubmitError(null);
 
       try {
@@ -356,7 +355,6 @@ function RouteComponent() {
         setSubmitError("Failed to submit application. Please try again.");
       } finally {
         setSubmitting(false);
-        useApplicantStore.getState().setSubmitting(false);
       }
     })();
   };
