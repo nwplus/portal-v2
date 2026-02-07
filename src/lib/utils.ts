@@ -191,3 +191,40 @@ export const getEventName = (event: DayOfEventType): string => {
     >
   )[event];
 };
+
+function parsePortalDateTime(iso?: string): Date | null {
+  if (!iso) return null;
+
+  const parsedDate = new Date(iso);
+  if (Number.isNaN(parsedDate.getTime())) return null;
+
+  return parsedDate;
+}
+
+// "2026-02-14T23:59:59-08:00" => "February 14, 2026 at 11:59 PM"
+export function formatPortalDateTime(iso?: string): string | null {
+  const parsedDate = parsePortalDateTime(iso);
+  if (!parsedDate) return null;
+
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Los_Angeles",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(parsedDate);
+}
+
+// "2026-02-14T23:59:59-08:00" => "Feb 14, 2026"
+export function formatPortalDateShort(iso?: string): string | null {
+  const parsedDate = parsePortalDateTime(iso);
+  if (!parsedDate) return null;
+
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Los_Angeles",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(parsedDate);
+}
