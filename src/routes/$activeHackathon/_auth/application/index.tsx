@@ -8,7 +8,7 @@ import { useHackathonInfo } from "@/hooks/use-hackathon-info";
 import { useApplicantStore } from "@/lib/stores/applicant-store";
 import { useApplicationQuestionStore } from "@/lib/stores/application-question-store";
 import { usePortalStore } from "@/lib/stores/portal-store";
-import { getColouredHackathonIcon } from "@/lib/utils";
+import { formatPortalDateTime, getColouredHackathonIcon } from "@/lib/utils";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { Check, Clock, PartyPopper, PencilLine } from "lucide-react";
 
@@ -26,6 +26,7 @@ function RouteComponent() {
   const location = usePortalStore((state) => state.location);
   const applicationDeadline = usePortalStore((state) => state.applicationDeadline);
   const welcome = useApplicationQuestionStore((s) => s.welcome);
+  const formattedApplicationDeadline = formatPortalDateTime(applicationDeadline?.[activeHackathon]);
   const applicationStatus = useApplicantStore(
     (state) => state.applicantDraft?.status.applicationStatus,
   );
@@ -124,9 +125,9 @@ function RouteComponent() {
                   </Tag>
                 )}
               </div>
-              {applicationStatus === "inProgress" && (
+              {applicationStatus === "inProgress" && formattedApplicationDeadline && (
                 <p className="font-regular text-text-secondary text-xs md:text-sm">
-                  due {applicationDeadline?.[activeHackathon]}
+                  due {formattedApplicationDeadline} (Pacific Time)
                 </p>
               )}
             </div>

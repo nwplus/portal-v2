@@ -3,7 +3,7 @@ export function cmdfPortal() {
     <img
       src="/assets/cmd-f/portal-entrance.png"
       alt="cmdf-portal"
-      className="h-[713px] max-h-[60svh] w-[569px]"
+      className="h-[713px] max-h-[60svh] w-[569px] translate-x-4"
     />
   );
 }

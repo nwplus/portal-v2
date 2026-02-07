@@ -7,7 +7,7 @@ import { type RsvpFormValues, rsvpSchema } from "@/lib/application/rsvp-schema";
 import { useApplicantStore } from "@/lib/stores/applicant-store";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { usePortalStore } from "@/lib/stores/portal-store";
-import { fireSideCannons, getHackathonIcon } from "@/lib/utils";
+import { fireSideCannons, formatPortalDateTime, getHackathonIcon } from "@/lib/utils";
 import { confirmRsvp } from "@/services/applicants";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, Navigate, createFileRoute, useRouter } from "@tanstack/react-router";
@@ -58,6 +58,7 @@ function RouteComponent() {
 
   const LogoIcon = getHackathonIcon(activeHackathon);
   const showSafewalk = activeHackathon === "nwhacks" || activeHackathon === "cmd-f";
+  const formattedRsvpBy = formatPortalDateTime(rsvpBy);
 
   const formMethods = useForm<RsvpFormValues>({
     // biome-ignore lint/suspicious/noExplicitAny: resolver's generics do not align cleanly with our schema type
@@ -151,7 +152,7 @@ function RouteComponent() {
               <h1 className="font-medium text-xl md:text-3xl">RSVP Form</h1>
               <p className="mt-2 font-light text-base">
                 Please read the following and submit to secure your spot
-                {rsvpBy && ` by ${rsvpBy}`}.
+                {formattedRsvpBy && ` by ${formattedRsvpBy} (Pacific Time)`}.
               </p>
             </div>
 
