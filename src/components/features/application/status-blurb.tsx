@@ -4,6 +4,7 @@ import type { ApplicationStatus } from "@/lib/firebase/types/applicants";
 import { useApplicantStore } from "@/lib/stores/applicant-store";
 import { useApplicationQuestionStore } from "@/lib/stores/application-question-store";
 import { usePortalStore } from "@/lib/stores/portal-store";
+import { formatPortalDateTime } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 
 type BlurbProps = {
@@ -101,6 +102,12 @@ export function StatusBlurb() {
   const isApplicationsOpen = applicationsOpen?.[activeHackathon] ?? false;
 
   const getStatusContent = () => {
+    const formattedRsvpBy = formatPortalDateTime(rsvpBy?.[activeHackathon]);
+    const formattedOffWaitlistNotify = formatPortalDateTime(offWaitlistNotify?.[activeHackathon]);
+    const formattedWaitlistSignupDeadline = formatPortalDateTime(
+      waitlistSignupDeadline?.[activeHackathon],
+    );
+
     const blurbProps = {
       name,
       displayNameShort,
@@ -108,9 +115,9 @@ export function StatusBlurb() {
       applicationDeadline: applicationDeadline?.[activeHackathon],
       hackathonWeekend: hackathonWeekend?.[activeHackathon],
       sendAcceptancesBy: sendAcceptancesBy?.[activeHackathon],
-      rsvpBy: rsvpBy?.[activeHackathon],
-      offWaitlistNotify: offWaitlistNotify?.[activeHackathon],
-      waitlistSignupDeadline: waitlistSignupDeadline?.[activeHackathon],
+      rsvpBy: `${formattedRsvpBy} (Pacific Time)`,
+      offWaitlistNotify: `${formattedOffWaitlistNotify} (Pacific Time)`,
+      waitlistSignupDeadline: `${formattedWaitlistSignupDeadline} (Pacific Time)`,
     };
 
     if (applicationStatus === "inProgress") {

@@ -1,7 +1,7 @@
 import { cmdfPortal } from "@/components/visual/cmdf-portal";
 import { HackCampPortal } from "@/components/visual/hackcamp-portal";
 import { nwHacksPortal } from "@/components/visual/nwhacks-portal";
-import { cn } from "@/lib/utils";
+import { cn, formatPortalDateShort } from "@/lib/utils";
 import { SubHeader } from "../../typography";
 import { Button } from "../../ui/button";
 // import { Lumination } from "../../visual/lumination";
@@ -25,26 +25,15 @@ const HACKATHON_TO_GRADIENT: Record<string, React.ComponentType> = {
   nwHacks: nwHacksPortal,
 };
 
-// example deadline format: February 22nd, 2025 at 11:59 PM (Pacific Time)
 const getApplicationStatusText = (applicationOpen: boolean, applicationDeadline?: string) => {
   if (!applicationDeadline) return "Applications opening soon!";
 
-  const cleanedDeadline = applicationDeadline
-    .replace(/(\d+)(st|nd|rd|th)/, "$1")
-    .replace(/\s*\(.*\)$/, "")
-    .replace(" at ", " ");
-  const deadlineDate = new Date(cleanedDeadline);
-  const isDeadlinePassed = new Date() > deadlineDate;
+  const isDeadlinePassed = new Date() > new Date(applicationDeadline);
 
   if (isDeadlinePassed) return "Applications closed";
   if (!applicationOpen) return "Applications opening soon!";
 
-  const formattedDate = deadlineDate.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-  return `Applications close on ${formattedDate}!`;
+  return `Applications close on ${formatPortalDateShort(applicationDeadline)}!`;
 };
 
 export function PortalEntrance({

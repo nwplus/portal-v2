@@ -212,24 +212,58 @@ function QuestionnaireSection({ applicantDraft }: { applicantDraft: ApplicantDra
 }
 
 function TermsSection() {
+  const { activeHackathon } = useHackathon();
   return (
     <ReviewSection title="Terms and conditions" emoji="🔒" className="">
-      <TermsCheckbox fieldPath="termsAndConditions.MLHCodeOfConduct">
-        I have read and agree to the{" "}
-        <a
-          href="https://mlh.io/code-of-conduct"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline"
-        >
-          MLH Code of Conduct
-        </a>
-        .
-      </TermsCheckbox>
-      <TermsCheckbox fieldPath="termsAndConditions.MLHPrivacyPolicy">
-        I authorize MLH to share my application/registration information with MLH for event
-        administration, ranking, and MLH administration.
-      </TermsCheckbox>
+      {activeHackathon !== "hackcamp" && (
+        <>
+          <TermsCheckbox fieldPath="termsAndConditions.MLHCodeOfConduct">
+            I have read and agree to the{" "}
+            <a
+              href="https://mlh.io/code-of-conduct"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+            >
+              MLH Code of Conduct
+            </a>
+            .
+          </TermsCheckbox>
+          <TermsCheckbox fieldPath="termsAndConditions.MLHPrivacyPolicy">
+            I authorize you to share my application/registration information with Major League
+            Hacking for event administration, ranking, and MLH administration in-line with the{" "}
+            <a
+              href="https://github.com/MLH/mlh-policies/blob/main/privacy-policy.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+            >
+              MLH Privacy Policy
+            </a>
+            .
+            <br />
+            <br />I further agree to the terms of both the{" "}
+            <a
+              href="https://github.com/MLH/mlh-policies/blob/main/contest-terms.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+            >
+              MLH Contest Terms and Conditions
+            </a>{" "}
+            and the{" "}
+            <a
+              href="https://github.com/MLH/mlh-policies/blob/main/privacy-policy.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+            >
+              MLH Privacy Policy
+            </a>
+            .
+          </TermsCheckbox>
+        </>
+      )}
       <TermsCheckbox fieldPath="termsAndConditions.nwPlusPrivacyPolicy">
         I agree to the{" "}
         <a
@@ -246,7 +280,8 @@ function TermsSection() {
         I agree that my application data may be used internally by nwPlus.
       </TermsCheckbox>
       <TermsCheckbox fieldPath="termsAndConditions.shareWithSponsors" optional>
-        I agree that my application data may be shared with sponsors.
+        I agree that my application data may be shared with sponsors for recruitment purposes upon
+        request.
       </TermsCheckbox>
       <TermsCheckbox fieldPath="termsAndConditions.MLHEmailSubscription" optional>
         I would like to receive emails from MLH about future events.
