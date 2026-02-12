@@ -4,6 +4,7 @@ import { ScrollFade } from "@/components/ui/scroll-fade";
 import { useHackathon } from "@/hooks/use-hackathon";
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
 import { type RsvpFormValues, rsvpSchema } from "@/lib/application/rsvp-schema";
+import { functions } from "@/lib/firebase/client";
 import { useApplicantStore } from "@/lib/stores/applicant-store";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { usePortalStore } from "@/lib/stores/portal-store";
@@ -11,6 +12,7 @@ import { fireSideCannons, formatPortalDateTime, getHackathonIcon } from "@/lib/u
 import { confirmRsvp } from "@/services/applicants";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, Navigate, createFileRoute, useRouter } from "@tanstack/react-router";
+import { httpsCallable } from "firebase/functions";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { FormProvider, type Resolver, useForm } from "react-hook-form";
@@ -114,6 +116,11 @@ function RouteComponent() {
     try {
       const formValues = formMethods.getValues();
       await confirmRsvp(dbCollectionName, uid, formValues);
+
+      const sendRsvpEmail = httpsCallable(functions, "sendRsvpEmail");
+      await sendRsvpEmail({
+        dbCollectionName,
+      });
 
       fireSideCannons(activeHackathon);
 
