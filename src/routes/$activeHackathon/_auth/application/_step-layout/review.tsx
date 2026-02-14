@@ -296,7 +296,7 @@ export const Route = createFileRoute("/$activeHackathon/_auth/application/_step-
 
 function RouteComponent() {
   const { activeHackathon } = useHackathon();
-  const { dbCollectionName, displayNameFull } = useHackathonInfo();
+  const { dbCollectionName } = useHackathonInfo();
   const applicantDraft = useApplicantStore((state) => state.applicantDraft);
   const user = useAuthStore((state) => state.user);
   const applicationsOpen = usePortalStore((state) => state.applicationsOpen);
@@ -339,9 +339,7 @@ function RouteComponent() {
 
         const sendConfirmationEmail = httpsCallable(functions, "sendConfirmationEmail");
         await sendConfirmationEmail({
-          email: submittedDraft.basicInfo?.email,
-          timestamp: `${new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" })} PST`,
-          hackathonName: displayNameFull,
+          dbCollectionName,
         });
 
         fireSideCannons(activeHackathon);
