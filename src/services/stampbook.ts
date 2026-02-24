@@ -13,7 +13,7 @@ export async function loadStampbook(
 ): Promise<StampWithUnlockState[]> {
   const [allStamps, unlockedStamps, hacker] = await Promise.all([
     fetchStamps(dbCollectionName),
-    fetchUnlockedStampIds(uid),
+    fetchUnlockedStampIds(uid, dbCollectionName),
     fetchApplicant(dbCollectionName, uid),
   ]);
 
@@ -28,7 +28,7 @@ export async function loadStampbook(
       const shouldUnlock = evaluateUnlockCriteria(stamp.criteria, hacker);
 
       if (shouldUnlock) {
-        persistUnlockedStamp(uid, stamp._id);
+        persistUnlockedStamp(uid, stamp._id, dbCollectionName);
       }
 
       return { ...stamp, isUnlocked: shouldUnlock };
@@ -41,12 +41,14 @@ export async function loadStampbook(
 /**
  * Persist a newly-unlocked stamp to the user's social profile.
  */
-async function persistUnlockedStamp(uid: string, stampId: string): Promise<void> {
+async function persistUnlockedStamp(uid: string, stampId: string, hackathonId: string): Promise<void> {
   const socialRef = doc(db, "Socials", uid);
   await setDoc(
     socialRef,
     {
-      unlockedStamps: arrayUnion(stampId),
+      unlockedStamps: {
+        [hackathonId]: arrayUnion(stampId),
+      },
     },
     { merge: true },
   );
@@ -68,7 +70,7 @@ export async function unlockStampById(
     return { success: false };
   }
 
-  await persistUnlockedStamp(uid, stampId);
+  await persistUnlockedStamp(uid, stampId, dbCollectionName);
 
   return { success: true, stampName: stamp.name };
 }
@@ -97,16 +99,16 @@ export async function fetchStamps(hackathonId?: string): Promise<Stamp[]> {
 }
 
 /**
- * Utility to fetch user's already unlocked stamp (IDs)
+ * Utility to fetch user's already unlocked stamp (IDs) for a specific hackathon
  */
-export async function fetchUnlockedStampIds(uid: string): Promise<string[]> {
+export async function fetchUnlockedStampIds(uid: string, hackathonId: string): Promise<string[]> {
   const ref = doc(db, "Socials", uid);
   const snap = await getDoc(ref);
 
   if (!snap.exists()) return [];
 
   const data = snap.data();
-  return data.unlockedStamps ?? [];
+  return data.unlockedStamps?.[hackathonId] ?? [];
 }
 
 /**

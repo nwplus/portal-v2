@@ -41,7 +41,7 @@ export interface Social {
   profilePictureIndex?: number;
   hideRecentlyViewed?: boolean;
   tagsToHide?: TagCategory[];
-  unlockedStamps?: string[]; // array of stamp IDs
+  unlockedStamps?: Record<string, string[]>; // { [hackathonName]: stampIds[] }
   socialLinks?: {
     devpost?: string;
     github?: string;
