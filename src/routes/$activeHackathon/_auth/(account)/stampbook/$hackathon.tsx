@@ -1,3 +1,4 @@
+import { StampbookActions } from "@/components/features/stampbook/stampbook-actions";
 import { Stampbook } from "@/components/features/stampbook/stampbook";
 import { GradientBackground } from "@/components/layout/gradient-background";
 import { Dropdown } from "@/components/ui/dropdown";
@@ -75,48 +76,44 @@ function RouteComponent() {
     );
   }
 
-  const backLink = (
-    <Link
-      to="/$activeHackathon/stampbook"
-      params={{ activeHackathon }}
-      search={{ unlockStamp: undefined }}
-      className="flex items-center gap-1.5 text-sm text-text-secondary transition-colors hover:text-text-primary"
-    >
-      <ArrowLeft size={16} />
-      Back to current stampbook
-    </Link>
-  );
-
-  const hackathonSelector = (
-    <div className="w-44">
-      <Dropdown
-        items={pastHackathonIds}
-        value={selectedHackathon}
-        onValueChange={(value) => {
-          if (!value) return;
-          navigate({
-            to: "/$activeHackathon/stampbook/$hackathon",
-            params: { activeHackathon, hackathon: value },
-          });
-        }}
-        itemToString={formatHackathonName}
-        readOnly
-        placeholder="Select hackathon"
-      />
-    </div>
-  );
-
   return (
     <GradientBackground gradientPosition="bottomMiddle">
-      <div className="flex min-h-full flex-col items-center justify-center">
-        <Stampbook
-          stamps={stamps}
-          displayName={preferredName}
-          hideDescription
-          headerLeft={backLink}
-          headerRight={hackathonSelector}
-          hackathonId={selectedHackathon}
-        />
+      <div className="flex min-h-full flex-col items-center justify-center gap-6 py-8">
+        <div className="flex w-full max-w-4xl items-center justify-between px-6">
+          <Link
+            to="/$activeHackathon/stampbook"
+            params={{ activeHackathon }}
+            search={{ unlockStamp: undefined }}
+            className="flex items-center gap-1.5 text-sm text-text-secondary transition-colors hover:text-text-primary"
+          >
+            <ArrowLeft size={16} />
+            Back to current stampbook
+          </Link>
+          <div className="flex items-center gap-3">
+            <div className="w-44">
+              <Dropdown
+                items={pastHackathonIds}
+                value={selectedHackathon}
+                onValueChange={(value) => {
+                  if (!value) return;
+                  navigate({
+                    to: "/$activeHackathon/stampbook/$hackathon",
+                    params: { activeHackathon, hackathon: value },
+                  });
+                }}
+                itemToString={formatHackathonName}
+                readOnly
+                placeholder="Select hackathon"
+              />
+            </div>
+            <StampbookActions
+              stamps={stamps}
+              displayName={preferredName}
+              hackathonId={selectedHackathon}
+            />
+          </div>
+        </div>
+        <Stampbook stamps={stamps} displayName={preferredName} />
       </div>
     </GradientBackground>
   );

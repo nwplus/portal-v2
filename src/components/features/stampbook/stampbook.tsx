@@ -1,36 +1,11 @@
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { StampWithUnlockState } from "@/lib/firebase/types/stamps";
 import { cn } from "@/lib/utils";
-import { toPng } from "html-to-image";
-import { ChevronLeft, ChevronRight, Download, HelpCircle, Share2 } from "lucide-react";
-import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { forwardRef, useCallback, useRef, useState } from "react";
 import HTMLFlipBook from "react-pageflip";
 import { StampbookPage } from "./stampbook-page";
-import { StampbookShareCard } from "./stampbook-share-card";
 import { organizeIntoSpreads } from "./utils";
-
-/** Inlines all images as base64 and preloads them. Mobile browsers skip loading off-screen images. */
-const preloadImages = async (element: HTMLElement): Promise<void> => {
-  const images = Array.from(element.querySelectorAll("img"));
-
-  await Promise.all(
-    images.map(async (img) => {
-      if (img.src.startsWith("data:")) return;
-      try {
-        const res = await fetch(img.src);
-        const blob = await res.blob();
-        img.src = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.onerror = reject;
-          reader.readAsDataURL(blob);
-        });
-      } catch {
-        console.warn("Failed to inline image:", img.src);
-      }
-    }),
-  );
-};
 
 const DESKTOP_PAGE_WIDTH = 480;
 const DESKTOP_PAGE_HEIGHT = 600;
@@ -40,26 +15,14 @@ const MOBILE_PAGE_HEIGHT = 420;
 interface StampbookProps {
   stamps: StampWithUnlockState[];
   displayName: string;
-  hideDescription?: boolean;
-  headerLeft?: React.ReactNode;
-  headerRight?: React.ReactNode;
-  hackathonId?: string;
 }
 
-// react-pageflip requires forwardRef wrapper for page components
 const Page = forwardRef<HTMLDivElement, { children: React.ReactNode }>(({ children }, ref) => (
   <div ref={ref}>{children}</div>
 ));
 Page.displayName = "Page";
 
-export function Stampbook({
-  stamps,
-  displayName,
-  hideDescription = false,
-  headerLeft,
-  headerRight,
-  hackathonId,
-}: StampbookProps) {
+export function Stampbook({ stamps, displayName }: StampbookProps) {
   const isMobile = useIsMobile();
 
   const pageWidth = isMobile ? MOBILE_PAGE_WIDTH : DESKTOP_PAGE_WIDTH;
@@ -70,57 +33,7 @@ export function Stampbook({
 
   // biome-ignore lint/suspicious/noExplicitAny: react-pageflip doesn't export proper types
   const bookRef = useRef<any>(null);
-  const shareCardRef = useRef<HTMLDivElement>(null);
   const [currentPage, setCurrentPage] = useState(0);
-  // TODO: remove the timeout on mobile once pre-loading is fixed
-  const [canShare, setCanShare] = useState(!isMobile);
-
-  useEffect(() => {
-    if (!isMobile) {
-      setCanShare(true);
-      return;
-    }
-
-    setCanShare(false);
-    const timeout = setTimeout(() => setCanShare(true), 9_000);
-    return () => clearTimeout(timeout);
-  }, [isMobile]);
-
-  const handleShare = async () => {
-    if (!shareCardRef.current) return;
-
-    try {
-      // Cmobile browsers skip loading off-screen images
-      await preloadImages(shareCardRef.current);
-
-      const dataUrl = await toPng(shareCardRef.current, {
-        pixelRatio: 2,
-      });
-
-      const fileName = `${displayName.replace(/\s+/g, "-").toLowerCase()}-stampbook.png`;
-
-      const response = await fetch(dataUrl);
-      const blob = await response.blob();
-      const file = new File([blob], fileName, { type: "image/png" });
-
-      // Use native share sheet only on mobile if available, else download
-      if (isMobile && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: `${displayName}'s Stampbook`,
-        });
-      } else {
-        const link = document.createElement("a");
-        link.download = fileName;
-        link.href = dataUrl;
-        link.click();
-      }
-    } catch (err) {
-      // exclude user cancelling share as an error
-      if (err instanceof Error && err.name === "AbortError") return;
-      console.error("Failed to share stampbook image:", err);
-    }
-  };
 
   const allPages = spreads.flatMap((spread, spreadIndex) => [
     {
@@ -293,71 +206,21 @@ export function Stampbook({
     </div>
   );
 
-  return (
-    <div className="flex flex-col items-center gap-6 py-8">
-      <div className="-left-[9999px] -top-[9999px] pointer-events-none fixed" aria-hidden="true">
-        <StampbookShareCard
-          ref={shareCardRef}
-          stamps={stampsToDisplay}
-          displayName={displayName}
-          hackathonId={hackathonId}
-        />
+  return isMobile ? (
+    <div className="flex flex-col items-center gap-6 py-4">
+      {FlipBook}
+      <div className="flex items-center gap-6">
+        {PrevButton}
+        {PageIndicators}
+        {NextButton}
       </div>
-
-      {!hideDescription && (
-        <div className="max-w-sm px-6 sm:px-10 md:max-w-4xl md:text-center">
-          <p className="text-text-secondary text-xs md:text-sm">
-            <HelpCircle className="mr-1 hidden h-4 w-4 md:inline-block" />
-            There are many ways to unlock these stamps, and each one earns you a ticket to our{" "}
-            <span className="font-bold">prize raffle!</span> Click the icons beside a stamp to learn
-            how to earn it. Some stamps are hidden, so it's up to you to discover them.
-            <span className="font-bold md:font-normal">
-              <br className="md:hidden" />
-              <br className="md:hidden" /> Try to collect them all!
-            </span>
-          </p>
-        </div>
-      )}
-      <div
-        className={cn("flex items-center gap-3", headerLeft && "w-full max-w-4xl justify-between")}
-      >
-        {headerLeft}
-        <div className="flex items-center gap-3">
-          {headerRight}
-          <button
-            type="button"
-            onClick={handleShare}
-            disabled={!canShare}
-            className={cn(
-              "flex items-center gap-2 rounded-lg border border-border-subtle px-4 py-2 font-medium text-sm transition-all",
-              "bg-bg-button-secondary text-text-primary",
-              canShare
-                ? "hover:bg-bg-button-secondary/80 active:scale-98"
-                : "cursor-not-allowed opacity-50",
-            )}
-          >
-            {isMobile ? <Share2 size={16} /> : <Download size={16} />}
-            {isMobile ? (canShare ? "Share Stampbook" : "Pre-loading...") : "Download Stampbook"}
-          </button>
-        </div>
-      </div>
-      {isMobile ? (
-        <div className="flex flex-col items-center gap-6 py-4">
-          {FlipBook}
-          <div className="flex items-center gap-6">
-            {PrevButton}
-            {PageIndicators}
-            {NextButton}
-          </div>
-        </div>
-      ) : (
-        <div className="relative flex items-center justify-center gap-4 py-8">
-          {PrevButton}
-          {FlipBook}
-          {NextButton}
-          <div className="-translate-x-1/2 absolute bottom-0 left-1/2">{PageIndicators}</div>
-        </div>
-      )}
+    </div>
+  ) : (
+    <div className="relative flex items-center justify-center gap-4 py-8">
+      {PrevButton}
+      {FlipBook}
+      {NextButton}
+      <div className="-translate-x-1/2 absolute bottom-0 left-1/2">{PageIndicators}</div>
     </div>
   );
 }
