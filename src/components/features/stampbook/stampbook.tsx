@@ -40,6 +40,10 @@ const MOBILE_PAGE_HEIGHT = 420;
 interface StampbookProps {
   stamps: StampWithUnlockState[];
   displayName: string;
+  hideDescription?: boolean;
+  headerLeft?: React.ReactNode;
+  headerRight?: React.ReactNode;
+  hackathonId?: string;
 }
 
 // react-pageflip requires forwardRef wrapper for page components
@@ -48,7 +52,14 @@ const Page = forwardRef<HTMLDivElement, { children: React.ReactNode }>(({ childr
 ));
 Page.displayName = "Page";
 
-export function Stampbook({ stamps, displayName }: StampbookProps) {
+export function Stampbook({
+  stamps,
+  displayName,
+  hideDescription = false,
+  headerLeft,
+  headerRight,
+  hackathonId,
+}: StampbookProps) {
   const isMobile = useIsMobile();
 
   const pageWidth = isMobile ? MOBILE_PAGE_WIDTH : DESKTOP_PAGE_WIDTH;
@@ -128,7 +139,6 @@ export function Stampbook({ stamps, displayName }: StampbookProps) {
     },
   ]);
 
-  // Filter out empty pages on mobile
   const pages = isMobile ? allPages.filter((page) => page.stamps.length > 0) : allPages;
 
   const handleFlip = useCallback((e: { data: number }) => {
@@ -286,36 +296,51 @@ export function Stampbook({ stamps, displayName }: StampbookProps) {
   return (
     <div className="flex flex-col items-center gap-6 py-8">
       <div className="-left-[9999px] -top-[9999px] pointer-events-none fixed" aria-hidden="true">
-        <StampbookShareCard ref={shareCardRef} stamps={stampsToDisplay} displayName={displayName} />
+        <StampbookShareCard
+          ref={shareCardRef}
+          stamps={stampsToDisplay}
+          displayName={displayName}
+          hackathonId={hackathonId}
+        />
       </div>
 
-      <div className="max-w-sm px-6 sm:px-10 md:max-w-4xl md:text-center">
-        <p className="text-text-secondary text-xs md:text-sm">
-          <HelpCircle className="mr-1 hidden h-4 w-4 md:inline-block" />
-          There are many ways to unlock these stamps, and each one earns you a ticket to our{" "}
-          <span className="font-bold">prize raffle!</span> Click the icons beside a stamp to learn
-          how to earn it. Some stamps are hidden, so it's up to you to discover them.
-          <span className="font-bold md:font-normal">
-            <br className="md:hidden" />
-            <br className="md:hidden" /> Try to collect them all!
-          </span>
-        </p>
-      </div>
-      <button
-        type="button"
-        onClick={handleShare}
-        disabled={!canShare}
-        className={cn(
-          "flex items-center gap-2 rounded-lg border border-border-subtle px-4 py-2 font-medium text-sm transition-all",
-          "bg-bg-button-secondary text-text-primary",
-          canShare
-            ? "hover:bg-bg-button-secondary/80 active:scale-98"
-            : "cursor-not-allowed opacity-50",
-        )}
+      {!hideDescription && (
+        <div className="max-w-sm px-6 sm:px-10 md:max-w-4xl md:text-center">
+          <p className="text-text-secondary text-xs md:text-sm">
+            <HelpCircle className="mr-1 hidden h-4 w-4 md:inline-block" />
+            There are many ways to unlock these stamps, and each one earns you a ticket to our{" "}
+            <span className="font-bold">prize raffle!</span> Click the icons beside a stamp to learn
+            how to earn it. Some stamps are hidden, so it's up to you to discover them.
+            <span className="font-bold md:font-normal">
+              <br className="md:hidden" />
+              <br className="md:hidden" /> Try to collect them all!
+            </span>
+          </p>
+        </div>
+      )}
+      <div
+        className={cn("flex items-center gap-3", headerLeft && "w-full max-w-4xl justify-between")}
       >
-        {isMobile ? <Share2 size={16} /> : <Download size={16} />}
-        {isMobile ? (canShare ? "Share Stampbook" : "Pre-loading...") : "Download Stampbook"}
-      </button>
+        {headerLeft}
+        <div className="flex items-center gap-3">
+          {headerRight}
+          <button
+            type="button"
+            onClick={handleShare}
+            disabled={!canShare}
+            className={cn(
+              "flex items-center gap-2 rounded-lg border border-border-subtle px-4 py-2 font-medium text-sm transition-all",
+              "bg-bg-button-secondary text-text-primary",
+              canShare
+                ? "hover:bg-bg-button-secondary/80 active:scale-98"
+                : "cursor-not-allowed opacity-50",
+            )}
+          >
+            {isMobile ? <Share2 size={16} /> : <Download size={16} />}
+            {isMobile ? (canShare ? "Share Stampbook" : "Pre-loading...") : "Download Stampbook"}
+          </button>
+        </div>
+      </div>
       {isMobile ? (
         <div className="flex flex-col items-center gap-6 py-4">
           {FlipBook}

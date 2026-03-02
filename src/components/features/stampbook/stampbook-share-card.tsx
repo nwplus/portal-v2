@@ -1,11 +1,13 @@
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
 import type { StampWithUnlockState } from "@/lib/firebase/types/stamps";
 import { cn, getColouredHackathonIcon } from "@/lib/utils";
+import { parseDbCollectionName } from "@/services/latest-hackathons";
 import { forwardRef } from "react";
 
 interface StampbookShareCardProps {
   stamps: StampWithUnlockState[];
   displayName: string;
+  hackathonId?: string;
 }
 
 const MAX_DISPLAY_STAMPS = 15;
@@ -22,12 +24,28 @@ const getLayoutConfig = (count: number) => {
  * A static, shareable card that displays the user's stamp collection.
  * Designed for social media sharing (1:1 aspect ratio).
  */
+const HACKATHON_DOMAINS: Record<string, string> = {
+  nwhacks: "nwhacks.io",
+  "cmd-f": "cmdf.nwplus.io",
+  hackcamp: "hackcamp.nwplus.io",
+};
+
+function getHackathonDomain(shortName: string): string {
+  const key = shortName.toLowerCase();
+  return HACKATHON_DOMAINS[key] ?? `${key}.io`;
+}
+
 export const StampbookShareCard = forwardRef<HTMLDivElement, StampbookShareCardProps>(
-  ({ displayName, stamps }, ref) => {
-    const { displayNameFull, displayNameShort } = useHackathonInfo();
-    const hackathonName = displayNameFull;
-    const hackathonDomain = displayNameShort.toLowerCase();
-    const HackathonIcon = getColouredHackathonIcon(hackathonDomain);
+  ({ displayName, stamps, hackathonId }, ref) => {
+    const currentHackathonInfo = useHackathonInfo();
+
+    const { displayNameFull, displayNameShort } = hackathonId
+      ? parseDbCollectionName(hackathonId)
+      : currentHackathonInfo;
+
+    // This is static for now; but should replace with year-specific icons in the future
+    const HackathonIcon = getColouredHackathonIcon(displayNameShort);
+    const domain = getHackathonDomain(displayNameShort);
 
     const unlockedStamps = stamps.filter((s) => s.isUnlocked);
     const totalStamps = stamps.length;
@@ -100,9 +118,9 @@ export const StampbookShareCard = forwardRef<HTMLDivElement, StampbookShareCardP
           )}
 
           <div className="mt-6 flex items-center justify-center gap-3 border-border-subtle border-t pt-4">
-            <span className="font-medium text-sm text-text-primary">{hackathonName}</span>
+            <span className="font-medium text-sm text-text-primary">{displayNameFull}</span>
             <span className="text-text-primary">•</span>
-            <span className="text-sm text-text-primary">{hackathonDomain}.io</span>
+            <span className="text-sm text-text-primary">{domain}</span>
           </div>
         </div>
       </div>
