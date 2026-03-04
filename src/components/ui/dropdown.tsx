@@ -21,6 +21,7 @@ interface DropdownProps<T = string> {
   inputId?: string;
   invalid?: boolean;
   onBlur?: () => void;
+  readOnly?: boolean;
 }
 
 export function Dropdown<T = string>({
@@ -38,6 +39,7 @@ export function Dropdown<T = string>({
   inputId,
   invalid,
   onBlur,
+  readOnly = false,
 }: DropdownProps<T>) {
   const generatedId = useId();
   const id = inputId ?? generatedId;
@@ -177,10 +179,11 @@ export function Dropdown<T = string>({
             placeholder={placeholder ?? "Start typing or select an option"}
             id={id}
             name={name}
+            readOnly={readOnly}
             aria-invalid={invalid || undefined}
             data-invalid={invalid || undefined}
             onBlur={() => {
-              commitInputToValue();
+              if (!readOnly) commitInputToValue();
               onBlur?.();
             }}
             onKeyDown={(event) => {
@@ -189,16 +192,14 @@ export function Dropdown<T = string>({
                 commitInputToValue();
               }
             }}
-            className="h-9 w-full min-w-0 rounded-md border border-border-subtle py-1 pr-10 pl-3 text-base text-text-primary shadow-xs outline-none transition-[color,box-shadow] [background:var(--background-text-field)] selection:bg-bg-text-field selection:text-text-primary placeholder:text-text-secondary focus:border-border-active focus:ring-2 focus:ring-border-active/20 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-border-danger aria-invalid:ring-border-danger/20 md:text-sm"
+            className={`h-9 w-full min-w-0 rounded-md border border-border-subtle py-1 pr-10 pl-3 text-base text-text-primary shadow-xs outline-none transition-[color,box-shadow] [background:var(--background-text-field)] selection:bg-bg-text-field selection:text-text-primary placeholder:text-text-secondary focus:border-border-active focus:ring-2 focus:ring-border-active/20 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-border-danger aria-invalid:ring-border-danger/20 md:text-sm${readOnly ? " cursor-pointer caret-transparent" : ""}`}
           />
-          <div className="pointer-events-none absolute top-0 right-2 flex h-9 items-center justify-center text-text-secondary">
-            <Combobox.Trigger
-              className="pointer-events-auto flex h-9 w-6 items-center justify-center rounded bg-transparent p-0"
-              aria-label="Open popup"
-            >
-              <ChevronDownIcon className="size-4" />
-            </Combobox.Trigger>
-          </div>
+          <Combobox.Trigger
+            className={`absolute top-0 right-0 flex h-9 items-center justify-center rounded bg-transparent p-0 text-text-secondary ${readOnly ? "w-full justify-end pr-2" : "pointer-events-auto w-8"}`}
+            aria-label="Open popup"
+          >
+            <ChevronDownIcon className="size-4" />
+          </Combobox.Trigger>
         </div>
       </div>
 

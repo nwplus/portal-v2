@@ -41,7 +41,11 @@ export async function loadStampbook(
 /**
  * Persist a newly-unlocked stamp to the user's social profile.
  */
-async function persistUnlockedStamp(uid: string, stampId: string, hackathonId: string): Promise<void> {
+async function persistUnlockedStamp(
+  uid: string,
+  stampId: string,
+  hackathonId: string,
+): Promise<void> {
   const socialRef = doc(db, "Socials", uid);
   await setDoc(
     socialRef,
@@ -109,6 +113,49 @@ export async function fetchUnlockedStampIds(uid: string, hackathonId: string): P
 
   const data = snap.data();
   return data.unlockedStamps?.[hackathonId] ?? [];
+}
+
+/**
+ * Fetch all hackathon IDs that have unlocked stamps for a user (excluding the current hackathon)
+ */
+export async function fetchPastHackathonIds(
+  uid: string,
+  currentHackathonId: string,
+): Promise<string[]> {
+  const ref = doc(db, "Socials", uid);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) return [];
+
+  const data = snap.data();
+  const unlockedStamps = data.unlockedStamps as Record<string, string[]> | undefined;
+
+  if (!unlockedStamps) return [];
+
+  return Object.keys(unlockedStamps)
+    .filter(
+      (hackathonId) =>
+        hackathonId !== currentHackathonId && unlockedStamps[hackathonId]?.length > 0,
+    )
+    .sort((a, b) => b.localeCompare(a));
+}
+
+/**
+ * Load a read-only stampbook for a past hackathon (no criteria evaluation or unlocking)
+ */
+export async function loadPastStampbook(
+  uid: string,
+  hackathonId: string,
+): Promise<StampWithUnlockState[]> {
+  const [allStamps, unlockedStampIds] = await Promise.all([
+    fetchStamps(hackathonId),
+    fetchUnlockedStampIds(uid, hackathonId),
+  ]);
+
+  return allStamps.map((stamp: Stamp) => ({
+    ...stamp,
+    isUnlocked: unlockedStampIds.includes(stamp._id),
+  }));
 }
 
 /**
