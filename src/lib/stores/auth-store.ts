@@ -1,4 +1,4 @@
-import { fetchOrCreateSocial } from "@/services/socials";
+import { guaranteeSocial } from "@/services/socials";
 import { type User, onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
 import { create } from "zustand";
 import { checkAdminClaim, googleProvider } from "../firebase/auth";
@@ -41,7 +41,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         });
 
         if (user?.email) {
-          await fetchOrCreateSocial(user.uid, user.email).catch(console.error);
+          await guaranteeSocial(user.uid, user.email).catch(console.error);
         }
       } catch (_) {
         set({
