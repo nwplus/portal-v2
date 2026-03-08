@@ -1,5 +1,5 @@
-import { StampbookActions } from "@/components/features/stampbook/stampbook-actions";
 import { Stampbook } from "@/components/features/stampbook/stampbook";
+import { StampbookActions } from "@/components/features/stampbook/stampbook-actions";
 import { GradientBackground } from "@/components/layout/gradient-background";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useHackerStore } from "@/lib/stores/hacker-store";

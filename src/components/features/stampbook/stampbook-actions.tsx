@@ -97,7 +97,9 @@ export function StampbookActions({ stamps, displayName, hackathonId }: Stampbook
         className={cn(
           "flex items-center gap-2 rounded-lg border border-border-subtle px-4 py-2 font-medium text-sm transition-all",
           "bg-bg-button-secondary text-text-primary",
-          canShare ? "hover:bg-bg-button-secondary/80 active:scale-98" : "cursor-not-allowed opacity-50",
+          canShare
+            ? "hover:bg-bg-button-secondary/80 active:scale-98"
+            : "cursor-not-allowed opacity-50",
         )}
       >
         {isMobile ? <Share2 size={16} /> : <Download size={16} />}
