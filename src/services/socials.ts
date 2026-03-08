@@ -245,6 +245,15 @@ function removeUndefinedFields<T extends Record<string, unknown>>(obj: T): Parti
 }
 
 /**
+ * Guarantee that a Socials document exists with at least _id and email.
+ * Intended to be called early (e.g. on auth) so downstream services can always
+ * pair email with other fields like unlockedStamps; which is used for raffling.
+ */
+export async function guaranteeSocial(uid: string, email: string): Promise<void> {
+  await createOrMergeSocial(uid, email, { _id: uid, email });
+}
+
+/**
  * Creates or merges a social profile 'draft' into Firestore
  *
  * @param uid - firebase auth user id
