@@ -1,3 +1,4 @@
+import { guaranteeSocial } from "@/services/socials";
 import { type User, onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
 import { create } from "zustand";
 import { checkAdminClaim, googleProvider } from "../firebase/auth";
@@ -38,6 +39,10 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
           isAuthenticated: !!user,
           isAdmin,
         });
+
+        if (user?.email) {
+          await guaranteeSocial(user.uid, user.email).catch(console.error);
+        }
       } catch (_) {
         set({
           user,
