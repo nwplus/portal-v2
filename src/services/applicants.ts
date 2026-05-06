@@ -82,6 +82,38 @@ export async function createOrMergeApplicant(
 }
 
 /**
+ * Saves an applicant draft snapshot to Firestore without touching submission state
+ *
+ * This is used by autosave/manual draft saves so stale draft writes cannot overwrite
+ * `submission.submitted`, `submission.submittedAt`, or `status.applicationStatus`
+ *
+ * @param dbCollectionName - firestore collection name for the hackathon
+ * @param uid - firebase auth user id (also used as the document id)
+ * @param draft - applicant draft snapshot to be merged
+ * @returns a promise that resolves when the applicant draft snapshot is merged
+ */
+export async function saveApplicantDraftSnapshot(
+  dbCollectionName: string,
+  uid: string,
+  draft: ApplicantDraft,
+): Promise<void> {
+  const ref = getApplicantRef(dbCollectionName, uid);
+
+  await setDoc(
+    ref,
+    {
+      _id: uid,
+      basicInfo: draft.basicInfo,
+      questionnaire: draft.questionnaire,
+      skills: draft.skills,
+      termsAndConditions: draft.termsAndConditions,
+      submission: { lastUpdated: serverTimestamp() as Timestamp },
+    },
+    { merge: true },
+  );
+}
+
+/**
  * Submits an applicant draft by marking it as submitted and persisting it.
  * Returns the updated draft shape that callers can use to update local state.
  */
@@ -140,7 +172,7 @@ export async function saveApplicantDraft(dbCollectionName: string): Promise<void
     return;
   }
 
-  await createOrMergeApplicant(dbCollectionName, user.uid, applicantDraft);
+  await saveApplicantDraftSnapshot(dbCollectionName, user.uid, applicantDraft);
   setDirty(false);
   setLastLocalSaveAt(Date.now());
 }

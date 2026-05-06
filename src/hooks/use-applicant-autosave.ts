@@ -1,5 +1,5 @@
 import { useApplicantStore } from "@/lib/stores/applicant-store";
-import { createOrMergeApplicant } from "@/services/applicants";
+import { saveApplicantDraftSnapshot } from "@/services/applicants";
 import { useEffect, useState } from "react";
 
 const AUTOSAVE_INTERVAL = 5_000;
@@ -45,11 +45,14 @@ export function useApplicantAutosave(dbCollectionName: string, uid: string | und
 
       try {
         setSaving(true);
-        await createOrMergeApplicant(dbCollectionName, uid, applicantDraft);
+        await saveApplicantDraftSnapshot(dbCollectionName, uid, applicantDraft);
 
         // only clear dirty if no new edits occurred during the save
         const { applicantDraft: currentDraft } = useApplicantStore.getState();
-        setDirty(currentDraft !== applicantDraft);
+        const currentIsSubmitted =
+          currentDraft?.submission?.submitted === true ||
+          currentDraft?.status?.applicationStatus !== "inProgress";
+        setDirty(currentIsSubmitted ? false : currentDraft !== applicantDraft);
         setLastLocalSaveAt(Date.now());
       } catch (error) {
         console.error("applicant autosave failed", {
