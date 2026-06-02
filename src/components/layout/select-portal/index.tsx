@@ -105,6 +105,8 @@ const useGeneratedPortals = (hackathons: Hackathon[]) => {
   const upNextHackathon = usePortalStore((state) => state.upNextHackathon);
   const applicationsOpen = usePortalStore((state) => state.applicationsOpen);
   const applicationDeadline = usePortalStore((state) => state.applicationDeadline);
+  const isLegacy = usePortalStore((state) => state.isLegacy);
+  const legacyStatementUrl = usePortalStore((state) => state.legacyStatementUrl);
   const portalTheme = usePortalTheme();
 
   const portals = hackathonTypes
@@ -141,6 +143,8 @@ const useGeneratedPortals = (hackathons: Hackathon[]) => {
         isUpNext: upNextHackathon ? upNextHackathon[hackathonId] : false,
         applicationOpen: applicationsOpen ? applicationsOpen[hackathonId] : false,
         applicationDeadline: applicationDeadline?.[hackathonId],
+        isLegacy: isLegacy ? isLegacy[hackathonId] : false,
+        legacyStatementUrl: legacyStatementUrl ? legacyStatementUrl[hackathonId] : undefined,
         index,
       };
     });
