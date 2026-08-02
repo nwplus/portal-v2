@@ -4,6 +4,7 @@ import { Message } from "@/components/features/my-ticket/message";
 import { type PlacedSticker, Ticket } from "@/components/features/my-ticket/ticket";
 import { GradientBackground } from "@/components/layout/gradient-background";
 import { useHackathon } from "@/hooks/use-hackathon";
+import { useHackathonInfo } from "@/hooks/use-hackathon-info";
 import { useHackerStore } from "@/lib/stores/hacker-store";
 import { addHackerPassToGoogleWallet } from "@/services/wallet";
 import { createFileRoute } from "@tanstack/react-router";
@@ -19,6 +20,7 @@ export const Route = createFileRoute("/$activeHackathon/_auth/(account)/my-ticke
 function RouteComponent() {
   const hacker = useHackerStore((state) => state.hacker);
   const { activeHackathon } = useHackathon();
+  const { dbCollectionName } = useHackathonInfo();
   const ticketRef = useRef<HTMLDivElement>(null);
   const [isCustomizing, setIsCustomizing] = useState(false);
   const [walletLoading, setWalletLoading] = useState(false);
@@ -117,7 +119,7 @@ function RouteComponent() {
     setWalletLoading(true);
     try {
       const qrValue = `${window.location.origin}/${activeHackathon}/social-profile/${hacker._id}`;
-      const saveUrl = await addHackerPassToGoogleWallet(activeHackathon, qrValue);
+      const saveUrl = await addHackerPassToGoogleWallet(dbCollectionName, qrValue);
       window.open(saveUrl, "_blank", "noopener,noreferrer");
     } catch (error) {
       console.error("Failed to add pass to Google Wallet", error);
