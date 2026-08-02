@@ -194,7 +194,7 @@ function RouteComponent() {
           type="button"
           onClick={handleAddToGoogleWallet}
           disabled={walletLoading}
-          className="mx-auto flex h-[50px] w-auto cursor-pointer items-center justify-center rounded-lg border border-border-subtle bg-bg-dropdown-selected px-2 transition-opacity disabled:cursor-default disabled:opacity-50"
+          className="mx-auto flex cursor-pointer items-center justify-center border-none bg-transparent p-0 transition-opacity disabled:cursor-default disabled:opacity-50"
           aria-label="Add to Google Wallet"
         >
           {walletLoading ? (
