@@ -5,9 +5,11 @@ import { type PlacedSticker, Ticket } from "@/components/features/my-ticket/tick
 import { GradientBackground } from "@/components/layout/gradient-background";
 import { useHackathon } from "@/hooks/use-hackathon";
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
+import { storage } from "@/lib/firebase/client";
 import { useHackerStore } from "@/lib/stores/hacker-store";
 import { addHackerPassToAppleWallet, addHackerPassToGoogleWallet } from "@/services/wallet";
 import { createFileRoute } from "@tanstack/react-router";
+import { getDownloadURL, ref } from "firebase/storage";
 import { toPng } from "html-to-image";
 import { Download, Loader2, Palette } from "lucide-react";
 import { useRef, useState } from "react";
@@ -135,7 +137,8 @@ function RouteComponent() {
     setAppleWalletLoading(true);
     try {
       const qrValue = `${window.location.origin}/${activeHackathon}/social-profile/${hacker._id}`;
-      const downloadUrl = await addHackerPassToAppleWallet(dbCollectionName, qrValue);
+      const storagePath = await addHackerPassToAppleWallet(dbCollectionName, qrValue);
+      const downloadUrl = await getDownloadURL(ref(storage, storagePath));
       window.location.href = downloadUrl;
     } catch (error) {
       console.error("Failed to add pass to Apple Wallet", error);

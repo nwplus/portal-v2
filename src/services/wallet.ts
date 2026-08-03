@@ -39,7 +39,7 @@ interface GenerateAppleWalletPassInput {
 
 interface GenerateAppleWalletPassOutput {
   success: boolean;
-  downloadUrl: string;
+  storagePath: string;
 }
 
 const generateAppleWalletPass = httpsCallable<
@@ -50,8 +50,9 @@ const generateAppleWalletPass = httpsCallable<
 /**
  * Calls the `generateAppleWalletPass` callable (Functions-new, `wallet/apple`
  * branch) to build and sign a `.pkpass` for the hacker, then returns the
- * public Storage URL the browser should navigate to so iOS Safari downloads
- * the pass and opens the Wallet "Add Pass" sheet.
+ * owner-private Storage path (`passes/{dbCollectionName}/{uid}`). The caller
+ * resolves a tokenized download URL with the client SDK `getDownloadURL` so the
+ * owner's signed-in auth passes the storage rules.
  *
  * Mirrors the `qrValue` construction used by `components/features/my-ticket/ticket.tsx:52-54`:
  * `${origin}/${activeHackathon}/social-profile/${uid}`.
@@ -61,5 +62,5 @@ export async function addHackerPassToAppleWallet(
   qrValue: string,
 ): Promise<string> {
   const result = await generateAppleWalletPass({ dbCollectionName, qrValue });
-  return result.data.downloadUrl;
+  return result.data.storagePath;
 }
