@@ -6,7 +6,7 @@ import { GradientBackground } from "@/components/layout/gradient-background";
 import { useHackathon } from "@/hooks/use-hackathon";
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
 import { useHackerStore } from "@/lib/stores/hacker-store";
-import { addHackerPassToGoogleWallet } from "@/services/wallet";
+import { addHackerPassToAppleWallet, addHackerPassToGoogleWallet } from "@/services/wallet";
 import { createFileRoute } from "@tanstack/react-router";
 import { toPng } from "html-to-image";
 import { Download, Loader2, Palette } from "lucide-react";
@@ -24,6 +24,7 @@ function RouteComponent() {
   const ticketRef = useRef<HTMLDivElement>(null);
   const [isCustomizing, setIsCustomizing] = useState(false);
   const [walletLoading, setWalletLoading] = useState(false);
+  const [appleWalletLoading, setAppleWalletLoading] = useState(false);
 
   // Persisted sticker storage key
   const STORAGE_KEY = "ticketPlacedStickers";
@@ -129,6 +130,21 @@ function RouteComponent() {
     }
   };
 
+  const handleAddToAppleWallet = async () => {
+    if (!hacker?._id) return;
+    setAppleWalletLoading(true);
+    try {
+      const qrValue = `${window.location.origin}/${activeHackathon}/social-profile/${hacker._id}`;
+      const downloadUrl = await addHackerPassToAppleWallet(dbCollectionName, qrValue);
+      window.location.href = downloadUrl;
+    } catch (error) {
+      console.error("Failed to add pass to Apple Wallet", error);
+      toast.error("Couldn't add pass to Apple Wallet. Please try again.");
+    } finally {
+      setAppleWalletLoading(false);
+    }
+  };
+
   const selectedFontCss =
     selectedFontKey === "caveat"
       ? "var(--font-caveat)"
@@ -203,6 +219,23 @@ function RouteComponent() {
             <img
               src="/assets/wallet/add-to-wallet-button-primary.png"
               alt="Add to Google Wallet"
+              className="h-[34px] w-auto"
+            />
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={handleAddToAppleWallet}
+          disabled={appleWalletLoading}
+          className="mx-auto flex cursor-pointer items-center justify-center border-none bg-transparent p-0 transition-opacity disabled:cursor-default disabled:opacity-50"
+          aria-label="Add to Apple Wallet"
+        >
+          {appleWalletLoading ? (
+            <Loader2 className="size-6 animate-spin" />
+          ) : (
+            <img
+              src="/assets/wallet/add-to-apple-wallet-badge.svg"
+              alt="Add to Apple Wallet"
               className="h-[34px] w-auto"
             />
           )}
