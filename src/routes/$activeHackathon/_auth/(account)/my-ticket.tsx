@@ -209,40 +209,42 @@ function RouteComponent() {
         >
           <Download size={22} />
         </button>
-        <button
-          type="button"
-          onClick={handleAddToGoogleWallet}
-          disabled={walletLoading}
-          className="mx-auto flex cursor-pointer items-center justify-center border-none bg-transparent p-0 transition-opacity disabled:cursor-default disabled:opacity-50"
-          aria-label="Add to Google Wallet"
-        >
-          {walletLoading ? (
-            <Loader2 className="size-6 animate-spin" />
-          ) : (
-            <img
-              src="/assets/wallet/add-to-wallet-button-primary.png"
-              alt="Add to Google Wallet"
-              className="h-[34px] w-auto"
-            />
-          )}
-        </button>
-        <button
-          type="button"
-          onClick={handleAddToAppleWallet}
-          disabled={appleWalletLoading}
-          className="mx-auto flex cursor-pointer items-center justify-center border-none bg-transparent p-0 transition-opacity disabled:cursor-default disabled:opacity-50"
-          aria-label="Add to Apple Wallet"
-        >
-          {appleWalletLoading ? (
-            <Loader2 className="size-6 animate-spin" />
-          ) : (
-            <img
-              src="/assets/wallet/add-to-apple-wallet-badge.svg"
-              alt="Add to Apple Wallet"
-              className="h-[34px] w-auto"
-            />
-          )}
-        </button>
+        <div className="flex flex-col items-center justify-center gap-3 px-4 md:flex-row md:gap-5 md:px-0">
+          <button
+            type="button"
+            onClick={handleAddToGoogleWallet}
+            disabled={walletLoading}
+            className="inline-flex cursor-pointer items-center justify-center rounded-xl border-none bg-transparent p-0 transition-opacity hover:opacity-80 focus-visible:opacity-80 disabled:cursor-default disabled:opacity-50"
+            aria-label="Add to Google Wallet"
+          >
+            {walletLoading ? (
+              <Loader2 className="size-6 animate-spin" />
+            ) : (
+              <img
+                src="/assets/wallet/add-to-wallet-button-condensed.png"
+                alt="Add to Google Wallet"
+                className="h-auto w-[130px] md:w-[150px]"
+              />
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={handleAddToAppleWallet}
+            disabled={appleWalletLoading}
+            className="inline-flex cursor-pointer items-center justify-center rounded-xl border-none bg-transparent p-0 transition-opacity hover:opacity-80 focus-visible:opacity-80 disabled:cursor-default disabled:opacity-50"
+            aria-label="Add to Apple Wallet"
+          >
+            {appleWalletLoading ? (
+              <Loader2 className="size-6 animate-spin" />
+            ) : (
+              <img
+                src="/assets/wallet/add-to-apple-wallet-badge.svg"
+                alt="Add to Apple Wallet"
+                className="h-auto w-[115px] md:w-[135px]"
+              />
+            )}
+          </button>
+        </div>
         {isCustomizing && (
           <Customization
             onStickerSelect={handleStickerSelect}
