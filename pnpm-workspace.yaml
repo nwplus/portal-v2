@@ -1,9 +1,15 @@
 packages:
-  - '.'
+  - "."
+
+minimumReleaseAge: 10080
+trustPolicy: no-downgrade
+trustPolicyIgnoreAfter: 525600
+trustLockfile: false
+blockExoticSubdeps: true
 
 allowBuilds:
-  '@biomejs/biome': true
-  '@firebase/util': true
-  '@tailwindcss/oxide': true
+  "@biomejs/biome": true
+  "@firebase/util": true
+  "@tailwindcss/oxide": true
   esbuild: true
   protobufjs: true
