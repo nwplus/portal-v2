@@ -3,11 +3,17 @@ import { Customization } from "@/components/features/my-ticket/customization";
 import { Message } from "@/components/features/my-ticket/message";
 import { type PlacedSticker, Ticket } from "@/components/features/my-ticket/ticket";
 import { GradientBackground } from "@/components/layout/gradient-background";
+import { useHackathon } from "@/hooks/use-hackathon";
+import { useHackathonInfo } from "@/hooks/use-hackathon-info";
+import { storage } from "@/lib/firebase/client";
 import { useHackerStore } from "@/lib/stores/hacker-store";
+import { addHackerPassToAppleWallet, addHackerPassToGoogleWallet } from "@/services/wallet";
 import { createFileRoute } from "@tanstack/react-router";
+import { getDownloadURL, ref } from "firebase/storage";
 import { toPng } from "html-to-image";
-import { Download, Palette } from "lucide-react";
+import { Download, Loader2, Palette } from "lucide-react";
 import { useRef, useState } from "react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/$activeHackathon/_auth/(account)/my-ticket")({
   component: RouteComponent,
@@ -15,8 +21,12 @@ export const Route = createFileRoute("/$activeHackathon/_auth/(account)/my-ticke
 
 function RouteComponent() {
   const hacker = useHackerStore((state) => state.hacker);
+  const { activeHackathon } = useHackathon();
+  const { dbCollectionName } = useHackathonInfo();
   const ticketRef = useRef<HTMLDivElement>(null);
   const [isCustomizing, setIsCustomizing] = useState(false);
+  const [walletLoading, setWalletLoading] = useState(false);
+  const [appleWalletLoading, setAppleWalletLoading] = useState(false);
 
   // Persisted sticker storage key
   const STORAGE_KEY = "ticketPlacedStickers";
@@ -107,6 +117,37 @@ function RouteComponent() {
     link.click();
   };
 
+  const handleAddToGoogleWallet = async () => {
+    if (!hacker?._id) return;
+    setWalletLoading(true);
+    try {
+      const qrValue = `${window.location.origin}/${activeHackathon}/social-profile/${hacker._id}`;
+      const saveUrl = await addHackerPassToGoogleWallet(dbCollectionName, qrValue);
+      window.open(saveUrl, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      console.error("Failed to add pass to Google Wallet", error);
+      toast.error("Couldn't add pass to Google Wallet. Please try again.");
+    } finally {
+      setWalletLoading(false);
+    }
+  };
+
+  const handleAddToAppleWallet = async () => {
+    if (!hacker?._id) return;
+    setAppleWalletLoading(true);
+    try {
+      const qrValue = `${window.location.origin}/${activeHackathon}/social-profile/${hacker._id}`;
+      const storagePath = await addHackerPassToAppleWallet(dbCollectionName, qrValue);
+      const downloadUrl = await getDownloadURL(ref(storage, storagePath));
+      window.location.href = downloadUrl;
+    } catch (error) {
+      console.error("Failed to add pass to Apple Wallet", error);
+      toast.error("Couldn't add pass to Apple Wallet. Please try again.");
+    } finally {
+      setAppleWalletLoading(false);
+    }
+  };
+
   const selectedFontCss =
     selectedFontKey === "caveat"
       ? "var(--font-caveat)"
@@ -168,6 +209,42 @@ function RouteComponent() {
         >
           <Download size={22} />
         </button>
+        <div className="flex flex-col items-center justify-center gap-3 px-4 md:flex-row md:gap-5 md:px-0">
+          <button
+            type="button"
+            onClick={handleAddToGoogleWallet}
+            disabled={walletLoading}
+            className="inline-flex cursor-pointer items-center justify-center rounded-xl border-none bg-transparent p-0 transition-opacity hover:opacity-80 focus-visible:opacity-80 disabled:cursor-default disabled:opacity-50"
+            aria-label="Add to Google Wallet"
+          >
+            {walletLoading ? (
+              <Loader2 className="size-6 animate-spin" />
+            ) : (
+              <img
+                src="/assets/wallet/add-to-wallet-button-condensed.png"
+                alt="Add to Google Wallet"
+                className="h-auto w-[130px] md:w-[150px]"
+              />
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={handleAddToAppleWallet}
+            disabled={appleWalletLoading}
+            className="inline-flex cursor-pointer items-center justify-center rounded-xl border-none bg-transparent p-0 transition-opacity hover:opacity-80 focus-visible:opacity-80 disabled:cursor-default disabled:opacity-50"
+            aria-label="Add to Apple Wallet"
+          >
+            {appleWalletLoading ? (
+              <Loader2 className="size-6 animate-spin" />
+            ) : (
+              <img
+                src="/assets/wallet/add-to-apple-wallet-badge.svg"
+                alt="Add to Apple Wallet"
+                className="h-auto w-[115px] md:w-[135px]"
+              />
+            )}
+          </button>
+        </div>
         {isCustomizing && (
           <Customization
             onStickerSelect={handleStickerSelect}
