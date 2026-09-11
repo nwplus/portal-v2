@@ -9,6 +9,8 @@ interface GenerateGoogleWalletPassInput {
 interface GenerateGoogleWalletPassOutput {
   success: boolean;
   saveUrl: string;
+  assetsMissing?: boolean;
+  missingAssets?: string[];
 }
 
 const generateGoogleWalletPass = httpsCallable<
@@ -17,19 +19,32 @@ const generateGoogleWalletPass = httpsCallable<
 >(functions, "generateGoogleWalletPass");
 
 /**
- * Calls the `generateGoogleWalletPass` callable (Functions-new, `wallet/google`
- * branch) to upsert a Wallet class+object for the hacker, then returns the
- * signed `saveUrl` the browser should open to land on Google's "Save to Wallet" page.
+ * Calls the `generateGoogleWalletPass` callable (Functions-new) to upsert a
+ * Wallet class+object for the hacker, then returns the signed `saveUrl` the
+ * browser should open to land on Google's "Save to Wallet" page.
  *
  * Mirrors the `qrValue` construction used by `components/features/my-ticket/ticket.tsx:52-54`:
  * `${origin}/${activeHackathon}/social-profile/${uid}`.
+ *
+ * A returned `assetsMissing`/`missingAssets` means this hackathon's Storage
+ * assets (`assets/{dbCollectionName}/google/`) are not available, so the
+ * callable generated the pass without logo/hero — the caller should surface
+ * that to the user instead of treating it as a generic failure.
  */
 export async function addHackerPassToGoogleWallet(
   dbCollectionName: string,
   qrValue: string,
-): Promise<string> {
+): Promise<{
+  saveUrl: string;
+  assetsMissing: boolean;
+  missingAssets: string[];
+}> {
   const result = await generateGoogleWalletPass({ dbCollectionName, qrValue });
-  return result.data.saveUrl;
+  return {
+    saveUrl: result.data.saveUrl,
+    assetsMissing: result.data.assetsMissing ?? false,
+    missingAssets: result.data.missingAssets ?? [],
+  };
 }
 
 interface GenerateAppleWalletPassInput {
