@@ -124,7 +124,15 @@ function RouteComponent() {
     setWalletLoading(true);
     try {
       const qrValue = `${window.location.origin}/${activeHackathon}/social-profile/${hacker._id}`;
-      const saveUrl = await addHackerPassToGoogleWallet(dbCollectionName, qrValue);
+      const { saveUrl, assetsMissing, missingAssets } = await addHackerPassToGoogleWallet(
+        dbCollectionName,
+        qrValue,
+      );
+      if (assetsMissing) {
+        toast.warning(
+          `The ${activeHackathon} Wallet assets are not available (missing: ${missingAssets.join(", ")}). The pass was saved without its logo and hero image.`,
+        );
+      }
       window.open(saveUrl, "_blank", "noopener,noreferrer");
     } catch (error) {
       console.error("Failed to add pass to Google Wallet", error);
