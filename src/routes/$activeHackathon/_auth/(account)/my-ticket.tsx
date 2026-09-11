@@ -180,11 +180,11 @@ function RouteComponent() {
           {appleWalletLoading ? (
             <Loader2 className="size-6 animate-spin" />
           ) : (
-            <div className="flex h-[48px] w-[172px] items-center justify-center">
+            <div className="w-[172px]">
               <img
                 src="/assets/wallet/add-to-apple-wallet-badge.svg"
                 alt="Add to Apple Wallet"
-                className="h-full w-full object-contain"
+                className="h-auto w-full"
               />
             </div>
           )}
@@ -201,11 +201,11 @@ function RouteComponent() {
           {walletLoading ? (
             <Loader2 className="size-6 animate-spin" />
           ) : (
-            <div className="flex h-[48px] w-[172px] items-center justify-center">
+            <div className="w-[172px]">
               <img
                 src="/assets/wallet/add-to-wallet-button-condensed.png"
                 alt="Add to Google Wallet"
-                className="h-full w-full object-contain"
+                className="h-auto w-full"
               />
             </div>
           )}
