@@ -92,10 +92,10 @@ export function SelectPortal() {
 
 /**
  * A utility function that fetches necessary data used to
- *  present the three nwPlus hackathons of the current season.
+ *  present the nwPlus hackathons of the current season.
  *
  * @param hackathons - hackathons from firestore
- * @returns the current season's three hackathons
+ * @returns the current season's hackathons
  */
 const useGeneratedPortals = (hackathons: Hackathon[]) => {
   const hackathonTypes = VALID_HACKATHONS.options;
@@ -105,6 +105,8 @@ const useGeneratedPortals = (hackathons: Hackathon[]) => {
   const upNextHackathon = usePortalStore((state) => state.upNextHackathon);
   const applicationsOpen = usePortalStore((state) => state.applicationsOpen);
   const applicationDeadline = usePortalStore((state) => state.applicationDeadline);
+  const isLegacy = usePortalStore((state) => state.isLegacy);
+  const legacyStatementUrl = usePortalStore((state) => state.legacyStatementUrl);
   const portalTheme = usePortalTheme();
 
   const portals = hackathonTypes
@@ -141,6 +143,8 @@ const useGeneratedPortals = (hackathons: Hackathon[]) => {
         isUpNext: upNextHackathon ? upNextHackathon[hackathonId] : false,
         applicationOpen: applicationsOpen ? applicationsOpen[hackathonId] : false,
         applicationDeadline: applicationDeadline?.[hackathonId],
+        isLegacy: isLegacy ? isLegacy[hackathonId] : false,
+        legacyStatementUrl: legacyStatementUrl ? legacyStatementUrl[hackathonId] : undefined,
         index,
       };
     });
@@ -160,12 +164,14 @@ const usePortalTextGradientStyle = () => {
   if (!portalTheme) return undefined;
   const hackathons = VALID_HACKATHONS.options;
   const gradients = [];
-  for (let i = 0; i < 3; i++) {
-    const hackathon = hackathons[i];
-    gradients.push((portalTheme[hackathon].portalGradient ?? ["#FFFFFF"])[0]);
+  for (const hackathon of hackathons) {
+    gradients.push((portalTheme[hackathon]?.portalGradient ?? ["#FFFFFF"])[0]);
   }
+  const stops = gradients
+    .map((c, i) => `${c} ${i === 0 ? 0 : i === gradients.length - 1 ? 100 : 50}%`)
+    .join(", ");
   return {
-    background: `linear-gradient(135deg, ${gradients[0]} 0%, ${gradients[1]} 50%, ${gradients[2]} 100%)`,
+    background: `linear-gradient(135deg, ${stops})`,
     WebkitBackgroundClip: "text",
     backgroundClip: "text",
     WebkitTextFillColor: "transparent",

@@ -1,4 +1,4 @@
-if ! pnpm biome check; then
-  echo "To apply the suggested fixes, run the command: pnpm lint"
+if ! pnpm check; then
+  echo "To apply the suggested fixes, run the command: pnpm check:write"
   exit 1
 fi

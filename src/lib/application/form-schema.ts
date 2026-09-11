@@ -75,7 +75,7 @@ function buildFieldSchema(question: HackerApplicationNonWelcomeQuestion): z.ZodT
 
     case "Long Answer": {
       const base = z.string().trim();
-      let field = isRequired
+      let field: z.ZodType<string | undefined> = isRequired
         ? base.min(1, "This field is required")
         : base.optional().or(z.literal(""));
 
