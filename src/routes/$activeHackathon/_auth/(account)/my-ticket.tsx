@@ -5,6 +5,7 @@ import { type PlacedSticker, Ticket } from "@/components/features/my-ticket/tick
 import { GradientBackground } from "@/components/layout/gradient-background";
 import { useHackathon } from "@/hooks/use-hackathon";
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
+import { useWalletPlatform } from "@/hooks/use-platform";
 import { storage } from "@/lib/firebase/client";
 import { useHackerStore } from "@/lib/stores/hacker-store";
 import { addHackerPassToAppleWallet, addHackerPassToGoogleWallet } from "@/services/wallet";
@@ -23,6 +24,7 @@ function RouteComponent() {
   const hacker = useHackerStore((state) => state.hacker);
   const { activeHackathon } = useHackathon();
   const { dbCollectionName } = useHackathonInfo();
+  const platform = useWalletPlatform();
   const ticketRef = useRef<HTMLDivElement>(null);
   const [isCustomizing, setIsCustomizing] = useState(false);
   const [walletLoading, setWalletLoading] = useState(false);
@@ -157,6 +159,53 @@ function RouteComponent() {
           ? "var(--font-space-grotesk)"
           : undefined;
 
+  const walletButtons = (
+    <>
+      {(platform === "apple" || platform === "other") && (
+        <button
+          type="button"
+          onClick={handleAddToAppleWallet}
+          disabled={appleWalletLoading}
+          className="inline-flex cursor-pointer items-center justify-center rounded-xl border-none bg-transparent p-0 transition-opacity hover:opacity-80 focus-visible:opacity-80 disabled:cursor-default disabled:opacity-50"
+          aria-label="Add to Apple Wallet"
+        >
+          {appleWalletLoading ? (
+            <Loader2 className="size-6 animate-spin" />
+          ) : (
+            <div className="flex h-[48px] w-[172px] items-center justify-center">
+              <img
+                src="/assets/wallet/add-to-apple-wallet-badge.svg"
+                alt="Add to Apple Wallet"
+                className="h-full w-full object-contain"
+              />
+            </div>
+          )}
+        </button>
+      )}
+      {(platform === "google" || platform === "other") && (
+        <button
+          type="button"
+          onClick={handleAddToGoogleWallet}
+          disabled={walletLoading}
+          className="inline-flex cursor-pointer items-center justify-center rounded-xl border-none bg-transparent p-0 transition-opacity hover:opacity-80 focus-visible:opacity-80 disabled:cursor-default disabled:opacity-50"
+          aria-label="Add to Google Wallet"
+        >
+          {walletLoading ? (
+            <Loader2 className="size-6 animate-spin" />
+          ) : (
+            <div className="flex h-[48px] w-[172px] items-center justify-center">
+              <img
+                src="/assets/wallet/add-to-wallet-button-condensed.png"
+                alt="Add to Google Wallet"
+                className="h-full w-full object-contain"
+              />
+            </div>
+          )}
+        </button>
+      )}
+    </>
+  );
+
   return (
     <GradientBackground gradientPosition="bottomMiddle">
       <div className="flex flex-col gap-10 py-10 md:py-12">
@@ -200,50 +249,18 @@ function RouteComponent() {
             >
               <Download size={22} />
             </button>
+            <div className="mt-2 flex flex-col items-center gap-3">{walletButtons}</div>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={downloadTicket}
-          className="mx-auto h-[46px] w-[46px] cursor-pointer rounded-lg border border-border-subtle bg-bg-dropdown-selected px-3 py-2 md:hidden"
-        >
-          <Download size={22} />
-        </button>
-        <div className="flex flex-col items-center justify-center gap-3 px-4 md:flex-row md:gap-5 md:px-0">
+        <div className="flex flex-col items-center gap-3 md:hidden">
           <button
             type="button"
-            onClick={handleAddToGoogleWallet}
-            disabled={walletLoading}
-            className="inline-flex cursor-pointer items-center justify-center rounded-xl border-none bg-transparent p-0 transition-opacity hover:opacity-80 focus-visible:opacity-80 disabled:cursor-default disabled:opacity-50"
-            aria-label="Add to Google Wallet"
+            onClick={downloadTicket}
+            className="mx-auto h-[46px] w-[46px] cursor-pointer rounded-lg border border-border-subtle bg-bg-dropdown-selected px-3 py-2 md:hidden"
           >
-            {walletLoading ? (
-              <Loader2 className="size-6 animate-spin" />
-            ) : (
-              <img
-                src="/assets/wallet/add-to-wallet-button-condensed.png"
-                alt="Add to Google Wallet"
-                className="h-auto w-[130px] md:w-[150px]"
-              />
-            )}
+            <Download size={22} />
           </button>
-          <button
-            type="button"
-            onClick={handleAddToAppleWallet}
-            disabled={appleWalletLoading}
-            className="inline-flex cursor-pointer items-center justify-center rounded-xl border-none bg-transparent p-0 transition-opacity hover:opacity-80 focus-visible:opacity-80 disabled:cursor-default disabled:opacity-50"
-            aria-label="Add to Apple Wallet"
-          >
-            {appleWalletLoading ? (
-              <Loader2 className="size-6 animate-spin" />
-            ) : (
-              <img
-                src="/assets/wallet/add-to-apple-wallet-badge.svg"
-                alt="Add to Apple Wallet"
-                className="h-auto w-[115px] md:w-[135px]"
-              />
-            )}
-          </button>
+          {walletButtons}
         </div>
         {isCustomizing && (
           <Customization
