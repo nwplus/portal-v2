@@ -76,9 +76,15 @@ export type HackerApplicationWelcomeQuestion = HackerApplicationQuestion & {
   content: string;
 };
 
+export interface HackerApplicationQuestionCondition {
+  sourceFormInput: HackerApplicationQuestionFormInputField;
+  values: string[];
+}
+
 export type HackerApplicationNonWelcomeQuestion = HackerApplicationQuestion & {
   type: HackerApplicationQuestionType;
   formInput?: HackerApplicationQuestionFormInputField;
+  condition?: HackerApplicationQuestionCondition;
 };
 
 export type HackerApplicationMetadataInfo = {
