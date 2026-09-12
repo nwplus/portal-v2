@@ -1,18 +1,15 @@
-name: Deploy Firebase Hosting Preview
+name: CI
 
 on:
   pull_request:
     branches: [main, dev]
 
 permissions:
-  checks: write
   contents: read
-  pull-requests: write
 
 jobs:
-  build_and_preview:
-    name: Deploy preview
-    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+  validate:
+    name: Validate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -31,7 +28,33 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build preview
+      - name: Check formatting and lint
+        run: pnpm check
+
+      - name: Check types and build
+        run: pnpm build
+
+  lighthouse:
+    name: Lighthouse
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build staging application
         run: pnpm build
         env:
           VITE_FIREBASE_API_KEY: ${{ secrets.DEV_FIREBASE_API_KEY }}
@@ -43,12 +66,5 @@ jobs:
           VITE_FIREBASE_APP_ID: ${{ secrets.DEV_FIREBASE_APP_ID }}
           VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.DEV_FIREBASE_MEASUREMENT_ID }}
 
-      - name: Deploy to Firebase
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_NWPLUS_UBC_DEV }}
-          channelId: pr${{ github.event.pull_request.number }}-${{ github.run_id }}
-          expires: 10d
-          projectId: nwplus-ubc-dev
-          target: nwplus-ubc-dev
+      - name: Run Lighthouse CI
+        run: pnpm exec lhci autorun

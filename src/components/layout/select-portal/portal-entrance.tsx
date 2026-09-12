@@ -16,6 +16,8 @@ type PortalEntranceProps = {
   applicationDeadline?: string;
   website: string;
   gradients?: string[];
+  isLegacy?: boolean;
+  legacyStatementUrl?: string;
   index?: number;
 };
 
@@ -25,7 +27,12 @@ const HACKATHON_TO_GRADIENT: Record<string, React.ComponentType> = {
   nwHacks: nwHacksPortal,
 };
 
-const getApplicationStatusText = (applicationOpen: boolean, applicationDeadline?: string) => {
+const getApplicationStatusText = (
+  applicationOpen: boolean,
+  applicationDeadline?: string,
+  isLegacy?: boolean,
+) => {
+  if (isLegacy) return "Legacy Hackathon";
   if (!applicationDeadline) return "Applications opening soon!";
 
   const isDeadlinePassed = new Date() > new Date(applicationDeadline);
@@ -46,11 +53,13 @@ export function PortalEntrance({
   applicationDeadline,
   website,
   // gradients,
+  isLegacy,
+  legacyStatementUrl,
   index,
 }: PortalEntranceProps) {
   const LogoComponent = logo;
   const PortalComponent = HACKATHON_TO_GRADIENT[hackathon];
-  const statusText = getApplicationStatusText(applicationOpen, applicationDeadline);
+  const statusText = getApplicationStatusText(applicationOpen, applicationDeadline, isLegacy);
 
   return (
     <div
@@ -110,21 +119,48 @@ export function PortalEntrance({
 
         <div className="flex w-full select-none flex-col items-center">
           <div className="pb-2 text-[2vh] sm:text-lg md:pb-2">{statusText}</div>
-          {isUpNext && (
-            <Button variant="ethereal" className="z-101" asChild>
-              <a href={href}>Enter portal</a>
-            </Button>
-          )}
-          {website && (
-            <Button
-              variant="link"
-              className="z-101 pb-0 text-[1.75vh] opacity-70 sm:text-sm"
-              asChild
-            >
-              <a href={website} target="_blank" rel="noreferrer noopener">
-                Visit website
-              </a>
-            </Button>
+          {isLegacy ? (
+            <>
+              {legacyStatementUrl ? (
+                <Button variant="ethereal" className="z-101" asChild>
+                  <a href={legacyStatementUrl} target="_blank" rel="noreferrer noopener">
+                    View statement
+                  </a>
+                </Button>
+              ) : (
+                <div className="text-sm opacity-50">Statement coming soon</div>
+              )}
+              {website && (
+                <Button
+                  variant="link"
+                  className="z-101 pb-0 text-[1.75vh] opacity-70 sm:text-sm"
+                  asChild
+                >
+                  <a href={website} target="_blank" rel="noreferrer noopener">
+                    Visit website
+                  </a>
+                </Button>
+              )}
+            </>
+          ) : (
+            <>
+              {isUpNext && (
+                <Button variant="ethereal" className="z-101" asChild>
+                  <a href={href}>Enter portal</a>
+                </Button>
+              )}
+              {website && (
+                <Button
+                  variant="link"
+                  className="z-101 pb-0 text-[1.75vh] opacity-70 sm:text-sm"
+                  asChild
+                >
+                  <a href={website} target="_blank" rel="noreferrer noopener">
+                    Visit website
+                  </a>
+                </Button>
+              )}
+            </>
           )}
         </div>
       </div>

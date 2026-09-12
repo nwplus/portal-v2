@@ -5,7 +5,7 @@ All-in-one platform to support nwPlus' hackathons 🚀
 ## Development instructions
 
 ### Setup
-1. Install [pnpm](https://pnpm.io/installation)
+1. Install Node 24 (`nvm use` if you use nvm) and pnpm 11.10.0.
 2. Add a `.env` file with the Firebase config (use the dev secrets)
 ```bash
 VITE_FIREBASE_API_KEY=your_api_key
@@ -57,6 +57,7 @@ When adding a new component from shadcn or another component library, replace al
 This project uses [Biome](https://biomejs.dev/) for linting and formatting. The following scripts are available:
 
 ```bash
+pnpm check              # verifies formatting and lint without changing files
 pnpm check:write        # applies safe formatting and lint fixes
 ```
 

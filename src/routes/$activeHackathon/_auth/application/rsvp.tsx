@@ -59,7 +59,7 @@ function RouteComponent() {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const LogoIcon = getHackathonIcon(activeHackathon);
-  const showSafewalk = activeHackathon === "nwhacks" || activeHackathon === "cmd-f";
+  const showSafewalk = activeHackathon === "nwhacks";
   const formattedRsvpBy = formatPortalDateTime(rsvpBy);
 
   const formMethods = useForm<RsvpFormValues>({

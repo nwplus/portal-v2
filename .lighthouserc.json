@@ -1,0 +1,30 @@
+{
+  "ci": {
+    "collect": {
+      "staticDistDir": "./dist",
+      "isSinglePageApplication": true
+    },
+    "assert": {
+      "assertions": {
+        "first-contentful-paint": ["warn", { "minScore": 0.1 }],
+        "largest-contentful-paint": ["warn", { "minScore": 0.5 }],
+        "document-title": ["error", { "minScore": 0.9 }],
+        "meta-description": ["warn", { "minScore": 0.9 }],
+        "is-crawlable": ["error", { "minScore": 0.9 }],
+        "color-contrast": "off",
+        "service-worker": "off",
+        "uses-http2": "off",
+        "works-offline": "off",
+        "offline-start-url": "off",
+        "unminified-javascript": "off",
+        "unused-javascript": "off",
+        "render-blocking-resources": "off",
+        "uses-long-cache-ttl": "off",
+        "bf-cache": "off"
+      }
+    },
+    "upload": {
+      "target": "temporary-public-storage"
+    }
+  }
+}
