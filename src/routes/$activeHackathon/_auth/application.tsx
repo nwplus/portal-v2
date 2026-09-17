@@ -4,8 +4,8 @@ import { useApplicationQuestions } from "@/hooks/use-application-questions";
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSyncFormWithApplicantDraft } from "@/hooks/use-sync-form-with-applicant-draft";
-import type { SchemaMeta } from "@/lib/application/form-schema";
 import { buildApplicationSchema } from "@/lib/application/form-schema";
+import { ApplicationSchemaMetaContext } from "@/lib/application/schema-meta-context";
 import type { ApplicationFormValues } from "@/lib/application/types";
 import type { BackgroundGradientPosition } from "@/lib/firebase/types";
 import type { ApplicantDraft } from "@/lib/firebase/types/applicants";
@@ -15,7 +15,7 @@ import { useAuthStore } from "@/lib/stores/auth-store";
 import { fetchApplicant } from "@/services/applicants";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
-import { createContext, useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import type { Resolver } from "react-hook-form";
 import { FormProvider, useForm } from "react-hook-form";
 
@@ -141,5 +141,3 @@ function deriveDefaultValuesFromApplicantDraft(
     termsAndConditions: applicantDraft?.termsAndConditions ?? {},
   };
 }
-
-const ApplicationSchemaMetaContext = createContext<SchemaMeta | null>(null);
