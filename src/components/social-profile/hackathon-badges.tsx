@@ -1,8 +1,9 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import type { HackathonsAttended } from "@/lib/firebase/types/socials";
+import { useAttendance } from "@/hooks/use-attendance";
+import { getAttendanceBrands } from "@/lib/attendance";
 
 interface HackathonBadgesProps {
-  hackathonsAttended?: HackathonsAttended;
+  uid: string;
   size?: "sm" | "md"; // TODO: maybe remove if no other use case
 }
 
@@ -12,10 +13,12 @@ const BADGES = [
   { key: "cmd-f" as const, icon: "/assets/profiles/mini-cmdf.svg", label: "cmd-f" },
 ];
 
-export function HackathonBadges({ hackathonsAttended, size = "sm" }: HackathonBadgesProps) {
-  if (!hackathonsAttended) return null;
+export function HackathonBadges({ uid, size = "sm" }: HackathonBadgesProps) {
+  const attendance = useAttendance(uid);
+  if (attendance.status !== "success") return null;
 
-  const attendedBadges = BADGES.filter((badge) => hackathonsAttended[badge.key]);
+  const brands = getAttendanceBrands(attendance.records);
+  const attendedBadges = BADGES.filter((badge) => brands.has(badge.key));
   if (attendedBadges.length === 0) return null;
 
   const iconSize = size === "sm" ? "h-5 w-auto" : "h-6 w-auto";
