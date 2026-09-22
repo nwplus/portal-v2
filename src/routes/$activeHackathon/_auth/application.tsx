@@ -1,6 +1,7 @@
 import { GradientBackground } from "@/components/layout/gradient-background";
 import { useApplicantHydration } from "@/hooks/use-applicant-hydration";
 import { useApplicationQuestions } from "@/hooks/use-application-questions";
+import { useClearHiddenAnswers } from "@/hooks/use-clear-hidden-answers";
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSyncFormWithApplicantDraft } from "@/hooks/use-sync-form-with-applicant-draft";
@@ -105,6 +106,8 @@ function RouteComponent() {
       formMethods.reset(deriveDefaultValuesFromApplicantDraft(applicantDraft));
     }
   }, [applicantDraft, formMethods]);
+
+  useClearHiddenAnswers(formMethods, meta.conditionMeta);
 
   // Mirror form values into the applicant store so autosave continues to work.
   useSyncFormWithApplicantDraft(formMethods);
