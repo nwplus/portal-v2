@@ -177,4 +177,11 @@ export type Hacker = Applicant & {
       timestamp: Timestamp;
     }>;
   };
+  preDayOf?: {
+    events?: Array<{
+      eventId: string;
+      eventName: string;
+      timestamp: Timestamp;
+    }>;
+  };
 };

@@ -247,7 +247,7 @@ export function AppSidebar() {
                 </Avatar>
                 <div className="flex flex-col">
                   <span className="truncate font-semibold text-sm">{getFullName(hacker)}</span>
-                  <span className="truncate text-xs">{hacker.basicInfo.email}</span>
+                  <span className="truncate text-xs">{hacker.basicInfo?.email}</span>
                 </div>
               </div>
 
