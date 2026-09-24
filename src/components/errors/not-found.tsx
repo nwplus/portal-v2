@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { Button, buttonVariants } from "../ui/button";
 
 /** Art shown when the URL names no valid hackathon (e.g. a typo'd top-level path) */
-const FALLBACK_HACKATHON = "nwhacks";
+const FALLBACK_HACKATHON = "hackcamp";
 
 /**
  * Resolves the hackathon for a 404 without requiring the `/$activeHackathon` route to have
@@ -18,13 +18,16 @@ const useNotFoundHackathon = () =>
     select: (state) => {
       const context = state.matches.find((match) => match.routeId === "/$activeHackathon")
         ?.context as { activeHackathon?: string } | undefined;
-      if (context?.activeHackathon) return context.activeHackathon;
 
-      // The route bails out before building context when the slug fails to parse, so read
-      // it back off the URL to keep e.g. /hackcamp/nope themed as HackCamp
-      const segment = state.location.pathname.split("/")[1]?.toLowerCase();
-      const parsed = VALID_HACKATHONS.safeParse(segment);
-      return parsed.success ? parsed.data : FALLBACK_HACKATHON;
+      // When the slug fails to parse, context can still carry the raw, unvalidated param
+      // (e.g. "foo" for /foo), so validate it rather than trusting it. The URL segment
+      // covers the case where the route bailed out before building context at all.
+      const segment = state.location.pathname.split("/")[1];
+      for (const candidate of [context?.activeHackathon, segment]) {
+        const parsed = VALID_HACKATHONS.safeParse(candidate?.toLowerCase());
+        if (parsed.success) return parsed.data;
+      }
+      return FALLBACK_HACKATHON;
     },
   });
 
