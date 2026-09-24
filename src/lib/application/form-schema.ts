@@ -572,23 +572,26 @@ export function buildApplicationSchema(questions: QuestionBuckets): {
       questionnaire: questionnaireSchema,
       termsAndConditions: termsSchema,
     })
-    .superRefine((values, ctx) => {
-      for (const entry of conditionMeta) {
-        if (!entry.required || !entry.sourcePath) continue;
+    .superRefine(
+      (values, ctx) => {
+        for (const entry of conditionMeta) {
+          if (!entry.required || !entry.sourcePath) continue;
 
-        const sourceValue = getValueAtPath(values, entry.sourcePath);
-        if (!isConditionMet(entry.condition, sourceValue)) continue;
+          const sourceValue = getValueAtPath(values, entry.sourcePath);
+          if (!isConditionMet(entry.condition, sourceValue)) continue;
 
-        const answer = getValueAtPath(values, entry.mainPath);
-        if (isAnswerEmpty(entry.questionType, answer)) {
-          ctx.addIssue({
-            code: "custom",
-            message: "This field is required",
-            path: entry.mainPath.split("."),
-          });
+          const answer = getValueAtPath(values, entry.mainPath);
+          if (isAnswerEmpty(entry.questionType, answer)) {
+            ctx.addIssue({
+              code: "custom",
+              message: "This field is required",
+              path: entry.mainPath.split("."),
+            });
+          }
         }
-      }
-    }) as unknown as z.ZodType<ApplicationFormValues>;
+      },
+      { when: () => true },
+    ) as unknown as z.ZodType<ApplicationFormValues>;
 
   const meta: SchemaMeta = {
     fieldNamesBySection,
