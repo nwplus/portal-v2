@@ -116,7 +116,7 @@ export function ViewProfile({ socialProfile }: ViewProfileProps) {
           <h2 className="font-medium text-2xl text-text-primary">
             {displayName} {pronouns && <span className="text-text-secondary">({pronouns})</span>}
           </h2>
-          <HackathonBadges hackathonsAttended={socialProfile.hackathonsAttended} size="md" />
+          <HackathonBadges uid={socialProfile._id} size="md" />
         </div>
 
         <p className="mb-6 text-text-secondary">{bio || "No bio added"}</p>
