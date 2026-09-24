@@ -56,6 +56,7 @@ export type BackgroundGradientPosition = "bottomMiddle" | "bottomRight" | "topMi
 
 export type HackathonPortalThemeEntry = {
   portalGradient?: string[];
+  confettiColors?: string[];
   portalSvg?: string;
   primary?: string;
   primaryForeground?: string;
