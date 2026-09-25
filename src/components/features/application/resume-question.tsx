@@ -104,29 +104,24 @@ export function ResumeQuestion({ section, question }: QuestionFieldProps) {
       {description ? <FieldDescription>{description}</FieldDescription> : null}
       <FieldContent>
         <div className="space-y-1">
-          <div className="flex items-center justify-between gap-2">
-            <FieldLabel htmlFor={mainId} className="font-normal text-sm" isRequired={isRequired}>
-              Resume
-            </FieldLabel>
-            <div className="flex items-center gap-2">
-              <span className="hidden text-text-secondary text-xs md:block">
-                {resumeFileName
-                  ? `${resumeFileName} uploaded`
-                  : currentResumeUrl
-                    ? "Resume uploaded"
-                    : "No file uploaded"}
-              </span>
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                onClick={() => resumeFileInputRef.current?.click()}
-                disabled={uploadingResume || !userId}
-                aria-invalid={isMainInvalid}
-              >
-                {uploadingResume ? "Uploading…" : "Upload"}
-              </Button>
-            </div>
+          <div className="flex items-center justify-end gap-2">
+            <span className="hidden text-text-secondary text-xs md:block">
+              {resumeFileName
+                ? `${resumeFileName} uploaded`
+                : currentResumeUrl
+                  ? "Resume uploaded"
+                  : "No file uploaded"}
+            </span>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              onClick={() => resumeFileInputRef.current?.click()}
+              disabled={uploadingResume || !userId}
+              aria-invalid={isMainInvalid}
+            >
+              {uploadingResume ? "Uploading…" : "Upload"}
+            </Button>
           </div>
           <p className="text-text-secondary text-xs">
             Accepted formats: pdf, doc, docx, png, jpg (max 3MB)

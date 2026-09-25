@@ -1,7 +1,13 @@
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 import { httpsCallable } from "firebase/functions";
-import { Fragment, type ReactNode, useState } from "react";
-import { useFormContext } from "react-hook-form";
+import { Fragment, type ReactNode, useMemo, useState } from "react";
+import { type FieldErrors, useFormContext } from "react-hook-form";
+
+import {
+  buildFieldPath,
+  buildOtherFieldPath,
+  getEffectiveFormInput,
+} from "@/lib/application/form-mapping";
 
 import { TermsCheckbox } from "@/components/features/application/terms-checkbox";
 import { Button } from "@/components/ui/button";
@@ -29,6 +35,28 @@ interface ReviewFieldProps {
   label: string;
   value: string;
   isNotAnswered?: boolean;
+}
+
+interface MissingFieldEntry {
+  path: string;
+  message: string;
+}
+
+function collectFieldErrors(errors: FieldErrors<ApplicationFormValues>): MissingFieldEntry[] {
+  const entries: MissingFieldEntry[] = [];
+  for (const [sectionKey, sectionErrors] of Object.entries(errors) as Array<
+    [keyof ApplicationFormValues, unknown]
+  >) {
+    if (!sectionErrors || typeof sectionErrors !== "object") continue;
+    for (const [fieldKey, fieldError] of Object.entries(sectionErrors as Record<string, unknown>)) {
+      if (!fieldError || typeof fieldError !== "object") continue;
+      const message = (fieldError as { message?: string }).message;
+      if (typeof message === "string" && message.length > 0) {
+        entries.push({ path: `${sectionKey}.${fieldKey}`, message });
+      }
+    }
+  }
+  return entries;
 }
 
 function ReviewField({ label, value, isNotAnswered }: ReviewFieldProps) {
@@ -216,58 +244,53 @@ function QuestionnaireSection({ applicantDraft }: { applicantDraft: ApplicantDra
 }
 
 function TermsSection() {
-  const { activeHackathon } = useHackathon();
   return (
     <ReviewSection title="Terms and conditions" emoji="🔒" className="">
-      {activeHackathon !== "hackcamp" && (
-        <>
-          <TermsCheckbox fieldPath="termsAndConditions.MLHCodeOfConduct">
-            I have read and agree to the{" "}
-            <a
-              href="https://mlh.io/code-of-conduct"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline"
-            >
-              MLH Code of Conduct
-            </a>
-            .
-          </TermsCheckbox>
-          <TermsCheckbox fieldPath="termsAndConditions.MLHPrivacyPolicy">
-            I authorize you to share my application/registration information with Major League
-            Hacking for event administration, ranking, and MLH administration in-line with the{" "}
-            <a
-              href="https://github.com/MLH/mlh-policies/blob/main/privacy-policy.md"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline"
-            >
-              MLH Privacy Policy
-            </a>
-            .
-            <br />
-            <br />I further agree to the terms of both the{" "}
-            <a
-              href="https://github.com/MLH/mlh-policies/blob/main/contest-terms.md"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline"
-            >
-              MLH Contest Terms and Conditions
-            </a>{" "}
-            and the{" "}
-            <a
-              href="https://github.com/MLH/mlh-policies/blob/main/privacy-policy.md"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline"
-            >
-              MLH Privacy Policy
-            </a>
-            .
-          </TermsCheckbox>
-        </>
-      )}
+      <TermsCheckbox fieldPath="termsAndConditions.MLHCodeOfConduct">
+        I have read and agree to the{" "}
+        <a
+          href="https://mlh.io/code-of-conduct"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline"
+        >
+          MLH Code of Conduct
+        </a>
+        .
+      </TermsCheckbox>
+      <TermsCheckbox fieldPath="termsAndConditions.MLHPrivacyPolicy">
+        I authorize you to share my application/registration information with Major League Hacking
+        for event administration, ranking, and MLH administration in-line with the{" "}
+        <a
+          href="https://github.com/MLH/mlh-policies/blob/main/privacy-policy.md"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline"
+        >
+          MLH Privacy Policy
+        </a>
+        .
+        <br />
+        <br />I further agree to the terms of both the{" "}
+        <a
+          href="https://github.com/MLH/mlh-policies/blob/main/contest-terms.md"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline"
+        >
+          MLH Contest Terms and Conditions
+        </a>{" "}
+        and the{" "}
+        <a
+          href="https://github.com/MLH/mlh-policies/blob/main/privacy-policy.md"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline"
+        >
+          MLH Privacy Policy
+        </a>
+        .
+      </TermsCheckbox>
       <TermsCheckbox fieldPath="termsAndConditions.nwPlusPrivacyPolicy">
         I agree to the{" "}
         <a
@@ -307,11 +330,41 @@ function RouteComponent() {
   const form = useFormContext<ApplicationFormValues>();
   const router = useRouter();
 
+  const basicInfoQuestions = useApplicationQuestionStore((state) => state.basicInfoQuestions);
+  const skillsQuestions = useApplicationQuestionStore((state) => state.skillsQuestions);
+  const questionnaireQuestions = useApplicationQuestionStore(
+    (state) => state.questionnaireQuestions,
+  );
+
+  const labelByPath = useMemo(() => {
+    const labels = new Map<string, string>();
+    const sections: Array<[HackerApplicationSections, HackerApplicationNonWelcomeQuestion[]]> = [
+      ["BasicInfo", basicInfoQuestions],
+      ["Skills", skillsQuestions],
+      ["Questionnaire", questionnaireQuestions],
+    ];
+    for (const [section, questions] of sections) {
+      for (const question of questions) {
+        const formInput = getEffectiveFormInput(question);
+        if (!formInput) continue;
+        const mainPath = buildFieldPath(section, formInput);
+        if (mainPath) labels.set(mainPath, question.title ?? "Untitled");
+        if (question.other) {
+          const otherPath = buildOtherFieldPath(section, formInput);
+          if (otherPath) labels.set(otherPath, `${question.title ?? "Untitled"} (other)`);
+        }
+      }
+    }
+    return labels;
+  }, [basicInfoQuestions, skillsQuestions, questionnaireQuestions]);
+
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 
   const hasValidationErrors = hasAttemptedSubmit && Object.keys(form.formState.errors).length > 0;
+
+  const missingFields = hasAttemptedSubmit ? collectFieldErrors(form.formState.errors) : [];
 
   const handleSubmitApplication = () => {
     setHasAttemptedSubmit(true);
@@ -375,9 +428,21 @@ function RouteComponent() {
       </ScrollFade>
 
       {hasValidationErrors && (
-        <p className="text-sm text-text-error">
-          One or more answers are still missing. Use the back button to revisit each section.
-        </p>
+        <div className="text-sm text-text-error">
+          <p>One or more answers are still missing. Use the back button to revisit each section.</p>
+          <ul className="mt-1 list-disc space-y-0.5 pl-5">
+            {missingFields.map((field) => {
+              const label = field.path.startsWith("termsAndConditions")
+                ? "Terms and conditions"
+                : labelByPath.get(field.path);
+              return (
+                <li key={field.path}>
+                  {label ?? field.path} — {field.message}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       )}
 
       {submitError && <p className="text-sm text-text-error">{submitError}</p>}
