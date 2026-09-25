@@ -33,6 +33,12 @@ export function ResumeQuestion({ section, question }: QuestionFieldProps) {
   const currentResumeUrl =
     resumePath != null ? watch(resumePath as FieldPath<ApplicationFormValues>) : undefined;
 
+  const resumeStatus = resumeFileName
+    ? `${resumeFileName} uploaded`
+    : currentResumeUrl
+      ? "Resume uploaded"
+      : "No file uploaded";
+
   const handleResumeFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !resumePath) return;
@@ -103,36 +109,20 @@ export function ResumeQuestion({ section, question }: QuestionFieldProps) {
       <FieldLabel isRequired={isRequired}>{label}</FieldLabel>
       {description ? <FieldDescription>{description}</FieldDescription> : null}
       <FieldContent>
-        <div className="space-y-1">
-          <div className="flex items-center justify-end gap-2">
-            <span className="hidden text-text-secondary text-xs md:block">
-              {resumeFileName
-                ? `${resumeFileName} uploaded`
-                : currentResumeUrl
-                  ? "Resume uploaded"
-                  : "No file uploaded"}
-            </span>
-            <Button
-              type="button"
-              size="sm"
-              variant="secondary"
-              onClick={() => resumeFileInputRef.current?.click()}
-              disabled={uploadingResume || !userId}
-              aria-invalid={isMainInvalid}
-            >
-              {uploadingResume ? "Uploading…" : "Upload"}
-            </Button>
-          </div>
+        <div className="space-y-2">
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            onClick={() => resumeFileInputRef.current?.click()}
+            disabled={uploadingResume || !userId}
+            aria-invalid={isMainInvalid}
+          >
+            {uploadingResume ? "Uploading…" : "Upload"}
+          </Button>
           <p className="text-text-secondary text-xs">
-            Accepted formats: pdf, doc, docx, png, jpg (max 3MB)
+            {resumeStatus}. Accepted formats: pdf, doc, docx, png, jpg (max 3MB)
           </p>
-          <span className="text-text-secondary text-xs md:hidden">
-            {resumeFileName
-              ? `${resumeFileName} uploaded`
-              : currentResumeUrl
-                ? "Resume uploaded"
-                : "No file uploaded"}
-          </span>
           <input
             ref={resumeFileInputRef}
             id={mainId}
