@@ -4,21 +4,8 @@ import type {
   ApplicantContribution,
   ApplicantMajor,
 } from "@/lib/firebase/types/applicants";
-import type {
-  HackathonsAttended,
-  RecentlyViewedProfile,
-  Social,
-  SocialDraft,
-} from "@/lib/firebase/types/socials";
-import {
-  type DocumentData,
-  type DocumentReference,
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  setDoc,
-} from "firebase/firestore";
+import type { RecentlyViewedProfile, Social, SocialDraft } from "@/lib/firebase/types/socials";
+import { type DocumentData, type DocumentReference, doc, getDoc, setDoc } from "firebase/firestore";
 
 const MAX_RECENTLY_VIEWED = 10;
 
@@ -163,11 +150,6 @@ export async function fetchOrCreateSocial(
   if (existing) {
     const updates: Partial<Social> = {};
 
-    // Update hackathonsAttended if missing
-    if (!existing.hackathonsAttended) {
-      updates.hackathonsAttended = await fetchUserHackathonsAttended(uid);
-    }
-
     // TODO: Update user Socials on application submission instead
     // Backfill only empty fields from applicant data - doesn't handle when a user has changed their information for a different hackathon
     if (!existing.school && applicant?.basicInfo?.school) {
@@ -194,8 +176,6 @@ export async function fetchOrCreateSocial(
     return existing;
   }
 
-  const hackathonsAttended = await fetchUserHackathonsAttended(uid);
-
   const newSocial: Social = {
     _id: uid,
     email,
@@ -210,7 +190,6 @@ export async function fetchOrCreateSocial(
       github: applicant?.skills?.github,
       website: applicant?.skills?.portfolio,
     },
-    hackathonsAttended,
   };
 
   await createOrMergeSocial(uid, email, newSocial);
@@ -277,52 +256,6 @@ export async function createOrMergeSocial(
   const cleanedPayload = removeUndefinedFields(payload);
 
   await setDoc(ref, cleanedPayload, { merge: true });
-}
-
-/**
- * Fetches which hackathons a user has been accepted to
- * Checks all hackathon collections for accepted application status
- *
- * @param uid - firebase auth user id
- * @returns object indicating which hackathons the user has been accepted to
- */
-export async function fetchUserHackathonsAttended(uid: string): Promise<HackathonsAttended> {
-  const hackathonsAttended: HackathonsAttended = {
-    hackcamp: false,
-    nwhacks: false,
-    "cmd-f": false,
-  };
-
-  try {
-    const hackathonsSnap = await getDocs(collection(db, "Hackathons"));
-    const hackathonIds = hackathonsSnap.docs.map((d) => d.id);
-
-    for (const hackathonId of hackathonIds) {
-      const applicantRef = doc(db, "Hackathons", hackathonId, "Applicants", uid);
-      const applicantSnap = await getDoc(applicantRef);
-
-      if (applicantSnap.exists()) {
-        const applicant = applicantSnap.data() as Applicant;
-        const status = applicant.status?.applicationStatus;
-
-        // TODO: maybe swap out for checked-in status?
-        if (status === "acceptedAndAttending") {
-          const lowerCaseId = hackathonId.toLowerCase();
-          if (lowerCaseId.startsWith("hackcamp")) {
-            hackathonsAttended.hackcamp = true;
-          } else if (lowerCaseId.startsWith("nwhacks")) {
-            hackathonsAttended.nwhacks = true;
-          } else if (lowerCaseId.startsWith("cmd-f") || lowerCaseId.startsWith("cmdf")) {
-            hackathonsAttended["cmd-f"] = true;
-          }
-        }
-      }
-    }
-  } catch (error) {
-    console.error("Error fetching hackathons attended:", error);
-  }
-
-  return hackathonsAttended;
 }
 
 /**

@@ -15,6 +15,8 @@ export interface Applicant {
     ageByHackathon?: string;
     preferredName?: string; // preferred first name
     phoneNumber: string; // "+1 XXX-XXX-XXXX"
+    phoneNumberOwnerNameAndRelationship?: string; // when the number above isn't theirs
+    parentOrGuardianPhoneNumber?: string;
     gender: string | Record<string, boolean>;
     graduation: number;
     isOfLegalAge: boolean;
@@ -79,6 +81,7 @@ export interface Applicant {
     longAnswers3?: string;
     longAnswers4?: string;
     longAnswers5?: string;
+    longAnswers6?: string;
     jobPosition?: string;
     connectPlus?: boolean;
   };

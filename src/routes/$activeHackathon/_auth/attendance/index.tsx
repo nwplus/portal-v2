@@ -2,7 +2,7 @@ import { GradientBackground } from "@/components/layout/gradient-background";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { fireSideCannons, getEventName } from "@/lib/utils";
-import { markPreHackathonAttendance } from "@/services/attendance";
+import { markPreHackathonAttendance } from "@/services/pre-hackathon-attendance";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, CheckCircle2, Clock3 } from "lucide-react";
 import { useEffect } from "react";

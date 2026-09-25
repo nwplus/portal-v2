@@ -17,6 +17,7 @@ export type HackerApplicationQuestionType =
   | "School" // fixed
   | "Major" // fixed
   | "Country"; // fixed
+// keep in sync w/ admin-v2 src/lib/firebase/types.ts
 export type HackerApplicationQuestionFormInputField =
   | "academicYear"
   | "ageByHackathon"
@@ -36,6 +37,8 @@ export type HackerApplicationQuestionFormInputField =
   | "identifyAsUnderrepresented"
   | "indigenousIdentification"
   | "phoneNumber"
+  | "phoneNumberOwnerNameAndRelationship"
+  | "parentOrGuardianPhoneNumber"
   | "preferredName"
   | "pronouns"
   | "race"
@@ -54,6 +57,7 @@ export type HackerApplicationQuestionFormInputField =
   | "longAnswers3"
   | "longAnswers4"
   | "longAnswers5"
+  | "longAnswers6"
   | "engagementSource"
   | "eventsAttended"
   | "friendEmail"
@@ -72,9 +76,15 @@ export type HackerApplicationWelcomeQuestion = HackerApplicationQuestion & {
   content: string;
 };
 
+export interface HackerApplicationQuestionCondition {
+  sourceFormInput: HackerApplicationQuestionFormInputField;
+  values: string[];
+}
+
 export type HackerApplicationNonWelcomeQuestion = HackerApplicationQuestion & {
   type: HackerApplicationQuestionType;
   formInput?: HackerApplicationQuestionFormInputField;
+  condition?: HackerApplicationQuestionCondition;
 };
 
 export type HackerApplicationMetadataInfo = {

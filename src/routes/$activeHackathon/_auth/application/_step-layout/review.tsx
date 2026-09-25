@@ -9,6 +9,7 @@ import { Field, FieldContent, FieldLabel, FieldSet } from "@/components/ui/field
 import { ScrollFade } from "@/components/ui/scroll-fade";
 import { useHackathon } from "@/hooks/use-hackathon";
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
+import { useQuestionVisibility } from "@/hooks/use-question-visibility";
 import { formatAnswerForReview } from "@/lib/application/review-format";
 import type { ApplicationFormValues } from "@/lib/application/types";
 import { functions } from "@/lib/firebase/client";
@@ -52,6 +53,9 @@ function QuestionReviewField({
   question: HackerApplicationNonWelcomeQuestion;
   applicantDraft: ApplicantDraft | null;
 }) {
+  const isVisible = useQuestionVisibility(question);
+  if (!isVisible) return null;
+
   const value = formatAnswerForReview(section, question, applicantDraft);
   const isNotAnswered = value === "Not answered";
 
@@ -212,58 +216,53 @@ function QuestionnaireSection({ applicantDraft }: { applicantDraft: ApplicantDra
 }
 
 function TermsSection() {
-  const { activeHackathon } = useHackathon();
   return (
     <ReviewSection title="Terms and conditions" emoji="🔒" className="">
-      {activeHackathon !== "hackcamp" && (
-        <>
-          <TermsCheckbox fieldPath="termsAndConditions.MLHCodeOfConduct">
-            I have read and agree to the{" "}
-            <a
-              href="https://mlh.io/code-of-conduct"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline"
-            >
-              MLH Code of Conduct
-            </a>
-            .
-          </TermsCheckbox>
-          <TermsCheckbox fieldPath="termsAndConditions.MLHPrivacyPolicy">
-            I authorize you to share my application/registration information with Major League
-            Hacking for event administration, ranking, and MLH administration in-line with the{" "}
-            <a
-              href="https://github.com/MLH/mlh-policies/blob/main/privacy-policy.md"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline"
-            >
-              MLH Privacy Policy
-            </a>
-            .
-            <br />
-            <br />I further agree to the terms of both the{" "}
-            <a
-              href="https://github.com/MLH/mlh-policies/blob/main/contest-terms.md"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline"
-            >
-              MLH Contest Terms and Conditions
-            </a>{" "}
-            and the{" "}
-            <a
-              href="https://github.com/MLH/mlh-policies/blob/main/privacy-policy.md"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline"
-            >
-              MLH Privacy Policy
-            </a>
-            .
-          </TermsCheckbox>
-        </>
-      )}
+      <TermsCheckbox fieldPath="termsAndConditions.MLHCodeOfConduct">
+        I have read and agree to the{" "}
+        <a
+          href="https://mlh.io/code-of-conduct"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline"
+        >
+          MLH Code of Conduct
+        </a>
+        .
+      </TermsCheckbox>
+      <TermsCheckbox fieldPath="termsAndConditions.MLHPrivacyPolicy">
+        I authorize you to share my application/registration information with Major League Hacking
+        for event administration, ranking, and MLH administration in-line with the{" "}
+        <a
+          href="https://github.com/MLH/mlh-policies/blob/main/privacy-policy.md"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline"
+        >
+          MLH Privacy Policy
+        </a>
+        .
+        <br />
+        <br />I further agree to the terms of both the{" "}
+        <a
+          href="https://github.com/MLH/mlh-policies/blob/main/contest-terms.md"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline"
+        >
+          MLH Contest Terms and Conditions
+        </a>{" "}
+        and the{" "}
+        <a
+          href="https://github.com/MLH/mlh-policies/blob/main/privacy-policy.md"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline"
+        >
+          MLH Privacy Policy
+        </a>
+        .
+      </TermsCheckbox>
       <TermsCheckbox fieldPath="termsAndConditions.nwPlusPrivacyPolicy">
         I agree to the{" "}
         <a
