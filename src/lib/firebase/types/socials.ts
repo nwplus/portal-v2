@@ -14,16 +14,6 @@ export interface RecentlyViewedProfile {
 }
 
 /**
- * Tracks which hackathons a user has attended
- * Determined automatically from hackathon attendance status
- */
-export interface HackathonsAttended {
-  hackcamp: boolean;
-  nwhacks: boolean;
-  "cmd-f": boolean;
-}
-
-/**
  * Social profile - global across all hackathons
  * Users manually fill out their profile information
  * Path: Socials/{uid}
@@ -50,7 +40,6 @@ export interface Social {
     website?: string;
   };
   recentlyViewedProfiles?: RecentlyViewedProfile[];
-  hackathonsAttended?: HackathonsAttended;
 }
 
 /**

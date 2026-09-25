@@ -8,6 +8,7 @@ import { PortfolioQuestion } from "@/components/features/application/portfolio-q
 import { SchoolQuestion } from "@/components/features/application/school-question";
 import { SelectAllQuestion } from "@/components/features/application/select-all-question";
 import { ShortAnswerQuestion } from "@/components/features/application/short-answer-question";
+import { useQuestionVisibility } from "@/hooks/use-question-visibility";
 import type {
   HackerApplicationNonWelcomeQuestion,
   HackerApplicationSections,
@@ -26,6 +27,10 @@ export interface QuestionFieldProps {
  */
 export function QuestionField(props: QuestionFieldProps) {
   const { question } = props;
+  const isVisible = useQuestionVisibility(question);
+
+  if (!isVisible) return null;
+
   switch (question.type) {
     case "Short Answer":
       return <ShortAnswerQuestion {...props} />;
