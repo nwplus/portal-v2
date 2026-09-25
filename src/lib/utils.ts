@@ -175,12 +175,12 @@ export function fireSideCannons(activeHackathon: string) {
 }
 
 export const getPreferredName = (applicant: Applicant): string => {
-  return applicant.basicInfo?.preferredName || applicant.basicInfo.legalFirstName;
+  return applicant.basicInfo?.preferredName || applicant.basicInfo?.legalFirstName || "";
 };
 
 export const getFullName = (applicant: Applicant): string => {
-  const firstName = applicant.basicInfo?.preferredName || applicant.basicInfo.legalFirstName;
-  const lastName = applicant.basicInfo.legalLastName;
+  const firstName = applicant.basicInfo?.preferredName || applicant.basicInfo?.legalFirstName || "";
+  const lastName = applicant.basicInfo?.legalLastName || "";
   return `${firstName} ${lastName}`.trim();
 };
 
