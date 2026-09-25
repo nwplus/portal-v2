@@ -25,6 +25,7 @@ import { Route as ActiveHackathonAuthinternalCharcuterieRouteImport } from './ro
 import { Route as ActiveHackathonAuthApplicationIndexRouteImport } from './routes/$activeHackathon/_auth/application/index'
 import { Route as ActiveHackathonAuthApplicationStepLayoutRouteImport } from './routes/$activeHackathon/_auth/application/_step-layout'
 import { Route as ActiveHackathonAuthApplicationRsvpRouteImport } from './routes/$activeHackathon/_auth/application/rsvp'
+import { Route as ActiveHackathonAuthAttendanceIndexRouteImport } from './routes/$activeHackathon/_auth/attendance/index'
 import { Route as ActiveHackathonAuthaccountSocialProfileIndexRouteImport } from './routes/$activeHackathon/_auth/(account)/social-profile/index'
 import { Route as ActiveHackathonAuthaccountSocialProfileUserIdRouteImport } from './routes/$activeHackathon/_auth/(account)/social-profile/$userId'
 import { Route as ActiveHackathonAuthaccountStampbookIndexRouteImport } from './routes/$activeHackathon/_auth/(account)/stampbook/index'
@@ -123,6 +124,12 @@ const ActiveHackathonAuthApplicationRsvpRoute =
     path: '/rsvp',
     getParentRoute: () => ActiveHackathonAuthApplicationRoute,
   } as any)
+const ActiveHackathonAuthAttendanceIndexRoute =
+  ActiveHackathonAuthAttendanceIndexRouteImport.update({
+    id: '/attendance/',
+    path: '/attendance/',
+    getParentRoute: () => ActiveHackathonAuthRoute,
+  } as any)
 const ActiveHackathonAuthaccountSocialProfileIndexRoute =
   ActiveHackathonAuthaccountSocialProfileIndexRouteImport.update({
     id: '/(account)/social-profile/',
@@ -187,6 +194,7 @@ export interface FileRoutesByFullPath {
   '/$activeHackathon/charcuterie': typeof ActiveHackathonAuthinternalCharcuterieRoute
   '/$activeHackathon/application/rsvp': typeof ActiveHackathonAuthApplicationRsvpRoute
   '/$activeHackathon/application/': typeof ActiveHackathonAuthApplicationIndexRoute
+  '/$activeHackathon/attendance/': typeof ActiveHackathonAuthAttendanceIndexRoute
   '/$activeHackathon/social-profile/$userId': typeof ActiveHackathonAuthaccountSocialProfileUserIdRoute
   '/$activeHackathon/stampbook/$hackathon': typeof ActiveHackathonAuthaccountStampbookHackathonRoute
   '/$activeHackathon/application/basic-info': typeof ActiveHackathonAuthApplicationStepLayoutBasicInfoRoute
@@ -209,6 +217,7 @@ export interface FileRoutesByTo {
   '/$activeHackathon/charcuterie': typeof ActiveHackathonAuthinternalCharcuterieRoute
   '/$activeHackathon/application': typeof ActiveHackathonAuthApplicationIndexRoute
   '/$activeHackathon/application/rsvp': typeof ActiveHackathonAuthApplicationRsvpRoute
+  '/$activeHackathon/attendance': typeof ActiveHackathonAuthAttendanceIndexRoute
   '/$activeHackathon/social-profile/$userId': typeof ActiveHackathonAuthaccountSocialProfileUserIdRoute
   '/$activeHackathon/stampbook/$hackathon': typeof ActiveHackathonAuthaccountStampbookHackathonRoute
   '/$activeHackathon/application/basic-info': typeof ActiveHackathonAuthApplicationStepLayoutBasicInfoRoute
@@ -236,6 +245,7 @@ export interface FileRoutesById {
   '/$activeHackathon/_auth/application/_step-layout': typeof ActiveHackathonAuthApplicationStepLayoutRouteWithChildren
   '/$activeHackathon/_auth/application/rsvp': typeof ActiveHackathonAuthApplicationRsvpRoute
   '/$activeHackathon/_auth/application/': typeof ActiveHackathonAuthApplicationIndexRoute
+  '/$activeHackathon/_auth/attendance/': typeof ActiveHackathonAuthAttendanceIndexRoute
   '/$activeHackathon/_auth/(account)/social-profile/$userId': typeof ActiveHackathonAuthaccountSocialProfileUserIdRoute
   '/$activeHackathon/_auth/(account)/stampbook/$hackathon': typeof ActiveHackathonAuthaccountStampbookHackathonRoute
   '/$activeHackathon/_auth/application/_step-layout/basic-info': typeof ActiveHackathonAuthApplicationStepLayoutBasicInfoRoute
@@ -262,6 +272,7 @@ export interface FileRouteTypes {
     | '/$activeHackathon/charcuterie'
     | '/$activeHackathon/application/rsvp'
     | '/$activeHackathon/application/'
+    | '/$activeHackathon/attendance/'
     | '/$activeHackathon/social-profile/$userId'
     | '/$activeHackathon/stampbook/$hackathon'
     | '/$activeHackathon/application/basic-info'
@@ -284,6 +295,7 @@ export interface FileRouteTypes {
     | '/$activeHackathon/charcuterie'
     | '/$activeHackathon/application'
     | '/$activeHackathon/application/rsvp'
+    | '/$activeHackathon/attendance'
     | '/$activeHackathon/social-profile/$userId'
     | '/$activeHackathon/stampbook/$hackathon'
     | '/$activeHackathon/application/basic-info'
@@ -310,6 +322,7 @@ export interface FileRouteTypes {
     | '/$activeHackathon/_auth/application/_step-layout'
     | '/$activeHackathon/_auth/application/rsvp'
     | '/$activeHackathon/_auth/application/'
+    | '/$activeHackathon/_auth/attendance/'
     | '/$activeHackathon/_auth/(account)/social-profile/$userId'
     | '/$activeHackathon/_auth/(account)/stampbook/$hackathon'
     | '/$activeHackathon/_auth/application/_step-layout/basic-info'
@@ -439,6 +452,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ActiveHackathonAuthApplicationRsvpRouteImport
       parentRoute: typeof ActiveHackathonAuthApplicationRoute
     }
+    '/$activeHackathon/_auth/attendance/': {
+      id: '/$activeHackathon/_auth/attendance/'
+      path: '/attendance'
+      fullPath: '/$activeHackathon/attendance/'
+      preLoaderRoute: typeof ActiveHackathonAuthAttendanceIndexRouteImport
+      parentRoute: typeof ActiveHackathonAuthRoute
+    }
     '/$activeHackathon/_auth/(account)/social-profile/': {
       id: '/$activeHackathon/_auth/(account)/social-profile/'
       path: '/social-profile'
@@ -547,6 +567,7 @@ interface ActiveHackathonAuthRouteChildren {
   ActiveHackathonAuthApplicationRoute: typeof ActiveHackathonAuthApplicationRouteWithChildren
   ActiveHackathonAuthaccountMyTicketRoute: typeof ActiveHackathonAuthaccountMyTicketRoute
   ActiveHackathonAuthinternalCharcuterieRoute: typeof ActiveHackathonAuthinternalCharcuterieRoute
+  ActiveHackathonAuthAttendanceIndexRoute: typeof ActiveHackathonAuthAttendanceIndexRoute
   ActiveHackathonAuthaccountSocialProfileUserIdRoute: typeof ActiveHackathonAuthaccountSocialProfileUserIdRoute
   ActiveHackathonAuthaccountStampbookHackathonRoute: typeof ActiveHackathonAuthaccountStampbookHackathonRoute
   ActiveHackathonAuthaccountSocialProfileIndexRoute: typeof ActiveHackathonAuthaccountSocialProfileIndexRoute
@@ -560,6 +581,8 @@ const ActiveHackathonAuthRouteChildren: ActiveHackathonAuthRouteChildren = {
     ActiveHackathonAuthaccountMyTicketRoute,
   ActiveHackathonAuthinternalCharcuterieRoute:
     ActiveHackathonAuthinternalCharcuterieRoute,
+  ActiveHackathonAuthAttendanceIndexRoute:
+    ActiveHackathonAuthAttendanceIndexRoute,
   ActiveHackathonAuthaccountSocialProfileUserIdRoute:
     ActiveHackathonAuthaccountSocialProfileUserIdRoute,
   ActiveHackathonAuthaccountStampbookHackathonRoute:
