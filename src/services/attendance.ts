@@ -1,6 +1,6 @@
 import { db } from "@/lib/firebase/client";
 import type { Hacker } from "@/lib/firebase/types/applicants";
-import { Timestamp, arrayUnion, doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 
 export interface AttendanceResult {
   alreadyMarked: boolean;
@@ -19,8 +19,7 @@ export async function markPreHackathonAttendance(
   eventName: string,
 ): Promise<AttendanceResult> {
   const existing = await getApplicant(dbCollectionName, uid);
-  const alreadyMarked =
-    existing?.preDayOf?.events?.some((event) => event.eventId === eventId) ?? false;
+  const alreadyMarked = existing?.preDayOf?.events?.[eventId] != null;
 
   if (!alreadyMarked) {
     const ref = getApplicantRef(dbCollectionName, uid);
@@ -28,11 +27,12 @@ export async function markPreHackathonAttendance(
       ref,
       {
         preDayOf: {
-          events: arrayUnion({
-            eventId,
-            eventName,
-            timestamp: Timestamp.now(),
-          }),
+          events: {
+            [eventId]: {
+              eventName,
+              timestamp: serverTimestamp(),
+            },
+          },
         },
       },
       { merge: true },
