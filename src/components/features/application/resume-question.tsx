@@ -33,11 +33,7 @@ export function ResumeQuestion({ section, question }: QuestionFieldProps) {
   const currentResumeUrl =
     resumePath != null ? watch(resumePath as FieldPath<ApplicationFormValues>) : undefined;
 
-  const resumeStatus = resumeFileName
-    ? `${resumeFileName} uploaded`
-    : currentResumeUrl
-      ? "Resume uploaded"
-      : "No file uploaded";
+  const resumeStatus = resumeFileName || currentResumeUrl ? "Uploaded" : "No file uploaded";
 
   const handleResumeFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
