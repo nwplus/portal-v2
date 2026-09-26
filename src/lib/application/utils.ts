@@ -85,6 +85,10 @@ export function isValidHttpsUrl(value: string): boolean {
   }
 }
 
+export function isNotApplicableAnswer(value: string): boolean {
+  return /^(?:n\/a|na)$/i.test(value.trim());
+}
+
 /**
  * Returns true when the provided value is an https URL pointing to a GitHub domain.
  * Accepts the main GitHub domain and common subdomains (e.g., "gist.github.com").

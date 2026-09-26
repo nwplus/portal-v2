@@ -96,6 +96,11 @@ export function formatAnswerForReview(
       return raw || "Not answered";
     }
 
+    case "Resume": {
+      const raw = typeof mainValue === "string" ? mainValue.trim() : "";
+      return raw ? "Uploaded" : "Not answered";
+    }
+
     default: {
       const raw =
         typeof mainValue === "string"

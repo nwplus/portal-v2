@@ -14,7 +14,7 @@ import { emptyAnswerFor, isAnswerEmpty, isConditionMet, isMultiSelectAnswer } fr
 import { FIXED_QUESTION_CONFIG } from "./fixed-question-config";
 import { buildFieldPath, buildOtherFieldPath, getEffectiveFormInput } from "./form-mapping";
 import { getValueAtPath } from "./object-path";
-import { isGithubUrl, isLinkedinUrl, isValidHttpsUrl } from "./utils";
+import { isGithubUrl, isLinkedinUrl, isNotApplicableAnswer, isValidHttpsUrl } from "./utils";
 
 /**
  * Question buckets by section used for schema generation.
@@ -222,6 +222,7 @@ function buildFieldTypeSchema(question: HackerApplicationNonWelcomeQuestion): z.
           (value) => {
             if (!value) return true;
             if (typeof value !== "string") return false;
+            if (isNotApplicableAnswer(value)) return true;
             return isGithubUrl(value);
           },
           {
@@ -332,6 +333,82 @@ function buildFieldTypeSchema(question: HackerApplicationNonWelcomeQuestion): z.
     case "Country": {
       const base = z.string().trim().min(1, "This field is required");
       return isRequired ? base : base.optional();
+    }
+
+    case "Github": {
+      const base = z.string().trim().optional().or(z.literal(""));
+      if (isRequired) {
+        return z
+          .string()
+          .trim()
+          .min(1, "This field is required")
+          .refine((value) => isNotApplicableAnswer(value) || isGithubUrl(value), {
+            error: "Enter a valid GitHub URL (e.g., https://github.com/your-username)",
+          });
+      }
+      return base.refine(
+        (value) => {
+          if (!value || typeof value !== "string") return true;
+          if (isNotApplicableAnswer(value)) return true;
+          return isGithubUrl(value);
+        },
+        { error: "Enter a valid GitHub URL (e.g., https://github.com/your-username)" },
+      );
+    }
+
+    case "LinkedIn": {
+      const base = z.string().trim().optional().or(z.literal(""));
+      if (isRequired) {
+        return z.string().trim().min(1, "This field is required").refine(isLinkedinUrl, {
+          error: "Enter a valid LinkedIn URL (e.g., https://linkedin.com/in/your-profile)",
+        });
+      }
+      return base.refine(
+        (value) => {
+          if (!value || typeof value !== "string") return true;
+          return isLinkedinUrl(value);
+        },
+        { error: "Enter a valid LinkedIn URL (e.g., https://linkedin.com/in/your-profile)" },
+      );
+    }
+
+    case "Portfolio Website": {
+      const base = z.string().trim().optional().or(z.literal(""));
+      if (isRequired) {
+        return z
+          .string()
+          .trim()
+          .min(1, "This field is required")
+          .refine(isValidHttpsUrl, { error: "Enter a valid URL for your portfolio" });
+      }
+      return base.refine(
+        (value) => {
+          if (!value || typeof value !== "string") return true;
+          return isValidHttpsUrl(value);
+        },
+        { error: "Enter a valid URL for your portfolio" },
+      );
+    }
+
+    case "Resume": {
+      const base = z.string().trim().optional().or(z.literal(""));
+      if (!isRequired) return base;
+      return base.superRefine((value, ctx) => {
+        const text = typeof value === "string" ? value.trim() : "";
+        if (!text) {
+          ctx.addIssue({
+            code: "custom",
+            message: "Please upload your resume",
+          });
+          return;
+        }
+        if (!isValidHttpsUrl(text)) {
+          ctx.addIssue({
+            code: "custom",
+            message: "Enter a valid URL for your resume",
+          });
+        }
+      });
     }
 
     default: {

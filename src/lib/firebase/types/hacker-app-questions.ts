@@ -16,7 +16,11 @@ export type HackerApplicationQuestionType =
   | "Dropdown" // dynamic
   | "School" // fixed
   | "Major" // fixed
-  | "Country"; // fixed
+  | "Country" // fixed
+  | "Github"
+  | "LinkedIn"
+  | "Portfolio Website"
+  | "Resume";
 // keep in sync w/ admin-v2 src/lib/firebase/types.ts
 export type HackerApplicationQuestionFormInputField =
   | "academicYear"
