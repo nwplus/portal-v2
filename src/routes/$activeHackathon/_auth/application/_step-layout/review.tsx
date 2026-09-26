@@ -221,7 +221,7 @@ function TermsSection() {
       <TermsCheckbox fieldPath="termsAndConditions.MLHCodeOfConduct">
         I have read and agree to the{" "}
         <a
-          href="https://mlh.io/code-of-conduct"
+          href="https://github.com/MLH/mlh-policies/blob/main/code-of-conduct.md"
           target="_blank"
           rel="noopener noreferrer"
           className="underline"
