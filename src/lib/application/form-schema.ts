@@ -14,7 +14,7 @@ import { emptyAnswerFor, isAnswerEmpty, isConditionMet, isMultiSelectAnswer } fr
 import { FIXED_QUESTION_CONFIG } from "./fixed-question-config";
 import { buildFieldPath, buildOtherFieldPath, getEffectiveFormInput } from "./form-mapping";
 import { getValueAtPath } from "./object-path";
-import { isGithubUrl, isLinkedinUrl, isValidHttpsUrl } from "./utils";
+import { isGithubUrl, isLinkedinUrl, isNotApplicableAnswer, isValidHttpsUrl } from "./utils";
 
 /**
  * Question buckets by section used for schema generation.
@@ -222,6 +222,7 @@ function buildFieldTypeSchema(question: HackerApplicationNonWelcomeQuestion): z.
           (value) => {
             if (!value) return true;
             if (typeof value !== "string") return false;
+            if (isNotApplicableAnswer(value)) return true;
             return isGithubUrl(value);
           },
           {
@@ -337,13 +338,18 @@ function buildFieldTypeSchema(question: HackerApplicationNonWelcomeQuestion): z.
     case "Github": {
       const base = z.string().trim().optional().or(z.literal(""));
       if (isRequired) {
-        return z.string().trim().min(1, "This field is required").refine(isGithubUrl, {
-          error: "Enter a valid GitHub URL (e.g., https://github.com/your-username)",
-        });
+        return z
+          .string()
+          .trim()
+          .min(1, "This field is required")
+          .refine((value) => isNotApplicableAnswer(value) || isGithubUrl(value), {
+            error: "Enter a valid GitHub URL (e.g., https://github.com/your-username)",
+          });
       }
       return base.refine(
         (value) => {
           if (!value || typeof value !== "string") return true;
+          if (isNotApplicableAnswer(value)) return true;
           return isGithubUrl(value);
         },
         { error: "Enter a valid GitHub URL (e.g., https://github.com/your-username)" },

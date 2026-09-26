@@ -16,6 +16,8 @@ export function normalizeUrl(raw: unknown): string {
   const trimmed = raw.trim();
   if (!trimmed) return "";
 
+  if (/^(?:n\/a|na)$/i.test(trimmed)) return trimmed;
+
   // Avoid aggressively rewriting inputs that clearly are not URLs.
   if (/\s/.test(trimmed)) {
     return trimmed;
