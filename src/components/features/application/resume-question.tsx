@@ -114,7 +114,11 @@ export function ResumeQuestion({ section, question }: QuestionFieldProps) {
             disabled={uploadingResume || !userId}
             aria-invalid={isMainInvalid}
           >
-            {uploadingResume ? "Uploading…" : "Upload"}
+            {uploadingResume
+              ? "Uploading…"
+              : resumeFileName || currentResumeUrl
+                ? "Uploaded"
+                : "Upload"}
           </Button>
           <p className="text-text-secondary text-xs">
             {resumeStatus}. Accepted formats: pdf, doc, docx, png, jpg (max 3MB)
