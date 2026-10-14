@@ -1,0 +1,11 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="1192.5" height="970" viewBox="0 0 1192.5 970" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="asteroid belt" style="mix-blend-mode:hard-light">
+<path d="M163.5 551.5C84.2626 609.232 0 742 0 742L118.5 970C118.5 970 223.118 788.788 334 727.5C440.798 668.469 539.617 739.159 641.5 672C755.719 596.71 713.686 457.312 819 370C936.624 272.482 1192.5 253.5 1192.5 253.5L932 0C932 0 737.862 88.7172 641.5 181.5C550.351 269.263 557.577 371.382 456.5 447.5C359.509 520.541 261.633 480.001 163.5 551.5Z" fill="url(#paint0_linear_0_74)" fill-opacity="0.3"/>
+</g>
+<defs>
+<linearGradient id="paint0_linear_0_74" x1="381.5" y1="380" x2="596" y2="619.5" gradientUnits="userSpaceOnUse">
+<stop stop-color="#6F00FC"/>
+<stop offset="1" stop-color="#FFBADB" stop-opacity="0"/>
+</linearGradient>
+</defs>
+</svg>

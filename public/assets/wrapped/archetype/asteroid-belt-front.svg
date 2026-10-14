@@ -1,0 +1,16 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="1231.9" height="1009.4" viewBox="0 0 1231.9 1009.4" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="asteroid belt" filter="url(#filter0_f_0_61)" style="mix-blend-mode:hard-light">
+<path d="M183.2 571.2C103.963 628.932 19.7 761.7 19.7 761.7L138.2 989.7C138.2 989.7 242.818 808.488 353.7 747.2C460.498 688.169 559.317 758.859 661.2 691.7C775.419 616.41 733.386 477.012 838.7 389.7C956.324 292.182 1212.2 273.2 1212.2 273.2L951.7 19.7C951.7 19.7 757.562 108.417 661.2 201.2C570.051 288.963 577.277 391.082 476.2 467.2C379.209 540.241 281.333 499.701 183.2 571.2Z" fill="url(#paint0_linear_0_61)" fill-opacity="0.42"/>
+</g>
+<defs>
+<filter id="filter0_f_0_61" x="0" y="0" width="1231.9" height="1009.4" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="9.85" result="effect1_foregroundBlur_0_61"/>
+</filter>
+<linearGradient id="paint0_linear_0_61" x1="400.422" y1="400.402" x2="708.7" y2="689.2" gradientUnits="userSpaceOnUse">
+<stop stop-color="#6F00FC"/>
+<stop offset="1" stop-color="#FFBADB" stop-opacity="0"/>
+</linearGradient>
+</defs>
+</svg>

@@ -1,0 +1,11 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="320" height="320" viewBox="0 0 320 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Planet" opacity="0.25" style="mix-blend-mode:multiply">
+<circle cx="160" cy="160" r="160" fill="url(#paint0_radial_0_37)"/>
+</g>
+<defs>
+<radialGradient id="paint0_radial_0_37" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(89.5 107) rotate(-146.701) scale(305.092 305.903)">
+<stop stop-color="#0DEFE1" stop-opacity="0"/>
+<stop offset="0.784984" stop-color="#4A6769"/>
+</radialGradient>
+</defs>
+</svg>

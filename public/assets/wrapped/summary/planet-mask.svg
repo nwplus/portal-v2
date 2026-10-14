@@ -1,0 +1,9 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="320" height="320" viewBox="0 0 320 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle id="Planet" cx="160" cy="160" r="160" fill="url(#paint0_linear_0_39)"/>
+<defs>
+<linearGradient id="paint0_linear_0_39" x1="0" y1="0" x2="333.756" y2="15.0555" gradientUnits="userSpaceOnUse">
+<stop stop-color="#0DEFE1"/>
+<stop offset="1" stop-color="#78FF96"/>
+</linearGradient>
+</defs>
+</svg>
