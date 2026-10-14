@@ -8,3 +8,9 @@ dist-ssr
 
 .env
 .idea/
+
+wrapped/service-account*.json
+wrapped/cache/
+wrapped/csv/
+
+.pnpm-store/
