@@ -40,6 +40,17 @@ export interface Social {
   role?: string;
   profilePictureIndex?: number;
   hideRecentlyViewed?: boolean;
+  /**
+   * Whether a Hacker Wrapped deck may be generated for this hacker.
+   *
+   * Opt-IN by default: absent means yes, and only an explicit `false` opts out. Read
+   * that way everywhere — `!== false`, never `=== true` — so hackers who predate the
+   * toggle, and hackers with no Socials doc at all, are not silently excluded.
+   *
+   * The batch script drops opted-out hackers before assembling anything, and the Portal
+   * hides the banner and the deck route for them.
+   */
+  hackerWrappedOptIn?: boolean;
   tagsToHide?: TagCategory[];
   unlockedStamps?: Record<string, string[]>; // { [hackathonName]: stampIds[] }
   socialLinks?: {

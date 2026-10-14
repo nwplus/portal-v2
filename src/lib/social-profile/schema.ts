@@ -85,6 +85,8 @@ export const socialProfileSchema = z.object({
 
   hideRecentlyViewed: z.boolean(),
 
+  hackerWrappedOptIn: z.boolean(),
+
   socialLinks: z.object({
     linkedin: z
       .string()
@@ -126,6 +128,7 @@ export function deriveDefaultValues(
     profilePictureIndex?: number;
     tagsToHide?: Array<"school" | "areaOfStudy" | "year" | "role">;
     hideRecentlyViewed?: boolean;
+    hackerWrappedOptIn?: boolean;
     socialLinks?: {
       linkedin?: string;
       github?: string;
@@ -141,6 +144,10 @@ export function deriveDefaultValues(
     profilePictureIndex: profile?.profilePictureIndex ?? 0,
     tagsToHide: profile?.tagsToHide ?? [],
     hideRecentlyViewed: profile?.hideRecentlyViewed ?? false,
+    // Defaults to on: absent means opted in, so the toggle must render on for every
+    // hacker who has never touched it. `??` rather than a truthy check, so an explicit
+    // `false` survives a round trip through the form.
+    hackerWrappedOptIn: profile?.hackerWrappedOptIn ?? true,
     socialLinks: {
       linkedin: profile?.socialLinks?.linkedin ?? "",
       github: profile?.socialLinks?.github ?? "",

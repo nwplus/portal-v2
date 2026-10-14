@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useHackathon } from "@/hooks/use-hackathon";
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
+import { useWrappedReady } from "@/hooks/use-wrapped-ready";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useHackerStore } from "@/lib/stores/hacker-store";
 import { getFullName, getSidebarHackathonIcon } from "@/lib/utils";
@@ -31,11 +32,13 @@ import {
   Map as MapIcon,
   PackageOpen,
   Share2,
+  Sparkles,
   Stamp,
   Ticket,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { PropsWithChildren } from "react";
+import { WrappedBanner } from "../features/wrapped/wrapped-banner";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
@@ -104,6 +107,7 @@ export function AppSidebar() {
   const signInWithGoogle = useAuthStore((state) => state.signInWithGoogle);
   const user = useAuthStore((state) => state.user);
   const hacker = useHackerStore((state) => state.hacker);
+  const isWrappedAvailable = useWrappedReady();
   const { isMobile } = useSidebar();
   const LogoComponent = getSidebarHackathonIcon(activeHackathon);
   const navigate = useNavigate();
@@ -135,6 +139,31 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
+        {/* Sits above Account on purpose: Wrapped is a limited-time thing, and it is
+            the first item a hacker should see while it is live.
+
+            No admin bypass here, unlike the route itself. The sidebar and banner are
+            meant to show exactly what a hacker sees, so an organizer previewing before
+            release navigates to /{hackathon}/wrapped directly. */}
+        {isAuthenticated && isWrappedAvailable && (
+          <SidebarGroup>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Hacker Wrapped">
+                  <Link
+                    to="/$activeHackathon/wrapped"
+                    params={{ activeHackathon }}
+                    activeProps={{ "data-active": true }}
+                  >
+                    <Sparkles />
+                    <span>Hacker Wrapped</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
+        )}
+
         {isAuthenticated && (
           <SidebarGroup>
             <SidebarGroupLabel>Account</SidebarGroupLabel>
@@ -295,6 +324,7 @@ export function AppSidebarLayout({ children }: PropsWithChildren) {
       <SidebarInset className="overflow-auto">
         {/* mobile trigger */}
         <SidebarTrigger className="absolute top-4 left-4 z-50 size-6 md:hidden" />
+        <WrappedBanner />
         {children}
       </SidebarInset>
     </SidebarProvider>

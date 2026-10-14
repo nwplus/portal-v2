@@ -49,6 +49,13 @@ export interface Hackathon {
     isOpen?: boolean;
     registrationOpen?: boolean;
     test?: boolean;
+    /**
+     * Absolute event timings, ISO 8601. Read by the Wrapped batch script to decide
+     * The Early Bird and The Finisher; without them those archetypes degrade to
+     * cohort-relative ("among the first/last") rather than absolute.
+     */
+    checkInOpensAt?: string;
+    submissionDeadline?: string;
   };
 }
 

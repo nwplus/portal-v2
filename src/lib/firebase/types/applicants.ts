@@ -171,6 +171,11 @@ export type Hacker = Applicant & {
       dinner?: Timestamp[];
     };
     checkedIn?: boolean;
+    /**
+     * Written by the QR scanner on check-in as a JS `Date.toString()` value, not a
+     * Timestamp. Absent for events run before the scanner change shipped.
+     */
+    checkedInTime?: string;
     events?: Array<{
       eventId: string;
       eventName: string;

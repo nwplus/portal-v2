@@ -2,6 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import type { Social, TagCategory } from "@/lib/firebase/types/socials";
 import {
@@ -59,6 +60,7 @@ export function MyProfile({ socialProfile, uid, email, displayName }: MyProfileP
   const watchedProfilePictureIndex = watch("profilePictureIndex");
   const watchedTagsToHide = watch("tagsToHide");
   const watchedHideRecentlyViewed = watch("hideRecentlyViewed");
+  const watchedHackerWrappedOptIn = watch("hackerWrappedOptIn");
 
   const bioWordCount = watchedBio.trim().split(/\s+/).filter(Boolean).length;
 
@@ -88,6 +90,7 @@ export function MyProfile({ socialProfile, uid, email, displayName }: MyProfileP
         year: socialProfile?.year,
         role: socialProfile?.role,
         hideRecentlyViewed: data.hideRecentlyViewed,
+        hackerWrappedOptIn: data.hackerWrappedOptIn,
         tagsToHide: data.tagsToHide.length > 0 ? data.tagsToHide : [],
         socialLinks: {
           linkedin: data.socialLinks.linkedin?.trim() || "",
@@ -428,6 +431,26 @@ export function MyProfile({ socialProfile, uid, email, displayName }: MyProfileP
             >
               Hide my profile from others' recently viewed
             </label>
+          </div>
+
+          <div className="mt-4 flex items-start gap-3">
+            <Switch
+              id="hacker-wrapped-opt-in"
+              checked={watchedHackerWrappedOptIn}
+              onCheckedChange={(checked) => setValue("hackerWrappedOptIn", checked)}
+            />
+            <div className="min-w-0">
+              <label
+                htmlFor="hacker-wrapped-opt-in"
+                className="cursor-pointer text-sm text-text-primary"
+              >
+                Opt in for Hacker Wrapped
+              </label>
+              <p className="mt-1 text-text-secondary text-xs">
+                Turning this off means we won't build a Hacker Wrapped recap of your event from your
+                check-ins, meals, workshops and project.
+              </p>
+            </div>
           </div>
         </div>
       </div>

@@ -144,6 +144,28 @@ export async function fetchSocial(uid: string): Promise<Social | null> {
 }
 
 /**
+ * Reads a hacker's Hacker Wrapped opt-in preference
+ *
+ * Opt-in is the default, so every "no" answer resolves to `true`: a missing Socials
+ * doc, a doc predating the toggle, or any value other than a literal `false`. Only an
+ * explicit opt-out excludes a hacker. A read failure resolves to `true` for the same
+ * reason it does elsewhere in the deck path — a network blip must not present itself
+ * to a hacker as "you opted out".
+ *
+ * @param uid - firebase auth user id (also used as the document id)
+ * @returns false only if the hacker explicitly opted out; else true
+ */
+export async function fetchWrappedOptIn(uid: string): Promise<boolean> {
+  try {
+    const snap = await getDoc(getSocialRef(uid));
+    return snap.data()?.hackerWrappedOptIn !== false;
+  } catch (error) {
+    console.error("Failed to read wrapped opt-in", error);
+    return true;
+  }
+}
+
+/**
  * Fetches an existing social profile or creates a new one
  * Social profiles are global and shared across all hackathons
  * When creating for the first time, pre-populates from current application data if available
