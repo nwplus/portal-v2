@@ -30,14 +30,14 @@ const CONFIG: RunConfig = {
   eventId: "HackCamp2026",
   /** Display name on the slides (`event`, `summary.event`). */
   eventName: "HackCamp 2026",
-  env: "dev",
+  env: "prod",
   /** Off: the run stops after writing cache/.../output/docs.json. */
   writeToFirestore: false,
   /** On: re-fetch every source instead of reading cache/.../raw/. */
   bypassCache: false,
-  devpostCsvPath: "wrapped/csv/test-hackcamp2026.csv",
+  devpostCsvPath: "wrapped/csv/hackcamp2026.csv",
   /** Try the prompt on a few projects first. Null on the real run. */
-  nuggetLimit: 1,
+  nuggetLimit: null,
 };
 
 // ---------------------------------------------------------------------------

@@ -6,7 +6,7 @@ type WrappedStore = {
   ready: Record<string, boolean>;
   /**
    * Resolves the release flag, reading Firestore at most once per event per session.
-   * A failed read counts as not released.
+   * A failed read counts as not released but is not cached, so a later call retries.
    */
   getOrFetchReady: (dbCollectionName: string) => Promise<boolean>;
 };
@@ -17,10 +17,13 @@ export const useWrappedStore = create<WrappedStore>((set, get) => ({
     const cached = get().ready[dbCollectionName];
     if (cached !== undefined) return cached;
 
-    const isReady = await fetchWrappedReady(dbCollectionName).catch((error) => {
+    let isReady: boolean;
+    try {
+      isReady = await fetchWrappedReady(dbCollectionName);
+    } catch (error) {
       console.error("Failed to read wrapped release flag", error);
       return false;
-    });
+    }
     set((state) => ({ ready: { ...state.ready, [dbCollectionName]: isReady } }));
     return isReady;
   },

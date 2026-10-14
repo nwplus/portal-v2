@@ -8,7 +8,7 @@ import { fetchWrappedOptIn } from "@/services/socials";
 import { fetchWrappedDoc } from "@/services/wrapped";
 import { useNavigate } from "@tanstack/react-router";
 import { X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /** How long the rocket takes to cross the banner, revealing it behind itself. */
 const REVEAL_MS = 1600;
@@ -21,11 +21,11 @@ const BANNER_ROCKET_SCALE = 0.07;
 const LAUNCH_ROCKET_SCALE = 0.55;
 
 /**
- * TEMPORARY: shows the banner in dev regardless of release, deck, opt-in or dismissal, and
- * launches into the `full` mock deck, so the banner can be seen without seeding data.
- * Remove before release.
+ * Dev-only opt-in (`VITE_FORCE_WRAPPED_BANNER=true`): shows the banner regardless of
+ * release, deck, opt-in or dismissal, and launches into the `full` mock deck, so the
+ * banner can be seen without seeding data. Off by default so dismissal behaves normally.
  */
-const FORCE_BANNER = import.meta.env.DEV;
+const FORCE_BANNER = import.meta.env.DEV && import.meta.env.VITE_FORCE_WRAPPED_BANNER === "true";
 
 /** The intro slide's sky, so the hand-off into the deck is seamless. */
 const INTRO_SKY = "#1a1138";
@@ -54,6 +54,10 @@ export function WrappedBanner() {
   const [isDismissed, setIsDismissed] = useState(true);
   const [hasDeck, setHasDeck] = useState(false);
   const [isLaunching, setIsLaunching] = useState(false);
+  const launchTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  // Don't navigate after the user has already left the page mid-launch.
+  useEffect(() => () => clearTimeout(launchTimeoutRef.current), []);
 
   useEffect(() => {
     setIsDismissed(isWrappedBannerDismissed(dbCollectionName));
@@ -102,7 +106,7 @@ export function WrappedBanner() {
       return;
     }
     setIsLaunching(true);
-    setTimeout(openDeck, LAUNCH_MS);
+    launchTimeoutRef.current = setTimeout(openDeck, LAUNCH_MS);
   };
 
   return (

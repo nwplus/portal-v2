@@ -562,17 +562,30 @@ async function stageWrite(ctx: RunContext): Promise<void> {
   const written = new Set(progress.state.writtenUids);
   const pending = Object.entries(docs).filter(([uid]) => !written.has(uid));
   if (written.size > 0) ui.info(`${written.size} docs already written; ${pending.length} left`);
-  if (pending.length === 0) return;
+
+  const collection = db.collection("Hackathons").doc(config.eventId).collection("Wrapped");
+  // Docs from an earlier run for hackers no longer in the run (opted out since, or no
+  // longer attending). Without this an opt-out never removes an existing deck.
+  const stale = (await collection.listDocuments()).filter((ref) => !Object.hasOwn(docs, ref.id));
+  if (pending.length === 0 && stale.length === 0) return;
 
   if (config.env === "prod") {
     const answer = await ui.prompt(
-      `Write ${pending.length} docs to PROD Hackathons/${config.eventId}/Wrapped?`,
+      `Write ${pending.length} docs to PROD Hackathons/${config.eventId}/Wrapped` +
+        `${stale.length ? ` and delete ${stale.length} stale ones` : ""}?`,
       ["y", "n"] as const,
     );
     if (answer === "n") throw new Error("Write cancelled; nothing written.");
   }
 
-  const collection = db.collection("Hackathons").doc(config.eventId).collection("Wrapped");
+  for (let i = 0; i < stale.length; i += WRITE_BATCH_SIZE) {
+    const batch = db.batch();
+    for (const ref of stale.slice(i, i + WRITE_BATCH_SIZE)) batch.delete(ref);
+    await batch.commit();
+  }
+  if (stale.length > 0) ui.success(`${stale.length} stale docs deleted (hackers no longer in the run)`);
+  if (pending.length === 0) return;
+
   const bar = ui.bar("Writing", pending.length);
   let carried = 0;
 
