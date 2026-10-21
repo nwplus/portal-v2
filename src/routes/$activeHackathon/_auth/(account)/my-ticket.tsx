@@ -8,6 +8,7 @@ import { useHackathonInfo } from "@/hooks/use-hackathon-info";
 import { useWalletPlatform } from "@/hooks/use-platform";
 import { storage } from "@/lib/firebase/client";
 import { useHackerStore } from "@/lib/stores/hacker-store";
+import { usePortalStore } from "@/lib/stores/portal-store";
 import { addHackerPassToAppleWallet, addHackerPassToGoogleWallet } from "@/services/wallet";
 import { createFileRoute } from "@tanstack/react-router";
 import { getDownloadURL, ref } from "firebase/storage";
@@ -25,6 +26,7 @@ function RouteComponent() {
   const { activeHackathon } = useHackathon();
   const { dbCollectionName } = useHackathonInfo();
   const platform = useWalletPlatform();
+  const isWalletAvailable = usePortalStore((s) => s.walletAvailable?.[activeHackathon] ?? false);
   const ticketRef = useRef<HTMLDivElement>(null);
   const [isCustomizing, setIsCustomizing] = useState(false);
   const [walletLoading, setWalletLoading] = useState(false);
@@ -167,7 +169,7 @@ function RouteComponent() {
           ? "var(--font-space-grotesk)"
           : undefined;
 
-  const walletButtons = (
+  const walletButtons = isWalletAvailable ? (
     <>
       {(platform === "apple" || platform === "other") && (
         <button
@@ -212,7 +214,7 @@ function RouteComponent() {
         </button>
       )}
     </>
-  );
+  ) : null;
 
   return (
     <GradientBackground gradientPosition="bottomMiddle">

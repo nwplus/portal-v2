@@ -39,6 +39,7 @@ type PortalStore = {
   submissionsOpen?: HackathonsFlagMap;
   upNextHackathon?: HackathonsFlagMap;
   visitWebsite?: HackathonsFlagMap;
+  walletAvailable?: HackathonsFlagMap;
   isLegacy?: HackathonsFlagMap;
   legacyStatementUrl?: HackathonsInfoMap;
   notionLinks?: HackathonsNotionLinksMap;
