@@ -106,10 +106,17 @@ test('ctf service maps doc ids, filters solves by uid and returns callable data'
   const service = load('src/services/ctf.ts', {
     '@/lib/firebase/client': { db: 'db', functions: 'functions' },
     'firebase/firestore': {
-      collection: (_db, ...path) => path[path.length - 1],
+      collection: (_db, ...path) => (path.includes('broken') ? 'failing' : path[path.length - 1]),
       where: (...args) => { calls.where.push(args); return 'where'; },
       query: (ref) => ref,
-      onSnapshot: (ref, next) => { next({ docs: snapshots[ref] }); return () => 'unsubscribed'; },
+      onSnapshot: (ref, next, error) => {
+        if (ref === 'failing') {
+          error(new Error('permission-denied'));
+          return () => 'unsubscribed';
+        }
+        next({ docs: snapshots[ref] });
+        return () => 'unsubscribed';
+      },
     },
     'firebase/functions': {
       httpsCallable: (functions, name) => {
@@ -129,6 +136,11 @@ test('ctf service maps doc ids, filters solves by uid and returns callable data'
   service.subscribeToOwnCtfSolves('hackcamp2026', 'alice', (value) => { solves = value; });
   assert.deepEqual(calls.where, [['uid', '==', 'alice']]);
   assert.equal(solves[0]._id, 'alice_day1');
+
+  const errors = [];
+  service.subscribeToCtfChallenges('broken', () => {}, (error) => errors.push(error.message));
+  service.subscribeToOwnCtfSolves('broken', 'alice', () => {}, (error) => errors.push(error.message));
+  assert.deepEqual(errors, ['permission-denied', 'permission-denied']);
 
   assert.deepEqual(await service.submitCtfFlag('hackcamp2026', 'hc26{x}'), { status: 'invalid' });
   assert.deepEqual(calls.callable, [{ dbCollectionName: 'hackcamp2026', flag: 'hc26{x}' }]);

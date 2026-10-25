@@ -5,7 +5,14 @@ import type {
   SubmitCtfFlagInput,
   SubmitCtfFlagResult,
 } from "@/lib/firebase/types/ctf";
-import { type Unsubscribe, collection, onSnapshot, query, where } from "firebase/firestore";
+import {
+  type FirestoreError,
+  type Unsubscribe,
+  collection,
+  onSnapshot,
+  query,
+  where,
+} from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 
 const submitCtfFlagCallable = httpsCallable<SubmitCtfFlagInput, SubmitCtfFlagResult>(
@@ -18,11 +25,13 @@ const submitCtfFlagCallable = httpsCallable<SubmitCtfFlagInput, SubmitCtfFlagRes
  *
  * @param dbCollectionName - firestore collection name for the hackathon
  * @param callback - receives every challenge, unsorted
+ * @param onError - called if the listener fails, e.g. permission denied
  * @returns an unsubscribe function to be called on dismount
  */
 export function subscribeToCtfChallenges(
   dbCollectionName: string,
   callback: (challenges: CtfChallenge[]) => void,
+  onError?: (error: FirestoreError) => void,
 ): Unsubscribe {
   return onSnapshot(
     query(collection(db, "Hackathons", dbCollectionName, "CtfChallenges")),
@@ -31,6 +40,7 @@ export function subscribeToCtfChallenges(
         snapshot.docs.map((d) => ({ ...(d.data() as Omit<CtfChallenge, "_id">), _id: d.id })),
       );
     },
+    onError,
   );
 }
 
@@ -40,18 +50,21 @@ export function subscribeToCtfChallenges(
  * @param dbCollectionName - firestore collection name for the hackathon
  * @param uid - the signed-in hacker's uid
  * @param callback - receives the hacker's solves
+ * @param onError - called if the listener fails, e.g. permission denied
  * @returns an unsubscribe function to be called on dismount
  */
 export function subscribeToOwnCtfSolves(
   dbCollectionName: string,
   uid: string,
   callback: (solves: CtfSolve[]) => void,
+  onError?: (error: FirestoreError) => void,
 ): Unsubscribe {
   return onSnapshot(
     query(collection(db, "Hackathons", dbCollectionName, "CtfSolves"), where("uid", "==", uid)),
     (snapshot) => {
       callback(snapshot.docs.map((d) => ({ ...(d.data() as Omit<CtfSolve, "_id">), _id: d.id })));
     },
+    onError,
   );
 }
 

@@ -7,16 +7,18 @@ import { useHackathonInfo } from "@/hooks/use-hackathon-info";
 import { describeSubmitError, describeSubmitResult, sortChallenges } from "@/lib/ctf";
 import type { CtfChallenge, CtfSolve } from "@/lib/firebase/types/ctf";
 import { useAuthStore } from "@/lib/stores/auth-store";
+import { useHackerStore } from "@/lib/stores/hacker-store";
 import { usePortalStore } from "@/lib/stores/portal-store";
 import { fireSideCannons } from "@/lib/utils";
 import { submitCtfFlag, subscribeToCtfChallenges, subscribeToOwnCtfSolves } from "@/services/ctf";
 import { fetchStamps } from "@/services/stampbook";
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import type { FirestoreError } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/$activeHackathon/_auth/(account)/ctf")({
-  beforeLoad: ({ params }) => {
+  beforeLoad: async ({ params, context }) => {
     const { isAdmin } = useAuthStore.getState();
     const ctfOpen = usePortalStore.getState().ctfOpen?.[params.activeHackathon] ?? false;
     if (!ctfOpen && !isAdmin) {
@@ -24,6 +26,18 @@ export const Route = createFileRoute("/$activeHackathon/_auth/(account)/ctf")({
         to: "/$activeHackathon",
         params: { activeHackathon: params.activeHackathon },
       });
+    }
+    if (!isAdmin) {
+      const uid = useAuthStore.getState().user?.uid;
+      if (uid) {
+        const applicant = await useHackerStore.getState().getOrFetch(context.dbCollectionName, uid);
+        if (applicant?.status?.applicationStatus !== "acceptedAndAttending") {
+          throw redirect({
+            to: "/$activeHackathon/application",
+            params: { activeHackathon: params.activeHackathon },
+          });
+        }
+      }
     }
   },
   loader: async ({ context }) => {
@@ -36,6 +50,11 @@ export const Route = createFileRoute("/$activeHackathon/_auth/(account)/ctf")({
   component: RouteComponent,
 });
 
+const onSubscriptionError = (error: FirestoreError) => {
+  console.error("CTF subscription failed:", error);
+  toast.error("Couldn't load the CTF. Try refreshing.", { id: "ctf-load-error" });
+};
+
 function RouteComponent() {
   const { stampImages } = Route.useLoaderData();
   const { activeHackathon } = useHackathon();
@@ -45,11 +64,14 @@ function RouteComponent() {
   const [solves, setSolves] = useState<CtfSolve[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => subscribeToCtfChallenges(dbCollectionName, setChallenges), [dbCollectionName]);
+  useEffect(
+    () => subscribeToCtfChallenges(dbCollectionName, setChallenges, onSubscriptionError),
+    [dbCollectionName],
+  );
 
   useEffect(() => {
     if (!uid) return;
-    return subscribeToOwnCtfSolves(dbCollectionName, uid, setSolves);
+    return subscribeToOwnCtfSolves(dbCollectionName, uid, setSolves, onSubscriptionError);
   }, [dbCollectionName, uid]);
 
   const handleSubmit = async (flag: string): Promise<boolean> => {
