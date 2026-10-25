@@ -96,3 +96,40 @@ test('unlockStampById only unlocks QR-unlockable stamps', async () => {
   assert.equal(writes.length, 1);
   assert.equal(writes[0].ref, 'Socials/alice');
 });
+
+test('ctf service maps doc ids, filters solves by uid and returns callable data', async () => {
+  const calls = { callable: [], where: [] };
+  const snapshots = {
+    CtfChallenges: [{ id: 'day1', data: () => ({ order: 1, isOpen: true }) }],
+    CtfSolves: [{ id: 'alice_day1', data: () => ({ uid: 'alice', challengeId: 'day1', rank: 1, points: 10 }) }],
+  };
+  const service = load('src/services/ctf.ts', {
+    '@/lib/firebase/client': { db: 'db', functions: 'functions' },
+    'firebase/firestore': {
+      collection: (_db, ...path) => path[path.length - 1],
+      where: (...args) => { calls.where.push(args); return 'where'; },
+      query: (ref) => ref,
+      onSnapshot: (ref, next) => { next({ docs: snapshots[ref] }); return () => 'unsubscribed'; },
+    },
+    'firebase/functions': {
+      httpsCallable: (functions, name) => {
+        assert.equal(functions, 'functions');
+        assert.equal(name, 'submitCtfFlag');
+        return async (input) => { calls.callable.push(input); return { data: { status: 'invalid' } }; };
+      },
+    },
+  });
+
+  let challenges;
+  const unsubscribe = service.subscribeToCtfChallenges('hackcamp2026', (value) => { challenges = value; });
+  assert.deepEqual(challenges, [{ _id: 'day1', order: 1, isOpen: true }]);
+  assert.equal(unsubscribe(), 'unsubscribed');
+
+  let solves;
+  service.subscribeToOwnCtfSolves('hackcamp2026', 'alice', (value) => { solves = value; });
+  assert.deepEqual(calls.where, [['uid', '==', 'alice']]);
+  assert.equal(solves[0]._id, 'alice_day1');
+
+  assert.deepEqual(await service.submitCtfFlag('hackcamp2026', 'hc26{x}'), { status: 'invalid' });
+  assert.deepEqual(calls.callable, [{ dbCollectionName: 'hackcamp2026', flag: 'hc26{x}' }]);
+});
