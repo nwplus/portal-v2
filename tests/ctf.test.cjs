@@ -65,3 +65,34 @@ test('solve summary and challenge sorting', () => {
   assert.deepEqual(ctf.sortChallenges(unsorted).map((c) => c._id), ['a', 'b']);
   assert.deepEqual(unsorted.map((c) => c._id), ['b', 'a']);
 });
+
+test('unlockStampById only unlocks QR-unlockable stamps', async () => {
+  const writes = [];
+  const stamps = [
+    { id: 'qr', data: { name: 'Sponsor booth', isQRUnlockable: true } },
+    { id: 'ctf', data: { name: 'CTF day 1', isQRUnlockable: false } },
+    { id: 'legacy', data: { name: 'Old stamp' } },
+  ];
+  const { unlockStampById } = load('src/services/stampbook.ts', {
+    '@/lib/firebase/client': { db: 'db' },
+    '@/lib/stamps': load('src/lib/stamps.ts'),
+    '@/services/applicants': { fetchApplicant: async () => null },
+    'firebase/firestore': {
+      arrayUnion: (...ids) => ({ arrayUnion: ids }),
+      collection: () => 'Stamps',
+      doc: (_db, ...path) => path.join('/'),
+      getDoc: async () => ({ exists: () => false }),
+      getDocs: async () => ({ docs: stamps.map((s) => ({ id: s.id, data: () => s.data })) }),
+      setDoc: async (ref, data) => { writes.push({ ref, data }); },
+    },
+  });
+
+  assert.deepEqual(await unlockStampById('alice', 'ctf', 'hackcamp2026'), { success: false });
+  assert.deepEqual(await unlockStampById('alice', 'legacy', 'hackcamp2026'), { success: false });
+  assert.deepEqual(await unlockStampById('alice', 'missing', 'hackcamp2026'), { success: false });
+  assert.equal(writes.length, 0);
+
+  assert.deepEqual(await unlockStampById('alice', 'qr', 'hackcamp2026'), { success: true, stampName: 'Sponsor booth' });
+  assert.equal(writes.length, 1);
+  assert.equal(writes[0].ref, 'Socials/alice');
+});

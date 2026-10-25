@@ -1,6 +1,7 @@
 import { db } from "@/lib/firebase/client";
 import type { Hacker } from "@/lib/firebase/types/applicants";
 import type { Stamp, StampCriteria, StampWithUnlockState } from "@/lib/firebase/types/stamps";
+import { canUnlockFromUrl } from "@/lib/stamps";
 import { fetchApplicant } from "@/services/applicants";
 import { arrayUnion, collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 
@@ -60,7 +61,7 @@ async function persistUnlockedStamp(
 
 /**
  * Wrapper around persistUnlockedStamp with validation + richer metadata.
- * Unlock a stamp by ID (used when scanning a QR code). Returns true if the stamp exists and was unlocked, false otherwise.
+ * Unlock a stamp by ID (used when scanning a QR code). Returns success only for QR-unlockable stamps.
  */
 export async function unlockStampById(
   uid: string,
@@ -70,7 +71,7 @@ export async function unlockStampById(
   const allStamps = await fetchStamps(dbCollectionName);
   const stamp = allStamps.find((s) => s._id === stampId);
 
-  if (!stamp) {
+  if (!stamp || !canUnlockFromUrl(stamp)) {
     return { success: false };
   }
 
