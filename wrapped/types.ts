@@ -31,6 +31,12 @@ export type RestartPoint = "fetch" | Checkpoint | "write";
 
 export type StageStatus = "pending" | "running" | "done" | "skipped";
 
+/**
+ * Bumped when a stage output's shape changes, so a later stage refuses a stale one instead
+ * of writing old-shape docs. Carried by EnrichOutput and AssembleOutput; absent means 1.
+ */
+export const STAGE_SCHEMA_VERSION = 2;
+
 /** `cache/{env}/{eventId}/progress.json` */
 export interface Progress {
   eventId: string;
@@ -182,6 +188,14 @@ export interface RawCommit {
   authorType: string | null;
 }
 
+/** raw/github-commits/{sha}.json, from `GET /repos/{owner}/{repo}/commits/{sha}`. Null: unreadable. */
+export interface RawCommitDetail {
+  /** More than 1 is a merge, which adds no lines (Q9). */
+  parentCount: number;
+  /** Every page of the file list. Binary files report 0 additions. */
+  files: Array<{ filename: string; additions: number }>;
+}
+
 // ---------------------------------------------------------------------------
 // Stage outputs: cache/{env}/{eventId}/stages/{stage}.json
 // ---------------------------------------------------------------------------
@@ -326,6 +340,15 @@ export interface ProjectEnrichment {
   commitsByUid: Record<string, number>;
   unattributedCommitCount: number;
   /**
+   * Additions across the same commits, merges and excluded files dropped (countCommitLines).
+   * Null with no readable repo, like teamCommitCount.
+   */
+  teamLineCount: number | null;
+  /** uid -> lines of that hacker's commits, attributed like commitsByUid. */
+  linesByUid: Record<string, number>;
+  /** Counted commits whose stats GitHub wouldn't return (422 etc.); they add 0 lines. */
+  unreadableCommitStats: number;
+  /**
    * Latest in-window commit across the project's repos. Stands in for the submission
    * time: earlySubmission, THE_SPEEDRUNNER, THE_FINISHER.
    */
@@ -337,10 +360,14 @@ export interface ProjectEnrichment {
 }
 
 export interface EnrichOutput {
+  /** STAGE_SCHEMA_VERSION when written; absent means 1. */
+  schemaVersion?: number;
   byProject: Record<string, ProjectEnrichment>;
 }
 
 export interface AssembleOutput {
+  /** STAGE_SCHEMA_VERSION when written; absent means 1. */
+  schemaVersion?: number;
   docs: Record<string, WrappedDoc>;
 }
 
@@ -362,6 +389,17 @@ export type ArchetypeId =
   | "THE_REGULAR"
   | "THE_WARRIOR";
 
+/** The stats the cross-hacker comparison ranks. */
+export type ComparisonStat = "lines" | "stamps" | "events";
+
+/** One stat ranked against its cohort. */
+export interface RankedStat {
+  /** The hacker's own count, copied on purpose. */
+  count: number;
+  /** ceil(1000 × (hackers with strictly more + 1) / cohort size) / 10. */
+  topPercentage: number;
+}
+
 export interface WrappedDoc {
   /** Display name, e.g. "HackCamp 2026". */
   event: string;
@@ -381,10 +419,14 @@ export interface WrappedDoc {
     title: string;
     /** Nugget's one-liner on the project, ≤ 80 chars. Null hides the slide. */
     nugget: string | null;
-    /** Team stat: shown even when this hacker has no skills.github (Q21). Null with no readable repo. */
-    githubTeamCommitCount: number | null;
-    /** Individual stat: null when the hacker has no skills.github (Q21). */
-    githubCommitCount: number | null;
+    /**
+     * Was githubTeamCommitCount. In-window additions across the team's repos; bots, merges
+     * and excluded files dropped. Team stat: shown even when this hacker has no
+     * skills.github (Q21). Null with no readable repo.
+     */
+    githubTeamLineCount: number | null;
+    /** Was githubCommitCount. This hacker's lines. Null without skills.github (Q21). */
+    githubLineCount: number | null;
     /** Devpost "Built With" plus detected AI tools. */
     techStack: string[];
   } | null;
@@ -398,10 +440,16 @@ export interface WrappedDoc {
   /** THE_PRIZEWINNER only via applyPrizes; `write` assigns everything below it. */
   archetype: ArchetypeId;
   /**
-   * Null when githubCommitCount is null. topPercentage = ceil(100 × (hackers with more
-   * commits + 1) / hackers with a count), so the top hacker gets 1 (Q10).
+   * Each stat ranked against its cohort (Q10); null outside it. Lines: hackers with a
+   * githubLineCount. Stamps and events: checked-in hackers.
    */
-  crossHackerComparison: { commitCount: number; topPercentage: number } | null;
+  crossHackerComparison: {
+    lines: RankedStat | null;
+    stamps: RankedStat | null;
+    events: RankedStat | null;
+    /** The stat the comparison slide shows; null hides the slide. */
+    featured: ComparisonStat | null;
+  };
   /** Meal slots with at least one scan, max 7 (Q18). */
   meals: number;
   checkIn: boolean;

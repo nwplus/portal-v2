@@ -292,6 +292,13 @@ select:-webkit-autofill:active {
   }
 }
 
+/* One digit column of the comparison's percentage: rolls its 0–9 strip to the digit. */
+@keyframes wrapped-odometer {
+  to {
+    transform: translateY(var(--wrapped-odometer-to));
+  }
+}
+
 @keyframes wrapped-rise-far {
   from {
     opacity: 0;

@@ -27,6 +27,7 @@ import type {
   RawAttendance,
   RawAwardPlacement,
   RawCommit,
+  RawCommitDetail,
   RawDayOfItem,
   RawPreHackathonWorkshop,
   RawSocial,
@@ -301,6 +302,21 @@ const MAX_COMMIT_PAGES = 30;
 /** Private, deleted, empty (409) or blocked (451): cached as null, never retried. */
 const UNREADABLE_STATUSES = new Set([404, 409, 451]);
 
+/** A commit whose diff GitHub won't compute (422, e.g. too large) is unreadable too. */
+const UNREADABLE_COMMIT_STATUSES = new Set([...UNREADABLE_STATUSES, 422]);
+
+function githubHeaders(): Record<string, string> {
+  const token = process.env.GITHUB_PAT?.trim();
+  if (!token) throw new Error("GITHUB_PAT is not set in .env");
+  return {
+    Authorization: `Bearer ${token}`,
+    Accept: "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28",
+  };
+}
+
+const nextPage = (response: Response) => response.headers.get("link")?.match(/<([^>]+)>;\s*rel="next"/)?.[1];
+
 interface GithubCommit {
   sha: string;
   commit: { message: string; committer: { date: string } | null };
@@ -313,7 +329,7 @@ interface GithubCommit {
  * hackathonStart minus a week. GitHub's `since` compares committer dates, like the window.
  * A 404/409 (private, deleted, empty) caches as null so it is not retried.
  *
- * Default branch only (Q9). Merge commits count.
+ * Default branch only (Q9). Merge commits count as commits; countCommitLines gives them 0 lines.
  */
 export async function fetchRepoCommits(
   ctx: RunContext,
@@ -323,9 +339,7 @@ export async function fetchRepoCommits(
   // GitHub names are case-insensitive; one cache file per repo however it was linked.
   const key = `github/${repo.owner}__${repo.repo}`.toLowerCase();
   return ctx.cache.raw(key, async () => {
-    const token = process.env.GITHUB_PAT?.trim();
-    if (!token) throw new Error("GITHUB_PAT is not set in .env");
-
+    const headers = githubHeaders();
     const since = new Date(new Date(hackathonStart).getTime() - COMMIT_LOOKBACK_MS).toISOString();
     let url: string | undefined =
       `${GITHUB_API}/repos/${repo.owner}/${repo.repo}/commits?per_page=100&since=${since}`;
@@ -336,16 +350,12 @@ export async function fetchRepoCommits(
         ctx.ui.warn(`${repo.owner}/${repo.repo}: stopped at ${commits.length} commits (page cap)`);
         break;
       }
-      const response = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/vnd.github+json",
-          "X-GitHub-Api-Version": "2022-11-28",
-        },
-      });
+      const response = await fetch(url, { headers });
 
       if (UNREADABLE_STATUSES.has(response.status)) return null;
-      if (!response.ok) throw new Error(githubError(repo, response, await response.text()));
+      if (!response.ok) {
+        throw new Error(githubError(`${repo.owner}/${repo.repo}`, response, await response.text()));
+      }
 
       for (const item of (await response.json()) as GithubCommit[]) {
         const committedAt = item.commit.committer?.date;
@@ -358,16 +368,79 @@ export async function fetchRepoCommits(
           authorType: item.author?.type ?? null,
         });
       }
-      url = response.headers.get("link")?.match(/<([^>]+)>;\s*rel="next"/)?.[1];
+      url = nextPage(response);
     }
 
     return commits;
   });
 }
 
-/** A fatal GitHub error. Thrown rather than cached, so the next run retries the repo. */
-function githubError(repo: RepoRef, response: Response, body: string): string {
-  const name = `${repo.owner}/${repo.repo}`;
+interface GithubCommitDetail {
+  parents: unknown[];
+  files?: Array<{ filename: string; additions: number }>;
+}
+
+const commitDetailKey = (sha: string) => `github-commits/${sha}`;
+
+/** Whether a commit's stats are already in raw/, so enrich can count what it must fetch. */
+export function isCommitDetailCached(ctx: RunContext, sha: string): Promise<boolean> {
+  return ctx.cache.hasRaw(commitDetailKey(sha));
+}
+
+/**
+ * raw/github-commits/{sha}.json
+ * `GET /repos/{owner}/{repo}/commits/{sha}`, following the `link` header when the file
+ * list runs past 300. Immutable: a sha's contents never change, so bypassCache keeps it.
+ * 404/409/422/451 caches as null; anything else (a rate limit included) throws, so a rerun
+ * resumes from the cache.
+ */
+export async function fetchCommitDetail(
+  ctx: RunContext,
+  repo: RepoRef,
+  sha: string,
+): Promise<RawCommitDetail | null> {
+  return ctx.cache.raw(
+    commitDetailKey(sha),
+    async () => {
+      const headers = githubHeaders();
+      const name = `${repo.owner}/${repo.repo}@${sha.slice(0, 7)}`;
+      let url: string | undefined = `${GITHUB_API}/repos/${repo.owner}/${repo.repo}/commits/${sha}`;
+      let detail: RawCommitDetail | undefined;
+
+      while (url) {
+        const response = await fetch(url, { headers });
+        if (UNREADABLE_COMMIT_STATUSES.has(response.status)) return null;
+        if (!response.ok) throw new Error(githubError(name, response, await response.text()));
+
+        const page = (await response.json()) as GithubCommitDetail;
+        // Every page repeats the commit; only the files differ.
+        detail ??= { parentCount: page.parents.length, files: [] };
+        for (const file of page.files ?? []) {
+          detail.files.push({ filename: file.filename, additions: file.additions });
+        }
+        url = nextPage(response);
+      }
+      return detail ?? null;
+    },
+    { immutable: true },
+  );
+}
+
+/** `GET /rate_limit` (free): core requests left, and when the window resets (ISO). */
+export async function fetchGithubRateLimit(): Promise<{ remaining: number; reset: string }> {
+  const response = await fetch(`${GITHUB_API}/rate_limit`, { headers: githubHeaders() });
+  if (!response.ok) throw new Error(githubError("rate_limit", response, await response.text()));
+  const { resources } = (await response.json()) as {
+    resources: { core: { remaining: number; reset: number } };
+  };
+  return {
+    remaining: resources.core.remaining,
+    reset: new Date(resources.core.reset * 1000).toISOString(),
+  };
+}
+
+/** A fatal GitHub error. Thrown rather than cached, so the next run retries the request. */
+function githubError(name: string, response: Response, body: string): string {
   if (response.status === 401) return `GitHub rejected GITHUB_PAT (401) on ${name}`;
   if (response.headers.get("x-ratelimit-remaining") === "0") {
     const reset = new Date(Number(response.headers.get("x-ratelimit-reset")) * 1000);

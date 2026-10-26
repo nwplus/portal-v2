@@ -1,0 +1,11 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="24.3531" height="26.9166" viewBox="0 0 24.3531 26.9166" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Star 20" style="mix-blend-mode:overlay">
+<path d="M12.1766 0L15.6034 9.67076L24.3531 13.4583L15.6034 17.2459L12.1766 26.9166L8.74973 17.2459L0 13.4583L8.74973 9.67076L12.1766 0Z" fill="url(#paint0_linear_0_16)" fill-opacity="0.5" style="mix-blend-mode:color-dodge"/>
+</g>
+<defs>
+<linearGradient id="paint0_linear_0_16" x1="12.1766" y1="29.7578" x2="12.1766" y2="0" gradientUnits="userSpaceOnUse">
+<stop stop-color="white"/>
+<stop offset="1" stop-color="#CAFFFC"/>
+</linearGradient>
+</defs>
+</svg>

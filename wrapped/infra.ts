@@ -48,7 +48,7 @@ export interface RunContext {
 // Cache
 //
 //   cache/{env}/{eventId}/
-//     raw/{key}.json        fetched data, one file per source (or per repo / project)
+//     raw/{key}.json        fetched data, one file per source (or per repo / commit)
 //     stages/{stage}.json   each stage's output, read by the next stage
 //     overrides.json        hand-written match corrections
 //     progress.json
@@ -59,8 +59,13 @@ export const CACHE_ROOT = path.join(import.meta.dirname, "cache");
 
 export interface Cache {
   dir: string;
-  /** Returns raw/{key}.json if present (and not bypassed), else runs `fetch` and stores it. */
-  raw<T>(key: string, fetch: () => Promise<T>): Promise<T>;
+  /**
+   * Returns raw/{key}.json if present (and not bypassed), else runs `fetch` and stores it.
+   * `immutable`: the source never changes (a commit by sha), so bypassCache is ignored.
+   */
+  raw<T>(key: string, fetch: () => Promise<T>, options?: { immutable?: boolean }): Promise<T>;
+  /** Whether raw/{key}.json exists, bypassCache aside. */
+  hasRaw(key: string): Promise<boolean>;
   readStage<T>(stage: Stage): Promise<T>;
   writeStage<T>(stage: Stage, data: T): Promise<void>;
   readJson<T>(relativePath: string, fallback: T): Promise<T>;
@@ -83,17 +88,26 @@ export function createCache(config: RunConfig): Cache {
   return {
     dir,
 
-    async raw<T>(key: string, fetch: () => Promise<T>) {
+    async raw<T>(key: string, fetch: () => Promise<T>, options?: { immutable?: boolean }) {
       const file = `raw/${key}.json`;
       // A missing file is a miss; a stored null (private repo) is a hit.
       const missing = Symbol("missing");
-      if (!config.bypassCache) {
+      if (!config.bypassCache || options?.immutable) {
         const hit = await readJson<T | typeof missing>(file, missing);
         if (hit !== missing) return hit;
       }
       const data = await fetch();
       await writeJsonAtomic(resolve(file), data);
       return data;
+    },
+
+    async hasRaw(key) {
+      try {
+        await fs.access(resolve(`raw/${key}.json`));
+        return true;
+      } catch {
+        return false;
+      }
     },
 
     async readStage<T>(stage: Stage) {
@@ -151,10 +165,16 @@ function emptyProgress(config: RunConfig): Progress {
 export async function loadProgress(cache: Cache, config: RunConfig): Promise<ProgressTracker> {
   const state = await cache.readJson(PROGRESS_FILE, emptyProgress(config));
   let lastTickAt = 0;
+  let saving = Promise.resolve();
 
-  const save = async () => {
-    state.updatedAt = new Date().toISOString();
-    await cache.writeJson(PROGRESS_FILE, state);
+  // Chained: concurrent ticks (enrich's commit fetch) would race on one temp file.
+  const save = () => {
+    const write = async () => {
+      state.updatedAt = new Date().toISOString();
+      await cache.writeJson(PROGRESS_FILE, state);
+    };
+    saving = saving.then(write, write);
+    return saving;
   };
 
   return {

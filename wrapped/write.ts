@@ -17,6 +17,7 @@ import {
   applyPrizes,
   assignArchetype,
   attributeCommits,
+  attributeLines,
   buildArchetypeCohort,
   buildHacker,
   buildHackerLookups,
@@ -25,6 +26,7 @@ import {
   checkNuggetMessage,
   cleanAbout,
   computeCrossHackerComparison,
+  countCommitLines,
   detectAiTools,
   filterToHackathonWindow,
   findStaleOverrides,
@@ -46,17 +48,20 @@ import {
   collectNuggetBatch,
   fetchAttendance,
   fetchAttendingApplicants,
+  fetchCommitDetail,
   fetchDayOfSchedule,
   fetchEventInfo,
+  fetchGithubRateLimit,
   fetchPreHackathonWorkshops,
   fetchRepoCommits,
   fetchSocials,
   fetchStamps,
+  isCommitDetailCached,
   parseDevpostCsv,
   submitNuggetBatch,
 } from "./sources.ts";
 import type { NuggetRequest } from "./sources.ts";
-import { STAGES } from "./types.ts";
+import { STAGE_SCHEMA_VERSION, STAGES } from "./types.ts";
 import type {
   AssembleOutput,
   EnrichOutput,
@@ -71,6 +76,8 @@ import type {
   ProjectEnrichment,
   RawApplicant,
   RawCommit,
+  RawCommitDetail,
+  RepoRef,
   RestartPoint,
   Stage,
   WrappedDoc,
@@ -221,58 +228,128 @@ function printMatchReport(ctx: RunContext, report: MatchReport, hackerCount: num
 // 3. enrich: GitHub + AI, per project -> EnrichOutput
 // ---------------------------------------------------------------------------
 
+/** Commit-stat requests in flight at once. */
+const COMMIT_DETAIL_CONCURRENCY = 6;
+
 async function stageEnrich(ctx: RunContext): Promise<void> {
+  const { ui } = ctx;
   const { event, hackers } = await ctx.cache.readStage<FetchOutput>("fetch");
   const { projects } = await ctx.cache.readStage<MatchOutput>("match");
   const hackerByUid = new Map(hackers.map((hacker) => [hacker.uid, hacker]));
 
-  const byProject: Record<string, ProjectEnrichment> = {};
-  const bar = ctx.ui.bar("Projects", projects.length);
+  // 1. Per project: commit lists (cached per repo, so a halt loses at most one repo).
+  const listed: Array<{ project: Project; readable: boolean; inWindow: RawCommit[] }> = [];
+  // The first repo each sha was listed in; a fork's copy has the same stats.
+  const repoBySha = new Map<string, RepoRef>();
+  const projectBar = ui.bar("Projects", projects.length);
   let unreadableRepos = 0;
 
-  for (const [i, project] of projects.entries()) {
-    // Cached per repo, so a halt mid-stage loses at most one repo.
-    const perRepo = [];
-    for (const repo of project.repos) perRepo.push(await fetchRepoCommits(ctx, repo, event.hackathonStart));
-    unreadableRepos += perRepo.filter((commits) => commits === null).length;
-    const readable = perRepo.filter((commits): commits is RawCommit[] => commits !== null);
+  for (const project of projects) {
+    const perRepo: RawCommit[][] = [];
+    for (const repo of project.repos) {
+      const commits = await fetchRepoCommits(ctx, repo, event.hackathonStart);
+      if (commits === null) {
+        unreadableRepos++;
+        continue;
+      }
+      perRepo.push(commits);
+      for (const commit of commits) if (!repoBySha.has(commit.sha)) repoBySha.set(commit.sha, repo);
+    }
 
     // One repo linked twice under different names, or a fork, must not double-count.
-    const unique = new Map(readable.flat().map((commit) => [commit.sha, commit]));
-    const inWindow = filterToHackathonWindow([...unique.values()], event);
-    const members = project.memberUids.flatMap((uid) => hackerByUid.get(uid) ?? []);
-    const attributed = attributeCommits(inWindow, members);
+    const unique = new Map(perRepo.flat().map((commit) => [commit.sha, commit]));
+    listed.push({
+      project,
+      readable: perRepo.length > 0,
+      inWindow: filterToHackathonWindow([...unique.values()], event),
+    });
+    projectBar.tick();
+  }
+  projectBar.stop();
 
+  // 2. Preflight: only uncached stats cost requests. Pages past 300 files cost more, rarely.
+  const counted = (commits: RawCommit[]) => commits.filter((commit) => commit.authorType !== "Bot");
+  const shas = [...new Set(listed.flatMap(({ inWindow }) => counted(inWindow).map((commit) => commit.sha)))];
+  const cached = await Promise.all(shas.map((sha) => isCommitDetailCached(ctx, sha)));
+  const uncached = cached.filter((hit) => !hit).length;
+  if (uncached > 0) {
+    const limit = await fetchGithubRateLimit();
+    ui.info(`${shas.length} commits, ${uncached} stats not cached; ${limit.remaining} GitHub requests left`);
+    if (limit.remaining < uncached) {
+      const reset = new Date(limit.reset).toLocaleTimeString();
+      ui.warn(
+        `Not enough GitHub requests for every commit; the limit resets at ${reset}. ` +
+          "Continuing stops at the limit; rerun after the reset to resume from the cache.",
+      );
+      const choice = await ui.prompt("[c]ontinue / [a]bort?", ["c", "a"] as const);
+      if (choice === "a") throw new Error("Enrich aborted before commit stats; progress stays at enrich.");
+    }
+  }
+
+  // 3. Commit stats, a few at a time. Cached per sha, so a halt loses only those in flight.
+  const details = new Map<string, RawCommitDetail | null>();
+  const statsBar = ui.bar("Commit stats", shas.length);
+  let next = 0;
+  let failed = false;
+  const worker = async () => {
+    while (!failed && next < shas.length) {
+      const sha = shas[next++];
+      try {
+        details.set(sha, await fetchCommitDetail(ctx, repoBySha.get(sha)!, sha));
+      } catch (error) {
+        // The others stop taking new shas; the rate-limit message reaches the user.
+        failed = true;
+        throw error;
+      }
+      statsBar.tick();
+      await ctx.progress.tick("enrich", details.size, shas.length);
+    }
+  };
+  await Promise.all(Array.from({ length: COMMIT_DETAIL_CONCURRENCY }, worker));
+  statsBar.stop();
+  const linesBySha = new Map([...details].map(([sha, detail]) => [sha, countCommitLines(detail)]));
+
+  // 4. Per project: attribution from the commits and stats above.
+  const byProject: Record<string, ProjectEnrichment> = {};
+  for (const { project, readable, inWindow } of listed) {
+    const members = project.memberUids.flatMap((uid) => hackerByUid.get(uid) ?? []);
     // No readable repo: every count is unknown, not zero, so no member enters the ranking.
     byProject[project.id] = {
       projectId: project.id,
-      ...(readable.length > 0
-        ? attributed
-        : { teamCommitCount: null, commitsByUid: {}, unattributedCommitCount: 0 }),
+      ...(readable
+        ? { ...attributeCommits(inWindow, members), ...attributeLines(inWindow, linesBySha, members) }
+        : {
+            teamCommitCount: null,
+            commitsByUid: {},
+            unattributedCommitCount: 0,
+            teamLineCount: null,
+            linesByUid: {},
+          }),
+      unreadableCommitStats: counted(inWindow).filter((commit) => details.get(commit.sha) === null).length,
       lastCommitAt: latestCommitAt(inWindow),
       aiTools: detectAiTools(inWindow),
       // Filled below, once every project's commits are in.
       nugget: null,
     };
-
-    bar.tick();
-    await ctx.progress.tick("enrich", i + 1, projects.length);
   }
-  bar.stop();
 
   const repoCount = projects.reduce((sum, project) => sum + project.repos.length, 0);
-  const withCommits = Object.values(byProject).filter((e) => e.teamCommitCount).length;
-  ctx.ui.success(
+  const enrichments = Object.values(byProject);
+  const withCommits = enrichments.filter((e) => e.teamCommitCount).length;
+  const totalLines = enrichments.reduce((sum, e) => sum + (e.teamLineCount ?? 0), 0);
+  const noStats = [...details.values()].filter((detail) => detail === null).length;
+  ui.success(
     `${projects.length} projects enriched: ${repoCount} repos (${unreadableRepos} private or missing), ` +
-      `${withCommits} projects with in-window commits`,
+      `${withCommits} projects with in-window commits, ${totalLines.toLocaleString()} lines ` +
+      `(${noStats}/${shas.length} commits with no readable stats)`,
   );
 
-  // Cohort-wide (the commit quartile), so after the loop.
+  // 5. Cohort-wide (the commit quartile), so after the loop.
   const store = await generateNuggets(ctx, projects, byProject, event);
   await reviewNuggets(ctx, projects, store);
   for (const project of projects) byProject[project.id].nugget = store[project.id]?.message ?? null;
 
-  await ctx.cache.writeStage<EnrichOutput>("enrich", { byProject });
+  await ctx.cache.writeStage<EnrichOutput>("enrich", { schemaVersion: STAGE_SCHEMA_VERSION, byProject });
 }
 
 const NUGGET_STORE = "nuggets.json";
@@ -487,13 +564,18 @@ async function reviewNuggets(ctx: RunContext, projects: Project[], store: Nugget
 async function stageAssemble(ctx: RunContext): Promise<void> {
   const { event, hackers } = await ctx.cache.readStage<FetchOutput>("fetch");
   const match = await ctx.cache.readStage<MatchOutput>("match");
-  const { byProject } = await ctx.cache.readStage<EnrichOutput>("enrich");
+  const enrich = await ctx.cache.readStage<EnrichOutput>("enrich");
+  if (enrich.schemaVersion !== STAGE_SCHEMA_VERSION) {
+    throw new Error("stages/enrich.json is from an older schema; run pnpm wrapped write --from enrich");
+  }
+  const { byProject } = enrich;
   const projectById = new Map(match.projects.map((project) => [project.id, project]));
 
   // Cohort-wide values first; each per-hacker rule only compares against these.
   const cohort = buildArchetypeCohort(hackers, match, byProject, event);
   const comparisons = computeCrossHackerComparison(
-    Object.assign({}, ...Object.values(byProject).map((e) => e.commitsByUid)),
+    hackers,
+    Object.assign({}, ...Object.values(byProject).map((e) => e.linesByUid)),
   );
 
   const generatedAt = new Date().toISOString();
@@ -508,12 +590,12 @@ async function stageAssemble(ctx: RunContext): Promise<void> {
       project,
       enrichment,
       archetype: assignArchetype(hacker, project, enrichment, cohort),
-      comparison: comparisons[hacker.uid] ?? null,
+      comparison: comparisons[hacker.uid],
       generatedAt,
     });
   }
 
-  await ctx.cache.writeStage<AssembleOutput>("assemble", { docs });
+  await ctx.cache.writeStage<AssembleOutput>("assemble", { schemaVersion: STAGE_SCHEMA_VERSION, docs });
   await ctx.cache.writeJson("output/docs.json", docs);
   printDocSummary(ctx, Object.values(docs));
   ctx.ui.info(`Review ${ctx.cache.dir}/output/docs.json before writing.`);
@@ -523,10 +605,12 @@ async function stageAssemble(ctx: RunContext): Promise<void> {
 function printDocSummary(ctx: RunContext, docs: WrappedDoc[]) {
   const nullable: Array<[string, (doc: WrappedDoc) => unknown]> = [
     ["project", (doc) => doc.project],
-    ["project.githubTeamCommitCount", (doc) => doc.project?.githubTeamCommitCount],
-    ["project.githubCommitCount", (doc) => doc.project?.githubCommitCount],
+    ["project.githubTeamLineCount", (doc) => doc.project?.githubTeamLineCount],
+    ["project.githubLineCount", (doc) => doc.project?.githubLineCount],
     ["project.nugget", (doc) => doc.project?.nugget],
-    ["crossHackerComparison", (doc) => doc.crossHackerComparison],
+    ["crossHackerComparison.lines", (doc) => doc.crossHackerComparison.lines],
+    ["crossHackerComparison.stamps", (doc) => doc.crossHackerComparison.stamps],
+    ["crossHackerComparison.events", (doc) => doc.crossHackerComparison.events],
     ["survival", (doc) => doc.survival],
     ["earlySubmission", (doc) => doc.earlySubmission],
   ];
@@ -541,6 +625,13 @@ function printDocSummary(ctx: RunContext, docs: WrappedDoc[]) {
   ctx.ui.info(
     `archetypes: ${[...archetypes].map(([id, count]) => `${id} ${count}`).join(", ")}`,
   );
+
+  const featured = new Map<string, number>(["lines", "stamps", "events", "none"].map((stat) => [stat, 0]));
+  for (const doc of docs) {
+    const stat = doc.crossHackerComparison.featured ?? "none";
+    featured.set(stat, featured.get(stat)! + 1);
+  }
+  ctx.ui.info(`featured: ${[...featured].map(([stat, count]) => `${stat} ${count}`).join(", ")}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -551,6 +642,12 @@ function printDocSummary(ctx: RunContext, docs: WrappedDoc[]) {
 const WRITE_BATCH_SIZE = 450;
 
 async function stageWrite(ctx: RunContext): Promise<void> {
+  const assembled = await ctx.cache.readStage<AssembleOutput>("assemble");
+  // A plain resume skips a done assemble; without this it would push old-shape docs.
+  if (assembled.schemaVersion !== STAGE_SCHEMA_VERSION) {
+    throw new Error("stages/assemble.json is from an older schema; run pnpm wrapped write --from assemble");
+  }
+
   if (!ctx.config.writeToFirestore) {
     ctx.ui.info("writeToFirestore is off; skipping. Docs are in output/docs.json.");
     await ctx.progress.setStatus("write", "skipped");
@@ -558,7 +655,7 @@ async function stageWrite(ctx: RunContext): Promise<void> {
   }
 
   const { config, db, ui, progress } = ctx;
-  const { docs } = await ctx.cache.readStage<AssembleOutput>("assemble");
+  const { docs } = assembled;
   const written = new Set(progress.state.writtenUids);
   const pending = Object.entries(docs).filter(([uid]) => !written.has(uid));
   if (written.size > 0) ui.info(`${written.size} docs already written; ${pending.length} left`);

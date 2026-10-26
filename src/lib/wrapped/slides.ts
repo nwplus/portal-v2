@@ -15,6 +15,7 @@ export type SlideId =
   | "hackerOrigin"
   | "nugget"
   | "github"
+  | "comparison"
   | "techStack"
   | "attendance"
   | "stamps"
@@ -30,7 +31,8 @@ export const SLIDE_LABELS: Record<SlideId, string> = {
   earlySubmission: "Early submission",
   hackerOrigin: "Hacker origin",
   nugget: "Your project",
-  github: "GitHub commits",
+  github: "Lines committed",
+  comparison: "Your ranking",
   techStack: "Tech stack",
   attendance: "Workshops",
   stamps: "Stamps collected",
@@ -52,10 +54,13 @@ const EARLY_SUBMISSION_MIN_HOURS = 1;
  *  - `earlySubmission`  beat the deadline by more than an hour
  *  - `hackerOrigin`     always — a static video with no per-hacker data
  *  - `nugget`           the project has a reviewed one-liner
- *  - `github`           the project has a readable repo (team commit count)
+ *  - `github`           the project has a readable repo (team line count)
  *  - `techStack`        the project lists at least one tool
  *  - `attendance`       always — zero workshops is still a number the comp can show
  *  - `stamps`           always
+ *  - `comparison`       a featured stat (`crossHackerComparison.featured`, picked by the
+ *                       script); right after that stat's own slide: `github` for lines,
+ *                       `stamps` for stamps, `attendance` for events
  *  - `prizes`           won something
  *  - `archetype`        always
  *  - `summary`          always
@@ -65,6 +70,8 @@ const EARLY_SUBMISSION_MIN_HOURS = 1;
  */
 export function buildSlides(doc: WrappedDoc): SlideId[] {
   const slides: SlideId[] = ["intro"];
+  // Optional-chained: dev Firestore still holds docs from before the comparison had it.
+  const featured = doc.crossHackerComparison?.featured ?? null;
 
   slides.push(doc.isFirstTimer ? "firstTimer" : "returning");
 
@@ -78,15 +85,20 @@ export function buildSlides(doc: WrappedDoc): SlideId[] {
     slides.push("nugget");
   }
 
-  if (doc.project?.githubTeamCommitCount != null) {
+  if (doc.project?.githubTeamLineCount != null) {
     slides.push("github");
+    if (featured === "lines") slides.push("comparison");
   }
 
   if (doc.project && doc.project.techStack.length > 0) {
     slides.push("techStack");
   }
 
-  slides.push("attendance", "stamps");
+  slides.push("attendance");
+  if (featured === "events") slides.push("comparison");
+
+  slides.push("stamps");
+  if (featured === "stamps") slides.push("comparison");
 
   if (doc.prize && doc.prize.length > 0) {
     slides.push("prizes");

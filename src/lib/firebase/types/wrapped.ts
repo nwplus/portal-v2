@@ -4,7 +4,8 @@
  *
  * This lives in `src/` rather than `wrapped/` because `wrapped/` is Node-targeted and
  * excluded from the root tsconfig, so the app cannot import from it. `ArchetypeId`,
- * `WrappedStamp` and `WrappedDoc` mirror `wrapped/types.ts` — keep them in sync.
+ * `WrappedStamp`, `ComparisonStat`, `RankedStat` and `WrappedDoc` mirror `wrapped/types.ts`
+ * — keep them in sync.
  *
  * All timestamps are ISO 8601 strings, never `Timestamp` objects — the script runs on
  * `firebase-admin/firestore` while the app runs on the client SDK, and the two classes
@@ -51,6 +52,17 @@ export interface WrappedStamp {
   imgURL: string | null;
 }
 
+/** The stats the cross-hacker comparison ranks. */
+export type ComparisonStat = "lines" | "stamps" | "events";
+
+/** One stat ranked against its cohort. */
+export interface RankedStat {
+  /** The hacker's own count, copied on purpose. */
+  count: number;
+  /** ceil(1000 × (hackers with strictly more + 1) / cohort size) / 10, so one decimal. */
+  topPercentage: number;
+}
+
 /**
  * The doc written to `Hackathons/{event}/Wrapped/{uid}` by `wrapped/`. Owner-read only.
  *
@@ -77,10 +89,13 @@ export interface WrappedDoc {
     title: string;
     /** Nugget's one-liner on the project, <= 80 chars. Null hides the slide. */
     nugget: string | null;
-    /** Team stat. Null with no readable repo. */
-    githubTeamCommitCount: number | null;
-    /** Individual stat: null when the hacker has no `skills.github`. */
-    githubCommitCount: number | null;
+    /**
+     * Was githubTeamCommitCount. In-window additions across the team's repos; bots, merges
+     * and excluded files dropped. Team stat. Null with no readable repo.
+     */
+    githubTeamLineCount: number | null;
+    /** Was githubCommitCount. This hacker's lines. Null without `skills.github`. */
+    githubLineCount: number | null;
     /** Devpost "Built With" plus detected AI tools. */
     techStack: string[];
   } | null;
@@ -92,8 +107,17 @@ export interface WrappedDoc {
   /** Written only by the prize run. */
   prize?: string[];
   archetype: ArchetypeId;
-  /** Null when githubCommitCount is null. The top hacker gets `topPercentage` 1. */
-  crossHackerComparison: { commitCount: number; topPercentage: number } | null;
+  /**
+   * Each stat ranked against its cohort; null outside it. Lines: hackers with a
+   * githubLineCount. Stamps and events: checked-in hackers.
+   */
+  crossHackerComparison: {
+    lines: RankedStat | null;
+    stamps: RankedStat | null;
+    events: RankedStat | null;
+    /** The stat the comparison slide shows; null hides the slide. */
+    featured: ComparisonStat | null;
+  };
   /** Meal slots with at least one scan, max 7. */
   meals: number;
   checkIn: boolean;

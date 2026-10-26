@@ -21,7 +21,7 @@ const STAMPS = [
   { id: "opening", name: "Opening Ceremony", imgURL: "/assets/wrapped/summary/stamp-purple.svg" },
 ];
 
-/** Every slide qualifies — the longest deck the gating can produce. */
+/** Every slide qualifies — the longest deck the gating can produce. Ranks on lines. */
 const full: WrappedDoc = {
   event: "HackCamp 2026",
   eventId: "HackCamp2026",
@@ -33,14 +33,19 @@ const full: WrappedDoc = {
   project: {
     title: "Moodloop",
     nugget: "A journal that turns your week into a playlist",
-    githubTeamCommitCount: 412,
-    githubCommitCount: 168,
+    githubTeamLineCount: 18452,
+    githubLineCount: 7309,
     techStack: ["TypeScript", "React", "Firebase", "Claude"],
   },
   showedUp: { stamps: STAMPS, dayOfWorkshopCount: 3, preHackathonWorkshopCount: 2 },
   prize: ["Best Use of Firebase", "Hacker's Choice"],
   archetype: "THE_PRIZEWINNER",
-  crossHackerComparison: { commitCount: 168, topPercentage: 4 },
+  crossHackerComparison: {
+    lines: { count: 7309, topPercentage: 0.3 },
+    stamps: { count: 5, topPercentage: 12 },
+    events: { count: 5, topPercentage: 18.4 },
+    featured: "lines",
+  },
   meals: 6,
   checkIn: true,
   summary: {
@@ -59,7 +64,7 @@ const noProject: WrappedDoc = {
   project: null,
   prize: undefined,
   archetype: "THE_REGULAR",
-  crossHackerComparison: null,
+  crossHackerComparison: { ...full.crossHackerComparison, lines: null, featured: "stamps" },
   summary: { ...full.summary, projectName: null, archetype: "THE_REGULAR" },
 };
 
@@ -73,11 +78,44 @@ const firstTimer: WrappedDoc = {
   summary: { ...full.summary, attendance: 1, archetype: "THE_ORIGIN_STORY" },
 };
 
-/** No `skills.github`: the GitHub slide shows the team count only. */
+/** No `skills.github`: the GitHub slide shows the team count only, and lines aren't ranked. */
 const noGithub: WrappedDoc = {
   ...full,
-  project: full.project && { ...full.project, githubCommitCount: null },
-  crossHackerComparison: null,
+  project: full.project && { ...full.project, githubLineCount: null },
+  crossHackerComparison: { ...full.crossHackerComparison, lines: null, featured: "stamps" },
+};
+
+/** Stamps beat lines, so the comparison follows the stamps slide. One stamp, for the singular copy. */
+const comparisonStamps: WrappedDoc = {
+  ...full,
+  crossHackerComparison: {
+    lines: { count: 7309, topPercentage: 15 },
+    stamps: { count: 1, topPercentage: 10 },
+    events: { count: 8, topPercentage: 5 },
+    featured: "stamps",
+  },
+};
+
+/** Neither lines nor stamps qualifies: events, after the attendance slide. */
+const comparisonEvents: WrappedDoc = {
+  ...full,
+  crossHackerComparison: {
+    lines: { count: 120, topPercentage: 62.5 },
+    stamps: { count: 0, topPercentage: 88 },
+    events: { count: 12, topPercentage: 2.4 },
+    featured: "events",
+  },
+};
+
+/** Nothing qualifies: no comparison slide. */
+const noComparison: WrappedDoc = {
+  ...full,
+  crossHackerComparison: {
+    lines: { count: 120, topPercentage: 62.5 },
+    stamps: { count: 0, topPercentage: 88 },
+    events: { count: 1, topPercentage: 71 },
+    featured: null,
+  },
 };
 
 /** The floor: intro, returning, origin, attendance, stamps, archetype, summary. */
@@ -86,6 +124,7 @@ const minimal: WrappedDoc = {
   survival: null,
   showedUp: { stamps: [], dayOfWorkshopCount: 0, preHackathonWorkshopCount: 0 },
   archetype: "THE_WARRIOR",
+  crossHackerComparison: { lines: null, stamps: null, events: null, featured: null },
   meals: 0,
   checkIn: false,
   summary: { ...noProject.summary, archetype: "THE_WARRIOR", stamps: [] },
@@ -96,6 +135,9 @@ export const WRAPPED_FIXTURES = {
   "no-project": noProject,
   "first-timer": firstTimer,
   "no-github": noGithub,
+  "comparison-stamps": comparisonStamps,
+  "comparison-events": comparisonEvents,
+  "no-comparison": noComparison,
   minimal,
 } satisfies Record<string, WrappedDoc>;
 

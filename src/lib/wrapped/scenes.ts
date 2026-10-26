@@ -25,9 +25,9 @@ export type Scene = VideoScene | CodedScene;
 /** The comp has four tech-stack slots; unused ones are blanked rather than left as placeholders. */
 const TECH_STACK_SLOTS = 4;
 
-/** Rounds to one decimal place, dropping a trailing `.0`. */
-function formatHours(hours: number): string {
-  return Number.isInteger(hours) ? String(hours) : hours.toFixed(1);
+/** Rounds to one decimal place, dropping a trailing `.0`: hours, and the comparison's percentage. */
+export function formatOneDecimal(value: number): string {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
 
 export const SCENES: Record<SlideId, Scene> = {
@@ -40,7 +40,7 @@ export const SCENES: Record<SlideId, Scene> = {
     lottie: `${ASSETS}/early-submission/early-submission.json`,
     // `\r` is After Effects' line break, matching the comp's two-line placeholder.
     texts: (doc) => ({
-      "You submitted 10 hours early!": `You submitted ${formatHours(doc.earlySubmission ?? 0)}\rhours early!`,
+      "You submitted 10 hours early!": `You submitted ${formatOneDecimal(doc.earlySubmission ?? 0)}\rhours early!`,
     }),
   },
   hackerOrigin: { kind: "video", video: `${ASSETS}/hacker-origin/hacker-origin.mp4` },
@@ -54,11 +54,11 @@ export const SCENES: Record<SlideId, Scene> = {
     kind: "video",
     video: `${ASSETS}/github-metrics/github-metrics-bg.mp4`,
     lottie: `${ASSETS}/github-metrics/github-metrics.json`,
-    // Team first, then this hacker's own — blank when there's no GitHub username to
-    // attribute commits to, never a team number standing in for a personal one.
+    // Lines committed: team first, then this hacker's own — blank when there's no GitHub
+    // username to attribute lines to, never a team number standing in for a personal one.
     texts: (doc) => ({
-      "10000": (doc.project?.githubTeamCommitCount ?? 0).toLocaleString(),
-      "10001": doc.project?.githubCommitCount?.toLocaleString() ?? "",
+      "10000": (doc.project?.githubTeamLineCount ?? 0).toLocaleString(),
+      "10001": doc.project?.githubLineCount?.toLocaleString() ?? "",
     }),
   },
   techStack: {
@@ -82,6 +82,7 @@ export const SCENES: Record<SlideId, Scene> = {
     }),
   },
   stamps: { kind: "coded" },
+  comparison: { kind: "coded" },
   prizes: {
     kind: "video",
     video: `${ASSETS}/prizes/prizes-won-bg.mp4`,

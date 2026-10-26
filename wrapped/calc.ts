@@ -7,6 +7,7 @@ import { createHash } from "node:crypto";
 
 import type {
   ArchetypeId,
+  ComparisonStat,
   DevpostRow,
   EventInfo,
   Hacker,
@@ -21,10 +22,12 @@ import type {
   RawAttendance,
   RawAwardPlacement,
   RawCommit,
+  RawCommitDetail,
   RawDayOfItem,
   RawPreHackathonWorkshop,
   RawSocial,
   RawStamp,
+  RankedStat,
   RepoRef,
   WrappedDoc,
   WrappedStamp,
@@ -403,6 +406,81 @@ export function attributeCommits(
     commitsByUid,
     unattributedCommitCount: Math.max(teamCommitCount - attributed, 0),
   };
+}
+
+/**
+ * Paths whose additions aren't lines anyone wrote, matched case-insensitively: lockfiles by
+ * name, dependency and build output directories at any depth, minified bundles, source maps.
+ */
+export const LINE_COUNT_EXCLUSIONS = {
+  lockfiles: [
+    "package-lock.json",
+    "yarn.lock",
+    "pnpm-lock.yaml",
+    "bun.lock",
+    "bun.lockb",
+    "cargo.lock",
+    "poetry.lock",
+    "gemfile.lock",
+    "composer.lock",
+    "go.sum",
+  ],
+  directories: ["node_modules", "vendor", "dist", "build", ".next", "venv", ".venv", "__pycache__"],
+  /** `*.min.*` and `*.map`, on the file name. */
+  names: [/\.min\./, /\.map$/],
+} as const;
+
+const EXCLUDED_LOCKFILES = new Set<string>(LINE_COUNT_EXCLUSIONS.lockfiles);
+const EXCLUDED_DIRECTORIES = new Set<string>(LINE_COUNT_EXCLUSIONS.directories);
+
+function isExcludedPath(filename: string): boolean {
+  const segments = filename.toLowerCase().split("/");
+  const name = segments.pop() ?? "";
+  return (
+    EXCLUDED_LOCKFILES.has(name) ||
+    segments.some((segment) => EXCLUDED_DIRECTORIES.has(segment)) ||
+    LINE_COUNT_EXCLUSIONS.names.some((pattern) => pattern.test(name))
+  );
+}
+
+/**
+ * Additions across a commit's files, excluded paths dropped. A merge (more than 1 parent)
+ * and an unreadable commit (null) add 0. No per-commit cap: starter templates count.
+ */
+export function countCommitLines(detail: RawCommitDetail | null): number {
+  if (!detail || detail.parentCount > 1) return 0;
+  let lines = 0;
+  for (const file of detail.files) {
+    if (!isExcludedPath(file.filename)) lines += file.additions;
+  }
+  return lines;
+}
+
+/**
+ * attributeCommits for lines: each commit's countCommitLines (by sha; a missing sha is 0)
+ * goes to the member whose githubLogin is its author. Bots are dropped. Members with a
+ * githubLogin get an entry even at 0. Team lines include unattributed commits.
+ */
+export function attributeLines(
+  commits: RawCommit[],
+  linesBySha: ReadonlyMap<string, number>,
+  members: Hacker[],
+): Pick<ProjectEnrichment, "teamLineCount" | "linesByUid"> {
+  const linesByLogin = new Map<string, number>();
+  let teamLineCount = 0;
+  for (const commit of commits) {
+    if (commit.authorType === "Bot") continue;
+    const lines = linesBySha.get(commit.sha) ?? 0;
+    teamLineCount += lines;
+    const login = commit.authorLogin?.toLowerCase();
+    if (login) linesByLogin.set(login, (linesByLogin.get(login) ?? 0) + lines);
+  }
+
+  const linesByUid: Record<string, number> = {};
+  for (const member of members) {
+    if (member.githubLogin) linesByUid[member.uid] = linesByLogin.get(member.githubLogin) ?? 0;
+  }
+  return { teamLineCount, linesByUid };
 }
 
 /**
@@ -793,7 +871,7 @@ const FINISHER_WINDOW_MS = 3 * MINUTE_MS;
 
 /**
  * First matching rule wins; THE_WARRIOR always matches. Rules in README.md
- * "Archetypes". Runs before computeCrossHackerComparison.
+ * "Archetypes". Commits, not lines (ANCHOR). Runs before computeCrossHackerComparison.
  *
  * Never returns THE_PRIZEWINNER: prizes don't exist yet, so that upgrade is
  * applyPrizes' job.
@@ -845,19 +923,84 @@ function isAnchor(hacker: Hacker, project: Project, enrichment: ProjectEnrichmen
   return others.every(([, count]) => count < mine) && mine / team >= ANCHOR_MIN_SHARE;
 }
 
+/** The comparison slide needs the stat in the hacker's top 40%, in a cohort of 10 or more. */
+export const COMPARISON_MAX_TOP_PERCENTAGE = 40;
+export const COMPARISON_MIN_COHORT = 10;
+
 /**
- * Ranks each hacker's githubCommitCount against every hacker who has one.
- * uid -> comparison; hackers with no count are absent. Formula in README Q10.
+ * Ranks every count against the whole cohort (Q10): topPercentage =
+ * ceil(1000 × (hackers with strictly more + 1) / size) / 10, so ties share the better rank
+ * and the top hacker of 412 gets 0.3.
+ */
+export function rankCohort(countByUid: Record<string, number>): {
+  byUid: Record<string, RankedStat>;
+  size: number;
+} {
+  const counts = Object.values(countByUid).sort((a, b) => b - a);
+  const byUid: Record<string, RankedStat> = {};
+  for (const [uid, count] of Object.entries(countByUid)) {
+    // counts is descending, so the first index at or below this count is the number above it.
+    const above = counts.findIndex((other) => other <= count);
+    byUid[uid] = { count, topPercentage: Math.ceil((1000 * (above + 1)) / counts.length) / 10 };
+  }
+  return { byUid, size: counts.length };
+}
+
+/**
+ * The stat the comparison slide shows. A stat qualifies with count ≥ 1, topPercentage ≤ 40
+ * and a cohort of ≥ 10. Lines or stamps first, the lower topPercentage winning (lines on a
+ * tie); events only when neither qualifies; else null.
+ */
+export function pickFeatured(
+  stats: Record<ComparisonStat, RankedStat | null>,
+  cohortSizes: Record<ComparisonStat, number>,
+): ComparisonStat | null {
+  const qualifies = (stat: ComparisonStat) => {
+    const ranked = stats[stat];
+    return (
+      ranked !== null &&
+      ranked.count >= 1 &&
+      ranked.topPercentage <= COMPARISON_MAX_TOP_PERCENTAGE &&
+      cohortSizes[stat] >= COMPARISON_MIN_COHORT
+    );
+  };
+  const lines = qualifies("lines") ? stats.lines : null;
+  const stamps = qualifies("stamps") ? stats.stamps : null;
+  if (lines && (!stamps || lines.topPercentage <= stamps.topPercentage)) return "lines";
+  if (stamps) return "stamps";
+  return qualifies("events") ? "events" : null;
+}
+
+/**
+ * Ranks lines, stamps and events across their cohorts, once for the whole run, and picks
+ * each hacker's featured stat. Lines: hackers with a githubLineCount. Stamps and events
+ * (day-of workshops + pre-hackathon workshops + mini-events): checked-in hackers.
+ * uid -> comparison for every hacker; one outside a cohort gets null for that stat.
  */
 export function computeCrossHackerComparison(
-  commitsByUid: Record<string, number>,
-): Record<string, NonNullable<WrappedDoc["crossHackerComparison"]>> {
-  const counts = Object.values(commitsByUid).sort((a, b) => b - a);
-  const result: Record<string, NonNullable<WrappedDoc["crossHackerComparison"]>> = {};
-  for (const [uid, commitCount] of Object.entries(commitsByUid)) {
-    // counts is descending, so the first index at or below this count is the number above it.
-    const above = counts.findIndex((count) => count <= commitCount);
-    result[uid] = { commitCount, topPercentage: Math.ceil((100 * (above + 1)) / counts.length) };
+  hackers: Hacker[],
+  linesByUid: Record<string, number>,
+): Record<string, WrappedDoc["crossHackerComparison"]> {
+  const checkedIn = hackers.filter((hacker) => hacker.checkedIn);
+  const cohorts = {
+    lines: rankCohort(linesByUid),
+    stamps: rankCohort(Object.fromEntries(checkedIn.map((h) => [h.uid, h.stamps.length]))),
+    events: rankCohort(
+      Object.fromEntries(
+        checkedIn.map((h) => [h.uid, h.dayOfWorkshopCount + h.preHackathonWorkshopCount + h.miniEventCount]),
+      ),
+    ),
+  };
+  const sizes = { lines: cohorts.lines.size, stamps: cohorts.stamps.size, events: cohorts.events.size };
+
+  const result: Record<string, WrappedDoc["crossHackerComparison"]> = {};
+  for (const { uid } of hackers) {
+    const stats = {
+      lines: cohorts.lines.byUid[uid] ?? null,
+      stamps: cohorts.stamps.byUid[uid] ?? null,
+      events: cohorts.events.byUid[uid] ?? null,
+    };
+    result[uid] = { ...stats, featured: pickFeatured(stats, sizes) };
   }
   return result;
 }
@@ -903,8 +1046,8 @@ export function buildWrappedDoc(inputs: DocInputs): WrappedDoc {
       ? {
           title: project.title,
           nugget: enrichment?.nugget ?? null,
-          githubTeamCommitCount: enrichment?.teamCommitCount ?? null,
-          githubCommitCount: enrichment?.commitsByUid[hacker.uid] ?? null,
+          githubTeamLineCount: enrichment?.teamLineCount ?? null,
+          githubLineCount: enrichment?.linesByUid[hacker.uid] ?? null,
           techStack: buildTechStack(project, enrichment),
         }
       : null,

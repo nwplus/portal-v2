@@ -52,8 +52,8 @@ fetch ──> match ──> enrich ──> assemble ──> write
 | - | ---------- | ---------------------------- | ----------------------------------------- | ------------------------------------ |
 | 1 | `fetch`    | Firestore, Devpost CSV       | `Hacker[]` (opted-out dropped), rows, event | bar per source; "x hackers recorded" |
 | 2 | `match`    | stage 1, `overrides.json`    | `Project[]`, uid → project                | report, then **pauses** for review   |
-| 3 | `enrich`   | stages 1–2, GitHub, Anthropic | per-project commit counts, AI tools, Nugget | bar per project, then **pauses** for Nugget review |
-| 4 | `assemble` | stages 1–3                   | `WrappedDoc` per hacker                   | null count per field                 |
+| 3 | `enrich`   | stages 1–2, GitHub, Anthropic | per-project commit and line counts, AI tools, Nugget | bar per project, rate-limit check, bar per commit, then **pauses** for Nugget review |
+| 4 | `assemble` | stages 1–3                   | `WrappedDoc` per hacker                   | null count per field, featured split |
 | 5 | `write`    | stage 4                      | Firestore docs                            | bar per batch; confirm on prod       |
 
 ### Per-item loops and cohort-wide steps
@@ -65,8 +65,8 @@ inside a loop.
 | ---------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
 | `fetch`    | `buildHacker` per applicant                                                                | the Attendance scan (one query, then lookups); the opt-out filter      |
 | `match`    | none                                                                                       | `matchHackersToProjects` over every row and hacker                     |
-| `enrich`   | per project: fetch commits, window filter, `attributeCommits`, `detectAiTools`             | after the loop: commit quartile, one Nugget batch, then the review pause |
-| `assemble` | per hacker: `assignArchetype`, `buildWrappedDoc`                                           | `buildArchetypeCohort` first, `computeCrossHackerComparison` after archetypes |
+| `enrich`   | per project: fetch commits, window filter. Per commit: fetch stats, `countCommitLines`. Per project: `attributeCommits`, `attributeLines`, `detectAiTools` | between the loops: one rate-limit check. After them: commit quartile, one Nugget batch, then the review pause |
+| `assemble` | per hacker: `assignArchetype`, `buildWrappedDoc`                                           | before the loop: `buildArchetypeCohort`, then `computeCrossHackerComparison` (`rankCohort` over three cohorts) |
 
 ### Checkpoints
 
@@ -75,17 +75,37 @@ Resume points, and why each one is at a boundary worth stopping on:
 1. **`match`**: every Firestore read and the CSV parse are done. Redo from here after
    editing `overrides.json` or changing matching rules. No network.
 2. **`enrich`**: matching has been reviewed and accepted. Redo from here after changing
-   commit attribution, the window or AI detection. GitHub responses are cached per repo
-   and Nugget messages per project (`nuggets.json`, reused while their inputs match), so
-   this redoes the work without re-fetching. Commits are
-   fetched from a week before `hackathonStart`, so moving the window earlier than that
-   needs `bypassCache` (or deleting `raw/github/`).
+   commit attribution, line counting (`LINE_COUNT_EXCLUSIONS`), the window or AI
+   detection. Commit lists are cached per repo, commit stats per sha, and Nugget messages
+   per project (`nuggets.json`, reused while their inputs match), so this redoes the work
+   without re-fetching. Commits are fetched from a week before `hackathonStart`, so
+   moving the window earlier than that needs `bypassCache` (or deleting `raw/github/`).
 3. **`assemble`**: every per-project value exists. Redo from here after changing a
-   formula, the archetype rules or the output schema. Takes seconds.
+   formula, the archetype rules, the comparison's threshold, cohorts or priority, or the
+   output schema. Takes seconds.
 
 `write` resumes by itself: `progress.json` records the uids already committed.
 `--from write` clears that list to rewrite every doc. `--from fetch` reruns everything
 but still reads `raw/` unless `bypassCache` is on.
+
+`stages/enrich.json` and `stages/assemble.json` carry `schemaVersion`
+(`STAGE_SCHEMA_VERSION` in `types.ts`; absent means 1). Bump it when either shape
+changes. `assemble` refuses an older enrich ("run --from enrich"), and `write` refuses
+an older assemble ("run --from assemble") even on a plain resume, which would otherwise
+push old-shape docs.
+
+### Failure recovery
+
+- **Lines committed (schema 2):** rerun `--from enrich`. Commit lists come from
+  `raw/github/`; only the per-commit stats are new requests, one per in-window commit
+  (about 1,340 for cmd-f2026).
+- **Before the stats loop**, enrich compares the uncached count with `GET /rate_limit`
+  and, if it's short, asks to continue or abort.
+- **Interrupted enrich** (Ctrl-C, crash): loses at most the 6 requests in flight. Stats
+  are cached per sha and kept with `bypassCache` on, so the rerun picks up where it
+  stopped.
+- **Rate limit mid-run:** the run stops with the reset time. Rerun after the reset; it
+  resumes from the cache.
 
 ### Progress file
 
@@ -123,6 +143,8 @@ cache/{env}/{eventId}/
     stamps.json  prehackathon-workshops.json
     awards.json                      prize run: judging-portal award placements
     github/{owner}__{repo}.json      one per repo; null if private or missing
+    github-commits/{sha}.json        one per counted commit: parents and per-file additions;
+                                     null if unreadable; kept with bypassCache (a sha never changes)
   stages/{fetch,match,enrich,assemble}.json
   overrides.json                     hand-written match fixes; never overwritten
   nuggets.json                       Nugget messages + review state; ignores bypassCache
@@ -140,7 +162,10 @@ only picked up with `bypassCache` on.
 After `Socials/{uid}` is fetched, hackers with `hackerWrappedOptIn === false` are
 dropped. A missing field or a missing Socials doc means included. Opted-out hackers get
 no doc, aren't in any cohort figure, and have their emails kept only so the match report
-doesn't list them as unmatched. Their commits still count toward their team's total.
+doesn't list them as unmatched. Their commits and lines still count toward their team's
+total. Because they leave every cohort, an opt-out also moves other hackers'
+`crossHackerComparison` percentiles (and possibly their `featured` stat), not only their
+own doc, so picking one up means rewriting every doc, not just deleting theirs.
 
 ### Match review pause
 
@@ -239,6 +264,7 @@ flowchart LR
       d_emails[member emails]
     end
     g_commits[GitHub commits]
+    g_detail[GitHub commit stats]
     p_prize[prize run]
   end
 
@@ -259,6 +285,8 @@ flowchart LR
     filterToHackathonWindow
     latestCommitAt
     attributeCommits
+    countCommitLines
+    attributeLines
     detectAiTools
     buildTechStack
     generateNuggets
@@ -266,6 +294,8 @@ flowchart LR
     computeEarlySubmission
     buildArchetypeCohort
     assignArchetype
+    rankCohort
+    pickFeatured
     computeCrossHackerComparison
     applyPrizes[applyPrizes: write and prize run]
   end
@@ -285,8 +315,8 @@ flowchart LR
     o_pre[showedUp.preHackathonWorkshopCount]
     o_pname[summary.projectName]
     o_desc[project.nugget]
-    o_team[project.githubTeamCommitCount]
-    o_mine[project.githubCommitCount]
+    o_team[project.githubTeamLineCount]
+    o_mine[project.githubLineCount]
     o_tech[project.techStack]
     o_cmp[crossHackerComparison]
     o_arch[archetype / summary.archetype]
@@ -315,8 +345,13 @@ flowchart LR
   e_start & e_end --> filterToHackathonWindow --> attributeCommits
   a_gh --> extractGithubLogin --> attributeCommits
   matchHackersToProjects --> attributeCommits
-  attributeCommits --> o_team & o_mine
-  attributeCommits --> computeCrossHackerComparison --> o_cmp
+  filterToHackathonWindow --> g_detail --> countCommitLines --> attributeLines
+  a_gh --> extractGithubLogin --> attributeLines
+  matchHackersToProjects --> attributeLines
+  attributeLines --> o_team & o_mine
+  attributeLines --> computeCrossHackerComparison
+  getStamps & countDayOfEvents & countPreHackathonWorkshops & a_ci --> computeCrossHackerComparison
+  computeCrossHackerComparison --> rankCohort --> pickFeatured --> o_cmp
   filterToHackathonWindow --> latestCommitAt --> computeEarlySubmission
   filterToHackathonWindow --> detectAiTools --> buildTechStack
   d_built --> buildTechStack --> o_tech
@@ -351,9 +386,10 @@ flowchart LR
 | `summary.projectName`                | `matchHackersToProjects`                           | Devpost Project Title                                              | null with no project                    |
 | `project.nugget`                     | `generateNuggets` + organizer review                | Devpost About The Project → Nugget ([NUGGET.md](NUGGET.md))        | null                                    |
 | `project.techStack`                  | `buildTechStack`, `detectAiTools`                  | Devpost Built With + AI tools from co-author trailers / bot authors | `[]`                                    |
-| `project.githubTeamCommitCount`      | `filterToHackathonWindow`, `attributeCommits`      | Try it out links → commits in [`hackathonStart`, `hackathonEnd`]   | null with no readable repo              |
-| `project.githubCommitCount`          | `attributeCommits`                                 | commit `author.login` = username from `skills.github`              | null if no `skills.github`              |
-| `crossHackerComparison`              | `computeCrossHackerComparison`                     | every hacker's `githubCommitCount` (**Q10**)                       | null if `githubCommitCount` is null     |
+| `project.githubTeamLineCount`        | `filterToHackathonWindow`, `countCommitLines`, `attributeLines` | Try it out links → additions of commits in [`hackathonStart`, `hackathonEnd`]; bots, merges, excluded files dropped | null with no readable repo |
+| `project.githubLineCount`            | `attributeLines`                                   | commit `author.login` = username from `skills.github`              | null if no `skills.github`              |
+| `crossHackerComparison.lines` / `.stamps` / `.events` | `computeCrossHackerComparison`, `rankCohort` | every `githubLineCount`; checked-in hackers' stamp count; their workshops + pre-hackathon workshops + mini-events (**Q10**) | null outside that stat's cohort |
+| `crossHackerComparison.featured`     | `pickFeatured`                                     | the three ranked stats and their cohort sizes                      | null: no stat qualifies, slide hidden   |
 | `archetype`, `summary.archetype`     | `buildArchetypeCohort`, `assignArchetype`, `applyPrizes` | see [Archetypes](#archetypes)                                | `THE_WARRIOR`                           |
 | `prize`                              | `applyPrizes` (prize run)                          | carried over by `write`                                            | absent until the prize run              |
 
@@ -367,7 +403,7 @@ project's latest in-window commit (`lastCommitAt`).
 | -- | ------------------ | ------------------------------------------------------------------------------------------------ | --------------------------------------- |
 | 1  | `THE_PRIZEWINNER`  | won ≥ 1 prize. Never assigned by `write`; `applyPrizes` upgrades to it                           | prize run                               |
 | 2  | `THE_VETERAN`      | attendance count (`countLifetimeEvents` + 1) > 3                                                 | `countLifetimeEvents` + 1               |
-| 3  | `ANCHOR`           | team of ≥ 2, strictly the most commits on the team, and ≥ 50% of `githubTeamCommitCount`         | `attributeCommits`                      |
+| 3  | `ANCHOR`           | team of ≥ 2, strictly the most commits on the team, and ≥ 50% of the team's commits (`teamCommitCount`) | `attributeCommits`                |
 | 4  | `THE_LONE_WOLF`    | has a project and `teamSize` is 1                                                                | `Project.teamSize`                      |
 | 5  | `THE_SPEEDRUNNER`  | submission time earlier than ≥ 80% of hackers with a submission time                             | `ArchetypeCohort.submissionTimes`       |
 | 6  | `THE_EARLY_BIRD`   | checked in ≤ 20 min after check-in opened                                                        | check-in time, **Q20**                  |
@@ -379,6 +415,9 @@ project's latest in-window commit (`lastCommitAt`).
 
 A tie for most commits means no one on that team is `ANCHOR`. Only hackers with
 `skills.github` can be `ANCHOR`, since their commits are the only ones attributed.
+`ANCHOR`, the Nugget commit quartile and the enrich summary use commit counts, which stay
+inside the script (`ProjectEnrichment.teamCommitCount` / `commitsByUid`); the doc carries
+lines only.
 
 `write` assigns rules 2–11. The prize run calls `applyPrizes`, which appends the prize
 names and sets `archetype` and `summary.archetype` to `THE_PRIZEWINNER`. Because
@@ -396,8 +435,32 @@ after the prize run never downgrades a winner.
   `Applicants/{uid}.skills.github`. With no `skills.github`, the hacker has no GitHub
   section.
 - `project` is nullable. `project.techStack` = Devpost Built With + detected AI tools.
-- `crossHackerComparison.commitCount` and every `summary` field copy other fields on
+- `crossHackerComparison.*.count` and every `summary` field copy other fields on
   purpose.
+- The GitHub stat is **lines committed**: the sum of `additions` over a commit's files,
+  for in-window commits by non-bot authors, attributed by author login like commits.
+  Deletions don't count. Excluded paths (case-insensitive, `LINE_COUNT_EXCLUSIONS`):
+  lockfiles (`package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`, `bun.lock`, `bun.lockb`,
+  `Cargo.lock`, `poetry.lock`, `Gemfile.lock`, `composer.lock`, `go.sum`); any path
+  segment `node_modules/`, `vendor/`, `dist/`, `build/`, `.next/`, `venv/`, `.venv/`,
+  `__pycache__/`; `*.min.*` and `*.map`. Binary files report 0 additions. Starter-template
+  boilerplate counts, and there's no per-commit cap. A commit whose stats GitHub won't
+  return (404/409/422/451) adds 0.
+- The cross-hacker comparison ranks three stats. **Lines**: hackers with a non-null
+  `githubLineCount`. **Stamps**: checked-in hackers, `stamps.length`. **Events**:
+  checked-in hackers, `dayOfWorkshopCount + preHackathonWorkshopCount + miniEventCount`.
+  A hacker outside a cohort gets `null` for that stat.
+- A stat **qualifies** for the slide with `count ≥ 1`, `topPercentage ≤ 40`
+  (`COMPARISON_MAX_TOP_PERCENTAGE`) and a cohort of ≥ 10 (`COMPARISON_MIN_COHORT`). The
+  cohort-size guard only affects `featured`; the ranked stat is still written.
+- **`featured`** (`pickFeatured`, computed by the script in assemble; the frontend only
+  reads it): if lines or stamps qualifies, the one with the lower `topPercentage`, lines
+  on a tie; otherwise events if it qualifies; otherwise null. Lines 15%, stamps 10%,
+  events 5% gives stamps.
+- The comparison slide follows the featured stat's own slide: `lines` after `github`,
+  `stamps` after `stamps`, `events` after `attendance`. Percentages show one decimal with
+  a trailing `.0` dropped ("Top 0.3%", "Top 12%"). One Figma frame serves all three
+  stats; only the copy changes.
 - Archetypes are assigned before the cross-hacker comparison. `THE_PRIZEWINNER` is
   applied as an upgrade by the prize run. `ANCHOR` is on, and the Finisher window stays
   at 3 minutes.
@@ -423,7 +486,7 @@ after the prize run never downgrades a winner.
   `description`, `hackathon`, `isEventUnlockable`. So fetch adds a
   `Stamps where hackathon == eventId` read, and `getStamps` maps ids to stamp records,
   dropping ids with no matching stamp.
-- **Q9.** Default branch only. Merge commits count.
+- **Q9.** Default branch only. Merge commits count as commits but add 0 lines.
 - **Q11d.** Checked on dev: `Attendance` docs are flat, one per (hacker, hackathon),
   `{uid, hackathonId, eventYear, recordedAt, sourceVersion, backfillRunId}`, with no
   per-event list. They feed only the lifetime count. Workshop and mini-event attendance
@@ -432,8 +495,8 @@ after the prize run never downgrades a winner.
   submission time). Duplicates shouldn't happen, so the match report lists every one
   with the row it picked; `uidToProject` overrides the pick.
 - **Q21.** Team stats only: with no `skills.github`, the hacker still gets the team's
-  `githubTeamCommitCount`, but every individual field (`githubCommitCount`,
-  `crossHackerComparison`) is null.
+  `githubTeamLineCount`, but every individual GitHub field (`githubLineCount`,
+  `crossHackerComparison.lines`) is null. Stamps and events are still ranked.
 
 - **Q2.** The display name (`event`, `summary.event`) is `CONFIG.eventName` in
   `script.ts`, e.g. "HackCamp 2026".
@@ -451,10 +514,10 @@ after the prize run never downgrades a winner.
 
 ### Formulas (agreed)
 
-- **Q10.** Cohort = hackers with a non-null `githubCommitCount`. `topPercentage` =
-  `ceil(100 × (hackers with strictly more commits + 1) / cohort size)`, so ties share
-  the better rank and the top hacker gets 1. Exact integer, no buckets; the frontend
-  picks the wording.
+- **Q10.** Each stat's cohort is in [Decisions](#decisions). `topPercentage` =
+  `ceil(1000 × (hackers with strictly more + 1) / cohort size) / 10` (`rankCohort`), so
+  ties share the better rank, it has one decimal, and the top hacker of 412 gets 0.3. No
+  buckets; the frontend picks the wording.
 - **Q18.** `meals` = meal slots with at least one scan (max 7), as a single count.
   Repeat scans of one slot count once.
 - **Q19.** Durations are written in **hours**, rounded to one decimal
@@ -484,6 +547,10 @@ against a real export, once submissions open. Until then `parseDevpostCsv` and
    before anything is written.
 
 ## Implementation plan
+
+**Status (2026-10-26):** lines committed and the three-stat comparison are done
+(step 10). Checked against a copy of cmd-f2026's cached prod data with `writeToFirestore` off;
+the docs in dev Firestore are still the old shape until the next `write`.
 
 **Status (2026-10-13):** steps 1–9 done, including Nugget. Checked on dev `HackCamp2026`
 against a synthetic CSV in `wrapped/csv/`, with enrich run against real public nwplus
@@ -516,3 +583,6 @@ Node's `fetch` reaches GitHub.
    confirmation, delete.
 8. **prize + stats** (done): judging-portal prizes joined by Devpost slug; organizer stats.
 9. **Cleanup** (done): the old script is removed and this folder moved up to `wrapped/`.
+10. **Lines committed + comparison** (done): per-commit stats (`fetchCommitDetail`, cached
+    per sha), `countCommitLines`, `attributeLines`, `rankCohort`, `pickFeatured`, stage
+    `schemaVersion` guards, and the frontend's comparison slide.
