@@ -1,6 +1,7 @@
 import { Stampbook } from "@/components/features/stampbook/stampbook";
 import { StampbookActions } from "@/components/features/stampbook/stampbook-actions";
 import { GradientBackground } from "@/components/layout/gradient-background";
+import { pointsLabel, raffleEntriesLabel } from "@/lib/stampbook";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useHackerStore } from "@/lib/stores/hacker-store";
 import { getPreferredName } from "@/lib/utils";
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/$activeHackathon/_auth/(account)/stampboo
     if (!dbCollectionName || !uid) {
       return {
         stamps: [],
+        points: 0,
         preferredName: "User",
         unlockedStampName: undefined,
         hasPastStampbooks: false,
@@ -38,7 +40,7 @@ export const Route = createFileRoute("/$activeHackathon/_auth/(account)/stampboo
     }
 
     const hacker = useHackerStore.getState().hacker;
-    const [stamps, pastHackathonIds] = await Promise.all([
+    const [{ stamps, points }, pastHackathonIds] = await Promise.all([
       loadStampbook(uid, dbCollectionName),
       fetchPastHackathonIds(uid, dbCollectionName),
     ]);
@@ -46,6 +48,7 @@ export const Route = createFileRoute("/$activeHackathon/_auth/(account)/stampboo
 
     return {
       stamps,
+      points,
       preferredName,
       unlockedStampName,
       hasPastStampbooks: pastHackathonIds.length > 0,
@@ -55,7 +58,8 @@ export const Route = createFileRoute("/$activeHackathon/_auth/(account)/stampboo
 });
 
 function RouteComponent() {
-  const { stamps, preferredName, unlockedStampName, hasPastStampbooks } = Route.useLoaderData();
+  const { stamps, points, preferredName, unlockedStampName, hasPastStampbooks } =
+    Route.useLoaderData();
   const { activeHackathon } = Route.useParams();
   const navigate = useNavigate();
 
@@ -78,15 +82,20 @@ function RouteComponent() {
         <div className="max-w-sm px-6 sm:px-10 md:max-w-4xl md:text-center">
           <p className="text-text-secondary text-xs md:text-sm">
             <HelpCircle className="mr-1 hidden h-4 w-4 md:inline-block" />
-            There are many ways to unlock these stamps, and each one earns you a ticket to our{" "}
-            <span className="font-bold">prize raffle!</span> Click the icons beside a stamp to learn
-            how to earn it. Some stamps are hidden, so it's up to you to discover them.
+            There are many ways to unlock these stamps, and each one is worth points. Every point is
+            a ticket to our <span className="font-bold">prize raffle!</span> Click the icons beside
+            a stamp to learn how to earn it. Some stamps are hidden, so it's up to you to discover
+            them.
             <span className="font-bold md:font-normal">
               <br className="md:hidden" />
               <br className="md:hidden" /> Try to collect them all!
             </span>
           </p>
         </div>
+        <p className="text-sm text-text-secondary md:text-base">
+          <span className="font-semibold text-text-primary">{pointsLabel(points)}</span> ·{" "}
+          {raffleEntriesLabel(points)}
+        </p>
         <StampbookActions stamps={stamps} displayName={preferredName} />
         <Stampbook stamps={stamps} displayName={preferredName} />
         {hasPastStampbooks && (

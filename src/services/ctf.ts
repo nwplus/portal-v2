@@ -9,6 +9,7 @@ import {
   type FirestoreError,
   type Unsubscribe,
   collection,
+  getDocs,
   onSnapshot,
   query,
   where,
@@ -66,6 +67,22 @@ export function subscribeToOwnCtfSolves(
     },
     onError,
   );
+}
+
+/**
+ * One-off read of the signed-in hacker's solves, for the points total
+ *
+ * @param dbCollectionName - firestore collection name for the hackathon
+ * @param uid - the signed-in hacker's uid
+ */
+export async function fetchOwnCtfSolves(
+  dbCollectionName: string,
+  uid: string,
+): Promise<CtfSolve[]> {
+  const snapshot = await getDocs(
+    query(collection(db, "Hackathons", dbCollectionName, "CtfSolves"), where("uid", "==", uid)),
+  );
+  return snapshot.docs.map((d) => ({ ...(d.data() as Omit<CtfSolve, "_id">), _id: d.id }));
 }
 
 /**

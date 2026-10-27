@@ -1,27 +1,35 @@
 import { db } from "@/lib/firebase/client";
 import type { Hacker } from "@/lib/firebase/types/applicants";
+import type { CtfSolve } from "@/lib/firebase/types/ctf";
 import type { Stamp, StampCriteria, StampWithUnlockState } from "@/lib/firebase/types/stamps";
+import { hackerPoints, stampPointValue } from "@/lib/points";
 import { canUnlockFromUrl } from "@/lib/stamps";
 import { fetchApplicant } from "@/services/applicants";
+import { fetchOwnCtfSolves } from "@/services/ctf";
 import { arrayUnion, collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 
 /**
- * Load stampbook with computed unlock states; returns active stamps and whether they are unlocked for a given user
+ * Load stampbook with computed unlock states; returns active stamps (with their point values) and
+ * whether they are unlocked for a given user, plus the hacker's total points
  */
 export async function loadStampbook(
   uid: string,
   dbCollectionName: string,
-): Promise<StampWithUnlockState[]> {
-  const [allStamps, unlockedStamps, hacker] = await Promise.all([
-    fetchStamps(dbCollectionName),
+): Promise<{ stamps: StampWithUnlockState[]; points: number }> {
+  const [everyStamp, unlockedStamps, hacker, ctfSolves] = await Promise.all([
+    fetchAllStamps(),
     fetchUnlockedStampIds(uid, dbCollectionName),
     fetchApplicant(dbCollectionName, uid),
+    fetchOwnCtfSolvesOrEmpty(dbCollectionName, uid),
   ]);
 
-  return allStamps.map((stamp: Stamp) => {
+  const criteriaUnlockedIds: string[] = [];
+  const stamps = filterStampsForHackathon(everyStamp, dbCollectionName).map((stamp: Stamp) => {
+    const pointValue = stampPointValue(stamp);
+
     // previously unlocked through QR or check-in app
     if (unlockedStamps.includes(stamp._id)) {
-      return { ...stamp, isUnlocked: true };
+      return { ...stamp, isUnlocked: true, pointValue };
     }
 
     // otherwise, evaluate portal-based criteria
@@ -29,14 +37,35 @@ export async function loadStampbook(
       const shouldUnlock = evaluateUnlockCriteria(stamp.criteria, hacker);
 
       if (shouldUnlock) {
+        criteriaUnlockedIds.push(stamp._id);
         persistUnlockedStamp(uid, stamp._id, dbCollectionName);
       }
 
-      return { ...stamp, isUnlocked: shouldUnlock };
+      return { ...stamp, isUnlocked: shouldUnlock, pointValue };
     }
 
-    return { ...stamp, isUnlocked: false };
+    return { ...stamp, isUnlocked: false, pointValue };
   });
+
+  const points = hackerPoints([...unlockedStamps, ...criteriaUnlockedIds], everyStamp, ctfSolves);
+
+  return { stamps, points };
+}
+
+/**
+ * The hacker's CTF solves, or none if they can't be read (e.g. CTF rules not deployed yet), so a
+ * CTF problem never breaks the stampbook
+ */
+async function fetchOwnCtfSolvesOrEmpty(
+  dbCollectionName: string,
+  uid: string,
+): Promise<CtfSolve[]> {
+  try {
+    return await fetchOwnCtfSolves(dbCollectionName, uid);
+  } catch (error) {
+    console.error("Failed to load CTF solves; counting CTF points as 0", error);
+    return [];
+  }
 }
 
 /**
@@ -87,20 +116,29 @@ export async function unlockStampById(
  * @returns a list of stamps
  */
 export async function fetchStamps(hackathonId?: string): Promise<Stamp[]> {
+  return filterStampsForHackathon(await fetchAllStamps(), hackathonId);
+}
+
+/**
+ * Every stamp, whatever hackathon it belongs to (point values count stamps from any hackathon)
+ */
+async function fetchAllStamps(): Promise<Stamp[]> {
   const ref = collection(db, "Stamps");
   const querySnapshot = await getDocs(ref);
 
-  return querySnapshot.docs
-    .map(
-      (doc) =>
-        ({
-          _id: doc.id,
-          ...doc.data(),
-        }) as Stamp,
-    )
-    .filter(
-      (stamp) => !stamp.hackathon || stamp.hackathon.toLowerCase() === hackathonId?.toLowerCase(),
-    );
+  return querySnapshot.docs.map(
+    (doc) =>
+      ({
+        _id: doc.id,
+        ...doc.data(),
+      }) as Stamp,
+  );
+}
+
+function filterStampsForHackathon(stamps: Stamp[], hackathonId?: string): Stamp[] {
+  return stamps.filter(
+    (stamp) => !stamp.hackathon || stamp.hackathon.toLowerCase() === hackathonId?.toLowerCase(),
+  );
 }
 
 /**
