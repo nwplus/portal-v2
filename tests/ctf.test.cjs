@@ -75,8 +75,10 @@ test('unlockStampById only unlocks QR-unlockable stamps', async () => {
   ];
   const { unlockStampById } = load('src/services/stampbook.ts', {
     '@/lib/firebase/client': { db: 'db' },
+    '@/lib/points': load('src/lib/points.ts'),
     '@/lib/stamps': load('src/lib/stamps.ts'),
     '@/services/applicants': { fetchApplicant: async () => null },
+    '@/services/ctf': { fetchOwnCtfSolves: async () => [] },
     'firebase/firestore': {
       arrayUnion: (...ids) => ({ arrayUnion: ids }),
       collection: () => 'Stamps',
@@ -144,4 +146,43 @@ test('ctf service maps doc ids, filters solves by uid and returns callable data'
 
   assert.deepEqual(await service.submitCtfFlag('hackcamp2026', 'hc26{x}'), { status: 'invalid' });
   assert.deepEqual(calls.callable, [{ dbCollectionName: 'hackcamp2026', flag: 'hc26{x}' }]);
+});
+
+test('loadStampbook returns point values and a total, and survives a CTF read failure', async () => {
+  const stamps = [
+    { id: 'a', data: { name: 'A', points: 5, hackathon: 'hackcamp2026' } },
+    { id: 'b', data: { name: 'B' } },
+    { id: 'other', data: { name: 'Other', points: 3, hackathon: 'hackcamp2025' } },
+    { id: 'locked', data: { name: 'Locked', points: 9 } },
+  ];
+  const build = (fetchOwnCtfSolves) => load('src/services/stampbook.ts', {
+    '@/lib/firebase/client': { db: 'db' },
+    '@/lib/points': load('src/lib/points.ts'),
+    '@/lib/stamps': load('src/lib/stamps.ts'),
+    '@/services/applicants': { fetchApplicant: async () => null },
+    '@/services/ctf': { fetchOwnCtfSolves },
+    'firebase/firestore': {
+      arrayUnion: (...ids) => ids,
+      collection: () => 'Stamps',
+      doc: () => 'Socials/alice',
+      getDoc: async () => ({ exists: () => true, data: () => ({ unlockedStamps: { hackcamp2026: ['a', 'b', 'other', 'gone'] } }) }),
+      getDocs: async () => ({ docs: stamps.map((s) => ({ id: s.id, data: () => s.data })) }),
+      setDoc: async () => {},
+    },
+  });
+
+  const ok = await build(async () => [{ points: 10 }]).loadStampbook('alice', 'hackcamp2026');
+  assert.equal(ok.points, 5 + 1 + 3 + 10);
+  assert.deepEqual(ok.stamps.map((s) => [s._id, s.isUnlocked, s.pointValue]), [
+    ['a', true, 5], ['b', true, 1], ['locked', false, 9],
+  ]);
+
+  const originalError = console.error;
+  console.error = () => {};
+  try {
+    const failed = await build(async () => { throw new Error('permission-denied'); }).loadStampbook('alice', 'hackcamp2026');
+    assert.equal(failed.points, 5 + 1 + 3);
+  } finally {
+    console.error = originalError;
+  }
 });
