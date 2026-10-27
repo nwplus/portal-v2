@@ -65,7 +65,9 @@ function RouteComponent() {
 
   useEffect(() => {
     if (unlockedStampName) {
-      toast.success(`"🎉 ${unlockedStampName}" stamp unlocked!`);
+      // on a fresh load (e.g. a phone QR scan) this effect runs before the root Toaster subscribes to
+      // sonner, so defer the toast
+      setTimeout(() => toast.success(`"🎉 ${unlockedStampName}" stamp unlocked!`), 0);
 
       navigate({
         to: "/$activeHackathon/stampbook",
