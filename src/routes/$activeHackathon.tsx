@@ -86,7 +86,7 @@ export const Route = createFileRoute("/$activeHackathon")({
     const isOnLoginPage = location.pathname.includes("/login");
     const isOnAttendancePage = location.pathname.includes("/attendance");
     // the CTF runs the week before the event, before portalLive, but is still RSVP-only
-    const isOnCtfPage = /^\/[^/]+\/ctf\/?$/.test(location.pathname);
+    const isOnCtfPage = /^\/[^/]+\/ctf\/?$/i.test(location.pathname);
 
     if (isAdmin && user) {
       await useHackerStore.getState().getOrFetch(hackathonInfo.dbCollectionName, user.uid);
