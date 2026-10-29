@@ -12,21 +12,27 @@ import type { ReactNode } from "react";
  * is drawn by exactly the component the hacker watched.
  *
  * @param summaryAction - rendered under the summary's sign-off (the share button)
+ * @param skipRocketEntrance - the intro's rocket is already on its pad (the launch
+ *   fly-up just played the climb), so its rise-into-view entrance is skipped
  */
 export function CodedSlideContent({
   slideId,
   doc,
   active,
+  skipRocketEntrance = false,
   summaryAction,
 }: {
   slideId: SlideId;
   doc: WrappedDoc;
   active: boolean;
+  skipRocketEntrance?: boolean;
   summaryAction?: ReactNode;
 }) {
   switch (slideId) {
     case "intro":
-      return <IntroSlide event={doc.event} active={active} />;
+      return (
+        <IntroSlide event={doc.event} active={active} skipRocketEntrance={skipRocketEntrance} />
+      );
     case "stamps":
       return <StampsSlide stamps={doc.showedUp.stamps} active={active} />;
     case "comparison":

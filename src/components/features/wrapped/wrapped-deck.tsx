@@ -36,22 +36,25 @@ const RESTART_THRESHOLD_MS = 1500;
  * The launch fly-up, staged on the deck's 1080x1920 design canvas: a full-stage-width
  * rocket (natural 510x696) climbs from below — nose starting 150 design-px under the
  * stage's bottom edge — until its tail clears the top by 80, revealing the intro behind
- * it in its wake. The reveal edge is swept in step with the tail over the same ease.
+ * it in its wake. The reveal edge is swept in step with the tail over the same ease, and
+ * feathered so the seam between the sky and the freshly revealed content stays soft.
  */
 const FLIGHT_MS = 2200;
 const LAUNCH_EASE = "cubic-bezier(0.65, 0, 0.35, 1)";
 const DESIGN_WIDTH = 1080;
 const LAUNCH_NOSE_MARGIN = 150;
 const LAUNCH_TAIL_MARGIN = 80;
+const LAUNCH_FEATHER = 140;
 
 /** Everything the fly-up needs, measured off the real stage box (its aspect can be
     stretched on tall-narrow phones, so the design canvas alone doesn't cut it). */
 interface LaunchGeometry {
   rocketFrom: string;
   rocketTo: string;
+  overhang: string;
+  clearance: string;
+  feather: string;
   rocketScale: number;
-  revealDelay: number;
-  revealDuration: number;
 }
 
 function useLaunchGeometry(
@@ -68,18 +71,18 @@ function useLaunchGeometry(
     const designScale = box.width / DESIGN_WIDTH;
     const rocketHeight = box.width * (ROCKET_HEIGHT / ROCKET_WIDTH);
     // The tail starts a nose-margin plus a full rocket below the stage, and finishes
-    // a tail-margin above its top; the wipe rides the tail between those two.
+    // a tail-margin above its top; the reveal edge rides the tail the whole way.
     const overhang = LAUNCH_NOSE_MARGIN * designScale + rocketHeight;
     const clearance = LAUNCH_TAIL_MARGIN * designScale;
-    const travel = box.height + overhang + clearance;
-    const tailIn = overhang / travel;
-    const tailOut = (box.height + overhang) / travel;
     setGeometry({
+      // The rocket hangs off `bottom: 0`, so its translate runs from the overhang to
+      // clear of the top; the reveal edge sweeps the same ease, so it stays with the tail.
       rocketFrom: `${overhang.toFixed(0)}px`,
       rocketTo: `${(-clearance - box.height).toFixed(0)}px`,
+      overhang: `${overhang.toFixed(0)}px`,
+      clearance: `${(-clearance).toFixed(0)}px`,
+      feather: `${(LAUNCH_FEATHER * designScale).toFixed(0)}px`,
       rocketScale: box.width / ROCKET_WIDTH,
-      revealDelay: Math.round(FLIGHT_MS * tailIn),
-      revealDuration: Math.round(FLIGHT_MS * (tailOut - tailIn)),
     });
   }, [enabled, stageRef]);
 
@@ -223,19 +226,24 @@ export function WrappedDeck({
         )}
         onClick={handleStageClick}
       >
-        {/* On a banner launch the content sits behind the wake wipe: hidden until the
-            climbing rocket's tail sweeps its edge up the stage. The stage's sky shows
-            through until then. */}
+        {/* On a banner launch the content sits behind the wake reveal: hidden until the
+            climbing rocket's tail sweeps the edge up the stage, feathered so the seam
+            stays soft. The stage's sky shows through until then. */}
         <div
           className="absolute inset-0"
           style={
             launchedFromBanner
               ? {
-                  clipPath: "inset(100% 0 0 0)",
+                  ["--reveal-edge" as string]: "0%",
+                  ["--launch-overhang" as string]: launch?.overhang,
+                  ["--launch-clearance" as string]: launch?.clearance,
+                  ["--launch-feather" as string]: launch?.feather,
+                  maskImage:
+                    "linear-gradient(180deg, transparent calc(var(--reveal-edge) - var(--launch-feather, 0px)), #000 var(--reveal-edge))",
+                  WebkitMaskImage:
+                    "linear-gradient(180deg, transparent calc(var(--reveal-edge) - var(--launch-feather, 0px)), #000 var(--reveal-edge))",
                   ...(launch
-                    ? {
-                        animation: `wrapped-launch-reveal ${launch.revealDuration}ms ${LAUNCH_EASE} ${launch.revealDelay}ms both`,
-                      }
+                    ? { animation: `wrapped-launch-reveal ${FLIGHT_MS}ms ${LAUNCH_EASE} both` }
                     : {}),
                 }
               : undefined
@@ -251,6 +259,7 @@ export function WrappedDeck({
                 slideId={slideId}
                 doc={doc}
                 active={i === safeIndex}
+                skipRocketEntrance={launchedFromBanner}
                 onShare={() => setIsSharing(true)}
               />
             ),
@@ -299,8 +308,8 @@ export function WrappedDeck({
               aspectRatio: "510 / 696",
               transform: "translateY(110%)",
               animation: `wrapped-launch ${FLIGHT_MS}ms ${LAUNCH_EASE} both`,
-              ["--rocket-from" as string]: launch.rocketFrom,
-              ["--rocket-to" as string]: launch.rocketTo,
+              ["--launch-from" as string]: launch.rocketFrom,
+              ["--launch-to" as string]: launch.rocketTo,
             }}
           >
             <div
@@ -337,11 +346,13 @@ interface SlideProps {
   slideId: SlideId;
   doc: WrappedDoc;
   active: boolean;
+  /** The launch fly-up already played the rocket's climb, so the intro's own skips it. */
+  skipRocketEntrance?: boolean;
   /** Opens the share sheet, from the summary's share button. */
   onShare: () => void;
 }
 
-function Slide({ slideId, doc, active, onShare }: SlideProps) {
+function Slide({ slideId, doc, active, skipRocketEntrance, onShare }: SlideProps) {
   const scene = SCENES[slideId];
   if (scene.kind === "video") {
     return (
@@ -359,6 +370,7 @@ function Slide({ slideId, doc, active, onShare }: SlideProps) {
         slideId={slideId}
         doc={doc}
         active={active}
+        skipRocketEntrance={skipRocketEntrance}
         summaryAction={<ShareButton onClick={onShare} />}
       />
     </div>

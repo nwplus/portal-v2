@@ -370,25 +370,34 @@ select:-webkit-autofill:active {
 /* The launch fly-up, on the deck. The stage is the 1080x1920 design canvas, so the
    rocket (natural 510x696, full stage width) rides entirely in stage-relative pixels:
    it starts nose-down 150 design-px below the stage's bottom edge and climbs until its
-   tail clears the top by 80. Distances arrive as measured px on --rocket-from/--rocket-to. */
+   tail clears the top by 80. Distances arrive as measured px on
+   --launch-from/--launch-to; the wake's feather band rides the same keyframes. */
 @keyframes wrapped-launch {
   from {
-    transform: translateY(var(--rocket-from));
+    transform: translateY(var(--launch-from));
   }
   to {
-    transform: translateY(var(--rocket-to));
+    transform: translateY(var(--launch-to));
   }
 }
 
-/* The wake wipe: the deck's content is unhidden behind the climbing rocket, its edge
-   swept upward in step with the rocket's tail. Runs from the moment the tail enters
-   the stage (44.8% of the flight) until it reaches the top (97.8%). */
+/* The wake reveal rides the same ease and duration as the rocket by animating a
+   registered custom property: the reveal edge (a length off the stage's top) sweeps
+   from below the stage to just past it, and the content's mask feathers over
+   --launch-feather behind that edge. Registered so the var interpolates smoothly
+   instead of flipping at the keyframe midpoint. */
+@property --reveal-edge {
+  syntax: "<length-percentage>";
+  inherits: false;
+  initial-value: 100%;
+}
+
 @keyframes wrapped-launch-reveal {
   from {
-    clip-path: inset(100% 0 0 0);
+    --reveal-edge: calc(100% + var(--launch-overhang));
   }
   to {
-    clip-path: inset(0 0 0 0);
+    --reveal-edge: var(--launch-clearance);
   }
 }
 
