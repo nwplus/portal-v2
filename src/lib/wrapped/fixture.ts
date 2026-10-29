@@ -12,13 +12,43 @@ import type { WrappedDoc } from "@/lib/firebase/types/wrapped";
  * back to these when the search param is present in a dev build.
  */
 
-/** Stand-in images from the summary art; real decks carry each stamp's `Stamps/{id}.imgURL`. */
+/** The 7 stamp clips; ids are the kebab-cased MOV filenames (`stamp-movs.ts`). */
 const STAMPS = [
-  { id: "first-commit", name: "First Commit", imgURL: "/assets/wrapped/summary/stamp-yellow.svg" },
-  { id: "night-owl", name: "Night Owl", imgURL: "/assets/wrapped/summary/stamp-blue.svg" },
-  { id: "team-player", name: "Team Player", imgURL: "/assets/wrapped/summary/stamp-pink.svg" },
-  { id: "demo-time", name: "Demo Time", imgURL: "/assets/wrapped/summary/stamp-green.svg" },
-  { id: "opening", name: "Opening Ceremony", imgURL: "/assets/wrapped/summary/stamp-purple.svg" },
+  {
+    id: "prompt-to-prototype",
+    name: "Prompt to Prototype",
+    imgURL: "/assets/wrapped/stamps/prompt-to-prototype.png",
+  },
+  {
+    id: "make-it-exist",
+    name: "Make It Exist",
+    imgURL: "/assets/wrapped/stamps/make-it-exist.png",
+  },
+  {
+    id: "give-your-app-superpowers",
+    name: "Give Your App Superpowers",
+    imgURL: "/assets/wrapped/stamps/give-your-app-superpowers.png",
+  },
+  {
+    id: "how-do-i-even-start",
+    name: "How Do I Even Start",
+    imgURL: "/assets/wrapped/stamps/how-do-i-even-start.png",
+  },
+  {
+    id: "give-it-a-memory",
+    name: "Give It a Memory",
+    imgURL: "/assets/wrapped/stamps/give-it-a-memory.png",
+  },
+  {
+    id: "behind-the-mind-of-a-product-designer",
+    name: "Behind the Mind of a Product Designer",
+    imgURL: "/assets/wrapped/stamps/behind-the-mind-of-a-product-designer.png",
+  },
+  {
+    id: "vibe-responsibily",
+    name: "Vibe Responsibily",
+    imgURL: "/assets/wrapped/stamps/vibe-responsibily.png",
+  },
 ];
 
 /** Every slide qualifies — the longest deck the gating can produce. Ranks on lines. */
@@ -42,7 +72,7 @@ const full: WrappedDoc = {
   archetype: "THE_PRIZEWINNER",
   crossHackerComparison: {
     lines: { count: 7309, topPercentage: 0.3 },
-    stamps: { count: 5, topPercentage: 12 },
+    stamps: { count: 7, topPercentage: 12 },
     events: { count: 5, topPercentage: 18.4 },
     featured: "lines",
   },

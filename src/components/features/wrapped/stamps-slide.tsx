@@ -1,58 +1,63 @@
 import { CompCanvas } from "@/components/features/wrapped/comp-canvas";
 import type { WrappedStamp } from "@/lib/firebase/types/wrapped";
 import { cn } from "@/lib/utils";
+import { stampVideo } from "@/lib/wrapped/stamp-movs";
 import type { CSSProperties } from "react";
+import { useEffect, useRef } from "react";
 
 /**
- * The stamps the hacker collected, laid into two ring-bound stampbooks.
+ * The stamps the hacker collected, each playing its reveal clip in the book.
  *
  * Built from the "stamps collected" frame in Figma's Hacker Wrapped "Final Handoff"
- * section, laid out in comp pixels. Each book holds two rows of four. Only collected
- * stamps appear, filling the slots in order; the rest stay empty but keep their space so
- * the rows hold their layout. Images are each stamp's `Stamps/{id}.imgURL`, copied onto
- * the deck doc by the batch script.
+ * section, laid out in comp pixels. The top book holds one row of four slots, the
+ * bottom book one row of three — 7 slots for the 7 stamps. Collected stamps fill
+ * the slots in order; the rest stay empty but keep their space so the rows hold
+ * their layout.
+ *
+ * Each slot is a 150px circle: the clip (`STAMP_MOVS[stamp.id]`, HEVC-with-alpha
+ * with an H.264 fallback composited over the slot colour) plays once on a
+ * staggered timer, over its last-frame poster — which is also what the PNG
+ * share-export captures, since video frames can't be rasterised. Unmapped
+ * (legacy) stamp ids fall back to their static `imgURL` in the same circle.
  *
  * The rings are a mesh-gradient shader in Figma; they ship as a rasterised PNG here.
  */
 
 const ASSETS = "/assets/wrapped/stamps";
-const SLOTS_PER_ROW = 4;
 const RING_COUNT = 5;
 
 const TIMING = {
   title: 0,
   topBook: 250,
   bottomBook: 550,
-  /** First stamp lands after both books; each next one follows by `stampStep`. */
-  stamps: 1100,
-  stampStep: 140,
+  /** First clip starts after both books; each next one follows by `stampStep`. */
+  stamps: 900,
+  stampStep: 100,
 } as const;
 
-/** Where each book's two rows sit, and how they tilt with their page. */
-const BOOKS = [
-  {
-    rows: [
-      { x: 206.01, y: 389.45, w: 813.019, h: 319.506 },
-      { x: 183.26, y: 677.85, w: 809.72, h: 291.506 },
-    ],
-    rowRotate: 3.28,
-    imageRotate: -6.77,
-  },
-  {
-    rows: [
-      { x: 82.44, y: 1186.03, w: 806.493, h: 303.151 },
-      { x: 87.91, y: 1464.08, w: 808.077, h: 303.242 },
-    ],
-    rowRotate: -3.28,
-    imageRotate: -0.21,
-  },
+/** The disc clip and the name text are sized off this. */
+const DISC = 170;
+
+/** One centred row per slot group: 2+2 on the top book, a triangle (1 then 2) on the
+ *  bottom. {x,y,w,h} place the flex rail; the groups fill in stamp order. Row centres
+ *  and tilts carry over from the original Figma layout; the single and pair of the
+ *  triangle share the bottom book's tilt. */
+const GROUPS = [
+  { x: 296, y: 433.5, w: 633, h: 230, rowRotate: 3.28, imageRotate: -6.77, slots: [0, 1] },
+  { x: 296, y: 707.5, w: 633, h: 230, rowRotate: 3.28, imageRotate: -6.77, slots: [2, 3] },
+  { x: 195, y: 1155, w: 586, h: 230, rowRotate: -3.28, imageRotate: -0.21, slots: [4] },
+  { x: 110, y: 1445, w: 756, h: 230, rowRotate: -3.28, imageRotate: -0.21, slots: [5, 6] },
 ] as const;
+
+/** The book never holds more than its 7 slots. */
+const MAX_STAMPS = 7;
 
 function enter(name: string, delay: number, duration = 800): CSSProperties {
   return { animation: `${name} ${duration}ms cubic-bezier(0.22, 1, 0.36, 1) ${delay}ms both` };
 }
 
 export function StampsSlide({ stamps, active }: { stamps: WrappedStamp[]; active: boolean }) {
+  const collected = stamps.slice(0, MAX_STAMPS);
   return (
     <CompCanvas className="bg-[#2c2543]">
       {active && (
@@ -72,35 +77,27 @@ export function StampsSlide({ stamps, active }: { stamps: WrappedStamp[]; active
             <TopBook />
           </div>
 
-          {BOOKS.map((book, bookIndex) =>
-            book.rows.map((row, rowIndex) => {
-              const rowStart = (bookIndex * 2 + rowIndex) * SLOTS_PER_ROW;
-              return (
-                <div
-                  key={`${row.x}-${row.y}`}
-                  className="absolute flex items-center justify-center"
-                  style={{ left: row.x, top: row.y, width: row.w, height: row.h }}
-                >
-                  <div
-                    className="flex flex-none items-start justify-center gap-[4px]"
-                    style={{ rotate: `${book.rowRotate}deg` }}
-                  >
-                    {Array.from({ length: SLOTS_PER_ROW }, (_, slot) => {
-                      const index = rowStart + slot;
-                      return (
-                        <StampSlot
-                          key={index}
-                          stamp={stamps[index] ?? null}
-                          imageRotate={book.imageRotate}
-                          delay={TIMING.stamps + index * TIMING.stampStep}
-                        />
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            }),
-          )}
+          {GROUPS.map((group) => (
+            <div
+              key={`${group.x}-${group.y}`}
+              className="absolute flex items-center justify-center"
+              style={{ left: group.x, top: group.y, width: group.w, height: group.h }}
+            >
+              <div
+                className="flex flex-none items-start justify-center gap-[28px]"
+                style={{ rotate: `${group.rowRotate}deg` }}
+              >
+                {group.slots.map((index) => (
+                  <StampSlot
+                    key={index}
+                    stamp={collected[index] ?? null}
+                    imageRotate={group.imageRotate}
+                    delay={TIMING.stamps + index * TIMING.stampStep}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
 
           <p
             className="-translate-x-1/2 -translate-y-1/2 absolute top-[194.5px] left-1/2 w-[816px] text-center font-bold text-[#fff] text-[100px] leading-[82.773px] tracking-[0.5912px]"
@@ -124,31 +121,98 @@ function StampSlot({
   delay: number;
 }) {
   // Uncollected slots keep their width so the collected ones stay where the design puts them.
-  if (!stamp) return <div className="w-[196px] shrink-0" />;
+  if (!stamp) return <div className="w-[186px] shrink-0" />;
 
   return (
-    <div className="flex w-[196px] shrink-0 justify-center">
-      <div className="flex w-[182.667px] rotate-[3.49deg] flex-col items-center gap-[13px]">
-        <div
-          className="size-[150px] rounded-full bg-[#c9b8f5]"
-          style={{ rotate: `${imageRotate}deg`, ...enter("wrapped-stamp", delay, 600) }}
+    <div className="flex w-[186px] shrink-0 flex-col items-center gap-[12px]">
+      <StampDisc stamp={stamp} imageRotate={imageRotate} delay={delay} />
+      <p
+        className="w-full break-words text-center font-semibold text-[#000] text-[26px] leading-[24px] tracking-[0.5912px]"
+        style={enter("wrapped-fade", delay + 150, 500)}
+      >
+        {stamp.name}
+      </p>
+    </div>
+  );
+}
+
+/**
+ * One slot's disc: the clip over its last-frame poster.
+ *
+ * The poster is always mounted underneath — it is the loading state, the
+ * transparent regions' backing while the clip plays, and the static image the
+ * share-export rasterises. The video starts on a timer so the 7 clips stagger;
+ * it plays once and rests on its last frame.
+ */
+function StampDisc({
+  stamp,
+  imageRotate,
+  delay,
+}: {
+  stamp: WrappedStamp;
+  imageRotate: number;
+  delay: number;
+}) {
+  const files = stampVideo(stamp.id);
+  const poster = files?.poster ?? stamp.imgURL;
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !files) return;
+    video.currentTime = 0;
+    const timer = setTimeout(() => {
+      void video.play().catch(() => {});
+    }, delay);
+    return () => {
+      clearTimeout(timer);
+      video.pause();
+    };
+  }, [files, delay]);
+
+  return (
+    <div
+      className="relative shrink-0 overflow-hidden rounded-full bg-[#c9b8f5]"
+      style={{
+        width: DISC,
+        height: DISC,
+        rotate: `${imageRotate}deg`,
+        ...enter("wrapped-fade", delay, 400),
+      }}
+    >
+      {poster && (
+        <img
+          alt={files ? "" : stamp.name}
+          src={poster}
+          className="absolute inset-0 block size-full object-cover"
+          draggable={false}
+        />
+      )}
+      {files ? (
+        <video
+          ref={videoRef}
+          className="absolute inset-0 block size-full object-cover"
+          muted
+          playsInline
+          preload="auto"
+          poster={files.poster}
+          aria-label={stamp.name}
         >
-          {stamp.imgURL && (
-            <img
-              alt={stamp.name}
-              src={stamp.imgURL}
-              className="block size-full rounded-full object-cover"
-              draggable={false}
-            />
-          )}
-        </div>
-        <p
-          className="w-full break-words text-center font-semibold text-[#000] text-[30px] leading-[28px] tracking-[0.5912px]"
-          style={enter("wrapped-fade", delay + 200, 500)}
-        >
-          {stamp.name}
-        </p>
-      </div>
+          {/* HEVC with alpha first (Safari, HEVC-capable Chromium); the H.264
+              fallback is composited over the slot colour for everyone else. */}
+          <source src={files.mp4} type='video/mp4; codecs="hvc1"' />
+          <source src={files.fallback} type="video/mp4" />
+        </video>
+      ) : (
+        stamp.imgURL && (
+          <img
+            alt={stamp.name}
+            src={stamp.imgURL}
+            className="absolute inset-0 block size-full object-cover"
+            draggable={false}
+          />
+        )
+      )}
     </div>
   );
 }
