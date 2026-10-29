@@ -7,8 +7,10 @@ after the per-project GitHub loop, then reviewed by organizers before the stage 
 
 ## Decisions (2026-10-12, implemented 2026-10-13)
 
-- **No persona voice.** Plain, warm and specific. Never mocks, ranks, or mentions judging
-  or prizes.
+- **Nugget's voice** (changed 2026-10-29, prompt version 3; was "no persona voice"): Nugget
+  speaks in first person, joyful, specific and a little whimsical, led by example lines. Still
+  never mocks, ranks, or mentions judging or prizes. Chosen over persona-only, craft-rule,
+  daydream and group-chat prompts after trials on the cmd-f 2026 projects.
 - **No `WINNER` path.** Messages never depend on prizes, so the `prize` run never touches
   them. 9 paths.
 - **One sentence, ≤ 80 characters.**
@@ -25,9 +27,10 @@ Checked in code (`checkNuggetMessage`) on both model output and organizer edits:
 - ≤ 80 characters, one sentence, at most one `!`.
 - No emoji (the font has no emoji glyphs), URLs, @handles or hashtags.
 
-In the prompt only (the model is asked, review catches misses): speak to "you"/"your team",
-only mention facts in the project, never invent numbers or features, never mock, compare,
-or mention judging or prizes, no political, religious or health claims.
+In the prompt only (the model is asked, review catches misses): Nugget says "I" and speaks to
+"you", only mention facts in the project, never invent numbers or features, never state a
+duration or time of day, no em dashes, never mock, compare, or mention judging or prizes, no
+political, religious or health claims.
 
 ## Paths
 
@@ -74,10 +77,10 @@ ipsum, is junk. A one-sentence About still gets a message.
 { options: Array<{ path: NuggetPath, message: string, groundedOn: string }> }
 ```
 
-`groundedOn` is the phrase of the title or About the line is based on, used only to flag
-for review. The model returns 3 options, best first, and the first that passes the hard checks
+`groundedOn` is 2–6 words copied exactly from the title or About the line is based on, used
+only to flag for review. The model returns 3 options, best first, and the first that passes the hard checks
 wins: it can't count characters, so this replaces a retry batch (the first real run went
-91 characters). The prompt asks for 8–12 words. The user message is JSON: `CANDIDATE_PATHS`, `SIGNALS`, and `PROJECT` (`title`,
+91 characters). The prompt asks for 5–10 words, under 70 characters. The user message is JSON: `CANDIDATE_PATHS`, `SIGNALS`, and `PROJECT` (`title`,
 `about`, `builtWith`, `teamSize`). The system prompt is `NUGGET_SYSTEM_PROMPT` in calc.ts and
 says to treat PROJECT as data.
 
