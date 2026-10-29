@@ -329,37 +329,77 @@ select:-webkit-autofill:active {
   }
 }
 
+/* The banner runs hot while the rocket pulls it open, settling to its true colors
+   exactly as the reveal completes — otherwise its near-black leading edge is
+   invisible against the page and the banner appears to pop in mid-flight. */
+@keyframes wrapped-banner-light {
+  from {
+    filter: brightness(2.75);
+  }
+}
+
+/* The ship's nose tracks the reveal edge exactly: it starts a rocket-width off the
+   left edge and ends a rocket-width short of the right one. */
 @keyframes wrapped-banner-fly {
   from {
-    left: -4rem;
+    left: calc(-1 * var(--rocket-w));
   }
   to {
-    left: calc(100% + 4rem);
+    left: calc(100% - var(--rocket-w));
   }
 }
 
 @keyframes wrapped-banner-glow {
   from {
+    background-position: 0% 0;
+  }
+  to {
     background-position: 100% 0;
   }
-  to {
-    background-position: -100% 0;
-  }
 }
 
+/* The launch carries the banner off to the right, the way its rocket flew in. The
+   animation runs on a wrapper inside the sticky container, whose overflow-hidden
+   clips the flight — nothing escapes to grow the page's scroll area. */
 @keyframes wrapped-banner-exit {
   to {
-    opacity: 0;
-    transform: translateY(-100%);
+    transform: translateX(110%);
   }
 }
 
+/* The launch fly-up, on the deck. The stage is the 1080x1920 design canvas, so the
+   rocket (natural 510x696, full stage width) rides entirely in stage-relative pixels:
+   it starts nose-down 150 design-px below the stage's bottom edge and climbs until its
+   tail clears the top by 80. Distances arrive as measured px on --rocket-from/--rocket-to. */
 @keyframes wrapped-launch {
   from {
-    transform: translateY(110dvh);
+    transform: translateY(var(--rocket-from));
   }
   to {
-    transform: translateY(-120%);
+    transform: translateY(var(--rocket-to));
+  }
+}
+
+/* The wake wipe: the deck's content is unhidden behind the climbing rocket, its edge
+   swept upward in step with the rocket's tail. Runs from the moment the tail enters
+   the stage (44.8% of the flight) until it reaches the top (97.8%). */
+@keyframes wrapped-launch-reveal {
+  from {
+    clip-path: inset(100% 0 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* The deck fades in from the launch's sky, so the hand-off between the two pages
+   has no hard cut. Default transparent, so a disabled animation can't strand it. */
+@keyframes wrapped-deck-reveal {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
   }
 }
 
