@@ -2,6 +2,7 @@ import { WrappedDeck } from "@/components/features/wrapped/wrapped-deck";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useWrappedStore } from "@/lib/stores/wrapped-store";
 import { getWrappedFixture } from "@/lib/wrapped/fixture";
+import { consumeLaunchHandoff } from "@/lib/wrapped/launch-handoff";
 import { fetchWrappedOptIn } from "@/services/socials";
 import { fetchWrappedDoc } from "@/services/wrapped";
 import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
@@ -36,11 +37,13 @@ export const Route = createFileRoute("/$activeHackathon/_auth/(account)/wrapped"
     if (!isReady) throw notFound();
   },
   loader: async ({ context, deps }) => {
+    // Set by the banner's animated launch; false when the deck was opened directly.
+    const launchedFromBanner = consumeLaunchHandoff();
     const fixture = getWrappedFixture(deps.mock);
     if (fixture) {
       // Telemetry is suppressed for fixtures — a developer flipping through mock decks
       // must not land in the organizer open-rate numbers.
-      return { wrapped: fixture, dbCollectionName: null, uid: null };
+      return { wrapped: fixture, dbCollectionName: null, uid: null, launchedFromBanner };
     }
 
     const { dbCollectionName } = context;
@@ -59,13 +62,13 @@ export const Route = createFileRoute("/$activeHackathon/_auth/(account)/wrapped"
     ]);
     if (!wrapped || !isOptedIn) throw notFound();
 
-    return { wrapped, dbCollectionName, uid: user.uid };
+    return { wrapped, dbCollectionName, uid: user.uid, launchedFromBanner };
   },
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  const { wrapped, dbCollectionName, uid } = Route.useLoaderData();
+  const { wrapped, dbCollectionName, uid, launchedFromBanner } = Route.useLoaderData();
   const { activeHackathon } = Route.useParams();
   const navigate = useNavigate();
 
@@ -74,6 +77,7 @@ function RouteComponent() {
       doc={wrapped}
       dbCollectionName={dbCollectionName}
       uid={uid}
+      launchedFromBanner={launchedFromBanner}
       onClose={() => navigate({ to: "/$activeHackathon", params: { activeHackathon } })}
     />
   );

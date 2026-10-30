@@ -36,8 +36,18 @@ const titleGlow = "2.847px 2.847px 142.329px #c4b2f0";
 /**
  * @param event - display name, e.g. "HackCamp 2026"; the trailing year is split off onto
  *   its own line
+ * @param skipRocketEntrance - render the rocket already on its pad instead of rising
+ *   into view — the launch fly-up climbing past it just played that same move
  */
-export function IntroSlide({ event, active }: { event: string; active: boolean }) {
+export function IntroSlide({
+  event,
+  active,
+  skipRocketEntrance = false,
+}: {
+  event: string;
+  active: boolean;
+  skipRocketEntrance?: boolean;
+}) {
   const match = event.match(/^(.*?)\s*(\d{4})$/);
   const name = match ? match[1] : event;
   const year = match?.[2];
@@ -91,7 +101,10 @@ export function IntroSlide({ event, active }: { event: string; active: boolean }
             </p>
           </div>
 
-          <div className="absolute inset-0" style={enter("wrapped-rise-far", TIMING.rocket, 1100)}>
+          <div
+            className="absolute inset-0"
+            style={skipRocketEntrance ? undefined : enter("wrapped-rise-far", TIMING.rocket, 1100)}
+          >
             <Rocket />
           </div>
         </div>
