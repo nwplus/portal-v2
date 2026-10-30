@@ -11,6 +11,7 @@
     "start": "vite --port 3000",
     "build": "vite build && tsc",
     "serve": "vite preview",
+    "test": "node --test tests/*.test.cjs",
     "check": "biome check",
     "check:write": "biome check --write",
     "lint": "biome lint",
