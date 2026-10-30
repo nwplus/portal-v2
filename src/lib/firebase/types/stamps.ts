@@ -16,10 +16,13 @@ export interface StampCriteria {
  * Collection: /Stamps
  * Represents a stamp that hackers can collect during our hackathons
  */
+export type StampCategory = "preHackathonWorkshop" | "dayOfWorkshop" | "dayOfActivity" | "other";
+
 export interface Stamp {
   _id: string;
   name: string;
   description: string;
+  category?: StampCategory;
   imgName: string;
   imgURL: string;
   lockedImgURL?: string;
