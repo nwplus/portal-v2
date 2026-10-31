@@ -1,16 +1,20 @@
+import type { FieldPath } from "react-hook-form";
 import { z } from "zod";
 
 import type { ApplicationFormValues } from "@/lib/application/types";
 import type {
   HackerApplicationNonWelcomeQuestion,
+  HackerApplicationQuestionCondition,
   HackerApplicationQuestionFormInputField,
   HackerApplicationQuestionMap,
   HackerApplicationQuestionType,
   HackerApplicationSections,
 } from "@/lib/firebase/types/hacker-app-questions";
+import { emptyAnswerFor, isAnswerEmpty, isConditionMet, isMultiSelectAnswer } from "./condition";
 import { FIXED_QUESTION_CONFIG } from "./fixed-question-config";
 import { buildFieldPath, buildOtherFieldPath, getEffectiveFormInput } from "./form-mapping";
-import { isGithubUrl, isLinkedinUrl, isValidHttpsUrl } from "./utils";
+import { getValueAtPath } from "./object-path";
+import { isGithubUrl, isLinkedinUrl, isNotApplicableAnswer, isValidHttpsUrl } from "./utils";
 
 /**
  * Question buckets by section used for schema generation.
@@ -20,6 +24,15 @@ export type QuestionBuckets = Pick<
   HackerApplicationQuestionMap,
   "BasicInfo" | "Skills" | "Questionnaire"
 >;
+
+export type ConditionMeta = {
+  questionType: HackerApplicationQuestionType;
+  mainPath: FieldPath<ApplicationFormValues>;
+  otherPath: FieldPath<ApplicationFormValues> | null;
+  sourcePath: FieldPath<ApplicationFormValues> | null;
+  condition: HackerApplicationQuestionCondition;
+  required: boolean;
+};
 
 export type SchemaMeta = {
   /**
@@ -42,6 +55,8 @@ export type SchemaMeta = {
     mainPath: string;
     otherPath: string | null;
   }>;
+  conditionMeta: ConditionMeta[];
+  conditionSourcePaths: Record<string, string>;
 };
 
 /**
@@ -49,6 +64,17 @@ export type SchemaMeta = {
  * This is used to populate the object shape for each section of the form.
  */
 function buildFieldSchema(question: HackerApplicationNonWelcomeQuestion): z.ZodTypeAny {
+  const schema = buildFieldTypeSchema(question);
+  if (!question.required) return schema;
+
+  // missing keys make zod skip the object's refinements, so default to an empty answer
+  return z.preprocess(
+    (value) => value ?? emptyAnswerFor(question.type as HackerApplicationQuestionType),
+    schema,
+  );
+}
+
+function buildFieldTypeSchema(question: HackerApplicationNonWelcomeQuestion): z.ZodTypeAny {
   const questionType = question.type as HackerApplicationQuestionType;
   const isRequired = Boolean(question.required);
   const options = question.options ?? [];
@@ -153,7 +179,7 @@ function buildFieldSchema(question: HackerApplicationNonWelcomeQuestion): z.ZodT
       if (isRequired) {
         return base.min(1, "This field is required").refine(
           (value) => {
-            if (allowedOptions.length === 0) return true;
+            if (!value || allowedOptions.length === 0) return true;
             return allowedOptions.includes(value);
           },
           { error: "Invalid selection" },
@@ -196,6 +222,7 @@ function buildFieldSchema(question: HackerApplicationNonWelcomeQuestion): z.ZodT
           (value) => {
             if (!value) return true;
             if (typeof value !== "string") return false;
+            if (isNotApplicableAnswer(value)) return true;
             return isGithubUrl(value);
           },
           {
@@ -308,6 +335,82 @@ function buildFieldSchema(question: HackerApplicationNonWelcomeQuestion): z.ZodT
       return isRequired ? base : base.optional();
     }
 
+    case "Github": {
+      const base = z.string().trim().optional().or(z.literal(""));
+      if (isRequired) {
+        return z
+          .string()
+          .trim()
+          .min(1, "This field is required")
+          .refine((value) => isNotApplicableAnswer(value) || isGithubUrl(value), {
+            error: "Enter a valid GitHub URL (e.g., https://github.com/your-username)",
+          });
+      }
+      return base.refine(
+        (value) => {
+          if (!value || typeof value !== "string") return true;
+          if (isNotApplicableAnswer(value)) return true;
+          return isGithubUrl(value);
+        },
+        { error: "Enter a valid GitHub URL (e.g., https://github.com/your-username)" },
+      );
+    }
+
+    case "LinkedIn": {
+      const base = z.string().trim().optional().or(z.literal(""));
+      if (isRequired) {
+        return z.string().trim().min(1, "This field is required").refine(isLinkedinUrl, {
+          error: "Enter a valid LinkedIn URL (e.g., https://linkedin.com/in/your-profile)",
+        });
+      }
+      return base.refine(
+        (value) => {
+          if (!value || typeof value !== "string") return true;
+          return isLinkedinUrl(value);
+        },
+        { error: "Enter a valid LinkedIn URL (e.g., https://linkedin.com/in/your-profile)" },
+      );
+    }
+
+    case "Portfolio Website": {
+      const base = z.string().trim().optional().or(z.literal(""));
+      if (isRequired) {
+        return z
+          .string()
+          .trim()
+          .min(1, "This field is required")
+          .refine(isValidHttpsUrl, { error: "Enter a valid URL for your portfolio" });
+      }
+      return base.refine(
+        (value) => {
+          if (!value || typeof value !== "string") return true;
+          return isValidHttpsUrl(value);
+        },
+        { error: "Enter a valid URL for your portfolio" },
+      );
+    }
+
+    case "Resume": {
+      const base = z.string().trim().optional().or(z.literal(""));
+      if (!isRequired) return base;
+      return base.superRefine((value, ctx) => {
+        const text = typeof value === "string" ? value.trim() : "";
+        if (!text) {
+          ctx.addIssue({
+            code: "custom",
+            message: "Please upload your resume",
+          });
+          return;
+        }
+        if (!isValidHttpsUrl(text)) {
+          ctx.addIssue({
+            code: "custom",
+            message: "Enter a valid URL for your resume",
+          });
+        }
+      });
+    }
+
     default: {
       // Unknown or missing type; allow anything to avoid blocking the form.
       return z.any();
@@ -334,6 +437,7 @@ export function buildApplicationSchema(questions: QuestionBuckets): {
   };
 
   const otherMeta: SchemaMeta["otherMeta"] = [];
+  const conditionMeta: SchemaMeta["conditionMeta"] = [];
 
   // Iterate through each section's questions and build per-field schemas.
   const sectionEntries: Array<[HackerApplicationSections, HackerApplicationNonWelcomeQuestion[]]> =
@@ -342,6 +446,16 @@ export function buildApplicationSchema(questions: QuestionBuckets): {
       ["Skills", questions.Skills ?? []],
       ["Questionnaire", questions.Questionnaire ?? []],
     ];
+
+  const pathByFormInput = new Map<string, string>();
+  for (const [section, sectionQuestions] of sectionEntries) {
+    for (const question of sectionQuestions) {
+      const formInput = getEffectiveFormInput(question);
+      if (!formInput || pathByFormInput.has(formInput)) continue;
+      const path = buildFieldPath(section, formInput);
+      if (path) pathByFormInput.set(formInput, path);
+    }
+  }
 
   for (const [section, sectionQuestions] of sectionEntries) {
     for (const question of sectionQuestions) {
@@ -434,7 +548,25 @@ export function buildApplicationSchema(questions: QuestionBuckets): {
       // Derive the object keys within the section (e.g., "gender", "otherGender")
       const [, mainKey] = mainPath.split(".");
       const otherKey = otherPath ? otherPath.split(".")[1] : null;
-      const fieldSchema = buildFieldSchema(question);
+
+      if (question.condition) {
+        conditionMeta.push({
+          questionType,
+          mainPath: mainPath as FieldPath<ApplicationFormValues>,
+          otherPath: (otherPath as FieldPath<ApplicationFormValues> | null) ?? null,
+          sourcePath:
+            (pathByFormInput.get(question.condition.sourceFormInput) as
+              | FieldPath<ApplicationFormValues>
+              | undefined) ?? null,
+          condition: question.condition,
+          required: Boolean(question.required),
+        });
+      }
+
+      // gated questions are optional here, superRefine below handles required
+      const fieldSchema = buildFieldSchema(
+        question.condition ? { ...question, required: false } : question,
+      );
 
       // Attach schemas to the appropriate section shape. For "otherX" paths,
       // default to an optional string; the cross-field refinement enforces presence when needed.
@@ -474,7 +606,7 @@ export function buildApplicationSchema(questions: QuestionBuckets): {
           const otherValue = values[otherKey];
 
           let needsOtherText = false;
-          if (questionType === "Select All" || questionType === "Major") {
+          if (isMultiSelectAnswer(questionType)) {
             const record = (mainValue ?? {}) as Record<string, boolean>;
             needsOtherText = Boolean(record.other);
           } else if (questionType === "Multiple Choice") {
@@ -495,31 +627,54 @@ export function buildApplicationSchema(questions: QuestionBuckets): {
   const skillsSchema = buildSectionSchema(skillsShape, "skills.");
   const questionnaireSchema = buildSectionSchema(questionnaireShape, "questionnaire.");
 
+  const mustAccept = z.preprocess(
+    (value) => value ?? false,
+    z.boolean().refine((value) => value === true, { error: "This field is required" }),
+  );
+
   const termsSchema = z.object({
-    MLHCodeOfConduct: z.boolean().refine((value) => value === true, {
-      error: "This field is required",
-    }),
+    MLHCodeOfConduct: mustAccept,
     MLHEmailSubscription: z.boolean().optional(),
-    MLHPrivacyPolicy: z.boolean().refine((value) => value === true, {
-      error: "This field is required",
-    }),
-    nwPlusPrivacyPolicy: z.boolean().refine((value) => value === true, {
-      error: "This field is required",
-    }),
+    MLHPrivacyPolicy: mustAccept,
+    nwPlusPrivacyPolicy: mustAccept,
     shareWithSponsors: z.boolean().optional(),
-    shareWithnwPlus: z.boolean().refine((value) => value === true, {
-      error: "This field is required",
-    }),
+    shareWithnwPlus: mustAccept,
   });
 
   // Assemble the full schema for react-hook-form resolver consumption.
-  const schema = z.object({
-    basicInfo: basicInfoSchema,
-    skills: skillsSchema,
-    questionnaire: questionnaireSchema,
-    termsAndConditions: termsSchema,
-  }) as z.ZodType<ApplicationFormValues>;
+  const schema = z
+    .object({
+      basicInfo: basicInfoSchema,
+      skills: skillsSchema,
+      questionnaire: questionnaireSchema,
+      termsAndConditions: termsSchema,
+    })
+    .superRefine(
+      (values, ctx) => {
+        for (const entry of conditionMeta) {
+          if (!entry.required || !entry.sourcePath) continue;
 
-  const meta: SchemaMeta = { fieldNamesBySection, otherMeta };
+          const sourceValue = getValueAtPath(values, entry.sourcePath);
+          if (!isConditionMet(entry.condition, sourceValue)) continue;
+
+          const answer = getValueAtPath(values, entry.mainPath);
+          if (isAnswerEmpty(entry.questionType, answer)) {
+            ctx.addIssue({
+              code: "custom",
+              message: "This field is required",
+              path: entry.mainPath.split("."),
+            });
+          }
+        }
+      },
+      { when: () => true },
+    ) as unknown as z.ZodType<ApplicationFormValues>;
+
+  const meta: SchemaMeta = {
+    fieldNamesBySection,
+    otherMeta,
+    conditionMeta,
+    conditionSourcePaths: Object.fromEntries(pathByFormInput),
+  };
   return { schema, meta };
 }

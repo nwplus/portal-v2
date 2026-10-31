@@ -1,13 +1,16 @@
 import { CountryQuestion } from "@/components/features/application/country-question";
 import { DropdownQuestion } from "@/components/features/application/dropdown-question";
 import { FullLegalNameQuestion } from "@/components/features/application/full-legal-name-question";
+import { LinkQuestion } from "@/components/features/application/link-question";
 import { LongAnswerQuestion } from "@/components/features/application/long-answer-question";
 import { MajorQuestion } from "@/components/features/application/major-question";
 import { MultipleChoiceQuestion } from "@/components/features/application/multiple-choice-question";
 import { PortfolioQuestion } from "@/components/features/application/portfolio-question";
+import { ResumeQuestion } from "@/components/features/application/resume-question";
 import { SchoolQuestion } from "@/components/features/application/school-question";
 import { SelectAllQuestion } from "@/components/features/application/select-all-question";
 import { ShortAnswerQuestion } from "@/components/features/application/short-answer-question";
+import { useQuestionVisibility } from "@/hooks/use-question-visibility";
 import type {
   HackerApplicationNonWelcomeQuestion,
   HackerApplicationSections,
@@ -26,11 +29,19 @@ export interface QuestionFieldProps {
  */
 export function QuestionField(props: QuestionFieldProps) {
   const { question } = props;
+  const isVisible = useQuestionVisibility(question);
+
+  if (!isVisible) return null;
+
   switch (question.type) {
     case "Short Answer":
       return <ShortAnswerQuestion {...props} />;
     case "Long Answer":
       return <LongAnswerQuestion {...props} />;
+    case "Github":
+    case "LinkedIn":
+    case "Portfolio Website":
+      return <LinkQuestion {...props} />;
     case "Select All":
       return <SelectAllQuestion {...props} />;
     case "Multiple Choice":
@@ -39,6 +50,8 @@ export function QuestionField(props: QuestionFieldProps) {
       return <DropdownQuestion {...props} />;
     case "Portfolio":
       return <PortfolioQuestion {...props} />;
+    case "Resume":
+      return <ResumeQuestion {...props} />;
     case "School":
       return <SchoolQuestion {...props} />;
     case "Major":

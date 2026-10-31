@@ -146,10 +146,11 @@ export const getColouredHackathonIcon = (hackathonId: string): React.ComponentTy
   return NwHacksIcon;
 };
 
-// Fires confetti cannons from both sides of the screen using the active hackathon's portal gradient colors
+// Fires confetti cannons from both sides of the screen using the active hackathon's confetti
+// colors, falling back to its portal gradient for hackathons that define no confetti palette
 export function fireSideCannons(activeHackathon: string) {
-  const hackathonTheme = usePortalStore.getState().hackathonTheme;
-  const colors = hackathonTheme?.[activeHackathon]?.portalGradient;
+  const theme = usePortalStore.getState().hackathonTheme?.[activeHackathon];
+  const colors = theme?.confettiColors ?? theme?.portalGradient;
 
   const DURATION_MS = 1500;
   const end = Date.now() + DURATION_MS;
@@ -174,12 +175,12 @@ export function fireSideCannons(activeHackathon: string) {
 }
 
 export const getPreferredName = (applicant: Applicant): string => {
-  return applicant.basicInfo?.preferredName || applicant.basicInfo.legalFirstName;
+  return applicant.basicInfo?.preferredName || applicant.basicInfo?.legalFirstName || "";
 };
 
 export const getFullName = (applicant: Applicant): string => {
-  const firstName = applicant.basicInfo?.preferredName || applicant.basicInfo.legalFirstName;
-  const lastName = applicant.basicInfo.legalLastName;
+  const firstName = applicant.basicInfo?.preferredName || applicant.basicInfo?.legalFirstName || "";
+  const lastName = applicant.basicInfo?.legalLastName || "";
   return `${firstName} ${lastName}`.trim();
 };
 

@@ -21,10 +21,12 @@ import { useHackathonInfo } from "@/hooks/use-hackathon-info";
 import { useWrappedReady } from "@/hooks/use-wrapped-ready";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useHackerStore } from "@/lib/stores/hacker-store";
+import { usePortalStore } from "@/lib/stores/portal-store";
 import { getFullName, getSidebarHackathonIcon } from "@/lib/utils";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import {
   Calendar,
+  Flag,
   ForkKnife,
   Home,
   Info,
@@ -64,6 +66,11 @@ const ACCOUNT_MENU_ITEMS: MenuItem[] = [
     label: "Stamps",
     to: "/$activeHackathon/stampbook",
     icon: Stamp,
+  },
+  {
+    label: "CTF",
+    to: "/$activeHackathon/ctf",
+    icon: Flag,
   },
 ];
 
@@ -108,6 +115,7 @@ export function AppSidebar() {
   const user = useAuthStore((state) => state.user);
   const hacker = useHackerStore((state) => state.hacker);
   const isWrappedAvailable = useWrappedReady();
+  const isCtfOpen = usePortalStore((state) => state.ctfOpen?.[activeHackathon] ?? false);
   const { isMobile } = useSidebar();
   const LogoComponent = getSidebarHackathonIcon(activeHackathon);
   const navigate = useNavigate();
@@ -169,26 +177,28 @@ export function AppSidebar() {
             <SidebarGroupLabel>Account</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {ACCOUNT_MENU_ITEMS.map(({ label, to, icon: Icon }) => {
-                  const isSocialProfileItem = to.includes("social-profile");
-                  return (
-                    <SidebarMenuItem key={to}>
-                      <SidebarMenuButton asChild tooltip={label}>
-                        <Link
-                          to={to}
-                          params={{ activeHackathon, userId: user?.uid }}
-                          activeProps={{ "data-active": true }}
-                          {...(isSocialProfileItem && {
-                            "data-active": location.pathname.includes("/social-profile/"),
-                          })}
-                        >
-                          <Icon />
-                          <span>{label}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
+                {ACCOUNT_MENU_ITEMS.filter((item) => item.label !== "CTF" || isCtfOpen).map(
+                  ({ label, to, icon: Icon }) => {
+                    const isSocialProfileItem = to.includes("social-profile");
+                    return (
+                      <SidebarMenuItem key={to}>
+                        <SidebarMenuButton asChild tooltip={label}>
+                          <Link
+                            to={to}
+                            params={{ activeHackathon, userId: user?.uid }}
+                            activeProps={{ "data-active": true }}
+                            {...(isSocialProfileItem && {
+                              "data-active": location.pathname.includes("/social-profile/"),
+                            })}
+                          >
+                            <Icon />
+                            <span>{label}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  },
+                )}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -276,7 +286,7 @@ export function AppSidebar() {
                 </Avatar>
                 <div className="flex flex-col">
                   <span className="truncate font-semibold text-sm">{getFullName(hacker)}</span>
-                  <span className="truncate text-xs">{hacker.basicInfo.email}</span>
+                  <span className="truncate text-xs">{hacker.basicInfo?.email}</span>
                 </div>
               </div>
 

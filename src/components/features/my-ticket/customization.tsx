@@ -1,6 +1,27 @@
 import { Button } from "@/components/ui/button";
+import { useHackathon } from "@/hooks/use-hackathon";
 import { Sticker } from "lucide-react";
 import { useState } from "react";
+
+// Stickers shared by hackathons without their own set. Paths are persisted in
+// `PlacedSticker.src`, so existing entries must keep resolving — never move these files.
+const SHARED_STICKERS = [
+  "cool",
+  "love",
+  "slay",
+  "star",
+  "yay",
+  "bufo",
+  "catto",
+  "fire",
+  "nugget",
+].map((name) => `/assets/stickers/${name}.png`);
+
+const HACKATHON_STICKERS: Record<string, string[]> = {
+  hackcamp: ["spiral", "five-point", "drop", "circle", "four-point", "eight-point"].map(
+    (name) => `/assets/hackcamp/stickers/${name}.png`,
+  ),
+};
 
 interface CustomizationProps {
   onStickerSelect: (src: string) => void;
@@ -15,22 +36,13 @@ export function Customization({
   onCancel,
   onSave,
 }: CustomizationProps) {
+  const { activeHackathon } = useHackathon();
   const [isStickerSelected, setStickerSelected] = useState(false);
   const handleStickerClick = () => {
     setStickerSelected(!isStickerSelected);
   };
 
-  const STICKERS = [
-    "/assets/stickers/cool.png",
-    "/assets/stickers/love.png",
-    "/assets/stickers/slay.png",
-    "/assets/stickers/star.png",
-    "/assets/stickers/yay.png",
-    "/assets/stickers/bufo.png",
-    "/assets/stickers/catto.png",
-    "/assets/stickers/fire.png",
-    "/assets/stickers/nugget.png",
-  ];
+  const STICKERS = HACKATHON_STICKERS[activeHackathon] ?? SHARED_STICKERS;
 
   const handleFontClick = (key: "caveat" | "ibm" | "space") => {
     onFontChange?.(key);

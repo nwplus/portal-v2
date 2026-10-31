@@ -10,6 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { buildFieldPath } from "@/lib/application/form-mapping";
 import { getValueAtPath } from "@/lib/application/object-path";
+import { RESUME_FILE_ACCEPT } from "@/lib/application/resume-upload";
 import type { ApplicationFormValues } from "@/lib/application/types";
 import { normalizeUrl } from "@/lib/application/utils";
 import { useAuthStore } from "@/lib/stores/auth-store";
@@ -70,29 +71,6 @@ export function PortfolioQuestion({ question }: QuestionFieldProps) {
       return;
     }
 
-    const allowedExtensions = [".pdf", ".doc", ".docx", ".png", ".jpg"];
-    const lowerName = file.name.toLowerCase();
-    const hasAllowedExtension = allowedExtensions.some((ext) => lowerName.endsWith(ext));
-    const maxBytes = 3 * 1024 * 1024;
-
-    if (!hasAllowedExtension) {
-      setError(resumePath as FieldPath<ApplicationFormValues>, {
-        type: "manual",
-        message: "Accepted types: .pdf, .doc, .docx, .png, .jpg",
-      });
-      event.target.value = "";
-      return;
-    }
-
-    if (file.size > maxBytes) {
-      setError(resumePath as FieldPath<ApplicationFormValues>, {
-        type: "manual",
-        message: "File must be 3MB or smaller",
-      });
-      event.target.value = "";
-      return;
-    }
-
     if (!userId) {
       setError(resumePath as FieldPath<ApplicationFormValues>, {
         type: "manual",
@@ -120,10 +98,10 @@ export function PortfolioQuestion({ question }: QuestionFieldProps) {
         shouldDirty: true,
         shouldValidate: true,
       });
-    } catch {
+    } catch (error) {
       setError(resumePath as FieldPath<ApplicationFormValues>, {
         type: "manual",
-        message: "Upload failed, please try again",
+        message: error instanceof Error ? error.message : "Upload failed, please try again",
       });
     } finally {
       setUploadingResume(false);
@@ -164,7 +142,7 @@ export function PortfolioQuestion({ question }: QuestionFieldProps) {
                 </div>
               </div>
               <p className="text-text-secondary text-xs">
-                Accepted formats: pdf, doc, docx, png, jpg (max 3MB)
+                PDF only (max 3MB). Export Word documents or images as a PDF before uploading.
               </p>
               <span className="text-text-secondary text-xs md:hidden">
                 {resumeFileName
@@ -177,7 +155,7 @@ export function PortfolioQuestion({ question }: QuestionFieldProps) {
                 ref={resumeFileInputRef}
                 id={resumeId}
                 type="file"
-                accept=".pdf,.doc,.docx,.png,.jpg"
+                accept={RESUME_FILE_ACCEPT}
                 className="hidden"
                 onChange={handleResumeFileChange}
               />

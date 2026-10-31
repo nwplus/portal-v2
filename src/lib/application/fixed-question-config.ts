@@ -62,6 +62,26 @@ export const FIXED_QUESTION_CONFIG: Partial<
     section: "BasicInfo",
     formInput: "countryOfResidence",
   },
+  Github: {
+    kind: "single",
+    section: "Skills",
+    formInput: "github",
+  },
+  LinkedIn: {
+    kind: "single",
+    section: "Skills",
+    formInput: "linkedin",
+  },
+  "Portfolio Website": {
+    kind: "single",
+    section: "Skills",
+    formInput: "portfolio",
+  },
+  Resume: {
+    kind: "single",
+    section: "Skills",
+    formInput: "resume",
+  },
   "Full Legal Name": {
     kind: "fanOut",
     section: "BasicInfo",

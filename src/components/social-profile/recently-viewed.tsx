@@ -28,6 +28,14 @@ interface RecentlyViewedProps {
  */
 export function RecentlyViewed({ socialProfile }: RecentlyViewedProps) {
   const user = useAuthStore((state) => state.user);
+  const authLoading = useAuthStore((state) => state.loading);
+  if (authLoading || !user || (socialProfile && socialProfile._id !== user.uid)) return null;
+
+  return <RecentlyViewedList key={user.uid} socialProfile={socialProfile} />;
+}
+
+function RecentlyViewedList({ socialProfile }: RecentlyViewedProps) {
+  const user = useAuthStore((state) => state.user);
   const { activeHackathon } = useParams({ strict: false });
 
   const [recentlyViewedItems, setRecentlyViewedItems] = useState<RecentlyViewedItem[]>([]);
@@ -36,6 +44,8 @@ export function RecentlyViewed({ socialProfile }: RecentlyViewedProps) {
   const [removingProfileId, setRemovingProfileId] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+    setRecentlyViewedItems([]);
     const loadRecentlyViewed = async () => {
       if (!user?.uid) {
         setIsLoading(false);
@@ -46,8 +56,10 @@ export function RecentlyViewed({ socialProfile }: RecentlyViewedProps) {
         setIsLoading(true);
 
         const currentSocial = socialProfile || (await fetchSocial(user.uid));
-        const recentlyViewedList: RecentlyViewedProfileType[] =
-          currentSocial?.recentlyViewedProfiles ?? [];
+        const recentlyViewedList: RecentlyViewedProfileType[] = (
+          currentSocial?.recentlyViewedProfiles ?? []
+        ).slice(0, 10);
+        if (cancelled) return;
 
         if (recentlyViewedList.length === 0) {
           setRecentlyViewedItems([]);
@@ -64,16 +76,19 @@ export function RecentlyViewed({ socialProfile }: RecentlyViewedProps) {
           profile: profiles[index],
         }));
 
-        setRecentlyViewedItems(combined);
+        if (!cancelled) setRecentlyViewedItems(combined);
       } catch (error) {
         // TODO: display user friendly error
         console.error("Error loading recently viewed profiles:", error);
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     };
 
     loadRecentlyViewed();
+    return () => {
+      cancelled = true;
+    };
   }, [user?.uid, socialProfile]);
 
   const handleRemove = useCallback(
@@ -166,7 +181,7 @@ export function RecentlyViewed({ socialProfile }: RecentlyViewedProps) {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <HackathonBadges hackathonsAttended={item.profile?.hackathonsAttended} />
+                  <HackathonBadges uid={item.profileId} />
 
                   <Link
                     to="/$activeHackathon/social-profile/$userId"

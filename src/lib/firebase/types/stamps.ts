@@ -16,10 +16,13 @@ export interface StampCriteria {
  * Collection: /Stamps
  * Represents a stamp that hackers can collect during our hackathons
  */
+export type StampCategory = "preHackathonWorkshop" | "dayOfWorkshop" | "dayOfActivity" | "other";
+
 export interface Stamp {
   _id: string;
   name: string;
   description: string;
+  category?: StampCategory;
   imgName: string;
   imgURL: string;
   lockedImgURL?: string;
@@ -29,6 +32,7 @@ export interface Stamp {
   isQRUnlockable?: boolean; // whether this stamp has a QR associated with it ie. sponsor/judging-unlockable stamps
   isEventUnlockable?: boolean;
   isTitle?: boolean; // whether this stamp should be displayed on the title page (only one at a time)
+  points?: number; // raffle entries this stamp is worth; read it through stampPointValue (missing counts as 1)
   lastModified?: Timestamp;
   lastModifiedBy: string;
 }
@@ -38,4 +42,5 @@ export interface Stamp {
  */
 export interface StampWithUnlockState extends Stamp {
   isUnlocked: boolean;
+  pointValue?: number; // set on the current stampbook only; past stampbooks don't show points
 }

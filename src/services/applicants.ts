@@ -1,3 +1,4 @@
+import { validateResumeFile } from "@/lib/application/resume-upload";
 import type { RsvpFormValues } from "@/lib/application/rsvp-schema";
 import { db } from "@/lib/firebase/client";
 import { storage } from "@/lib/firebase/client";
@@ -147,10 +148,19 @@ export async function submitApplicantDraft(
  * Storage rules and legacy behaviour from the previous portal.
  */
 export async function uploadResumeToStorage(userId: string, file: File): Promise<string | null> {
+  await validateResumeFile(file);
+
   try {
     // Match the original v8-style path: storage.ref(`applicantResumes/${userId}`)
     const objectRef = ref(storage, `applicantResumes/${userId}`);
-    const snapshot = await uploadBytes(objectRef, file);
+    const encodedName = encodeURIComponent(file.name).replace(
+      /['()*]/g,
+      (character) => `%${character.charCodeAt(0).toString(16).toUpperCase()}`,
+    );
+    const snapshot = await uploadBytes(objectRef, file, {
+      contentType: "application/pdf",
+      contentDisposition: `inline; filename="resume.pdf"; filename*=UTF-8''${encodedName}`,
+    });
     const url = await getDownloadURL(snapshot.ref);
     return url;
   } catch (error) {
