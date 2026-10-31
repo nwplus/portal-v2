@@ -4,6 +4,8 @@ All-in-one platform to support nwPlus' hackathons 🚀
 
 ## Development instructions
 
+Use `http://localhost:3000` for local testing. The development Firebase project allows Google sign-in from `localhost`; `127.0.0.1` returns `auth/unauthorized-domain` and closes the sign-in popup. These addresses also keep separate browser sessions.
+
 ### Setup
 1. Install Node 24 (`nvm use` if you use nvm) and pnpm 11.10.0.
 2. Add a `.env` file with the Firebase config (use the dev secrets)
