@@ -90,6 +90,13 @@ export function summarizeSolves(solves: Pick<CtfSolve, "points">[]): {
   };
 }
 
+/**
+ * Flags look like `hackcamp2026{...}`: the hackathon slug and year
+ */
+export function flagPlaceholder(activeHackathon: string, hackathonYear: number): string {
+  return `${activeHackathon}${hackathonYear}{...}`;
+}
+
 export function sortChallenges<T extends Pick<CtfChallenge, "order">>(challenges: T[]): T[] {
   return [...challenges].sort((a, b) => a.order - b.order);
 }

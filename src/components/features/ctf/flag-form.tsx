@@ -4,11 +4,12 @@ import { type FormEvent, useRef, useState } from "react";
 
 interface FlagFormProps {
   submitting: boolean;
+  placeholder: string;
   /** resolves true when the flag solved a challenge, so the input can be cleared */
   onSubmit: (flag: string) => Promise<boolean>;
 }
 
-export function FlagForm({ submitting, onSubmit }: FlagFormProps) {
+export function FlagForm({ submitting, placeholder, onSubmit }: FlagFormProps) {
   const [flag, setFlag] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -26,7 +27,7 @@ export function FlagForm({ submitting, onSubmit }: FlagFormProps) {
         ref={inputRef}
         value={flag}
         onChange={(event) => setFlag(event.target.value)}
-        placeholder="hc26{...}"
+        placeholder={placeholder}
         aria-label="Flag"
         autoComplete="off"
         spellCheck={false}
