@@ -17,8 +17,6 @@ export const Route = createFileRoute("/$activeHackathon/login")({
 function RouteComponent() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const signInWithGoogle = useAuthStore((state) => state.signInWithGoogle);
-  const error = useAuthStore((state) => state.error);
-  const loading = useAuthStore((state) => state.loading);
   const router = useRouter();
   const search = Route.useSearch();
   const { activeHackathon } = useHackathon();
@@ -29,12 +27,7 @@ function RouteComponent() {
   const handleSignIn = async () => {
     const redirectTo = search.redirect || "/";
     if (!isAuthenticated) {
-      try {
-        await signInWithGoogle();
-      } catch {
-        // The auth store exposes the failure below; stay on the login page.
-        return;
-      }
+      await signInWithGoogle();
     }
     router.history.replace(redirectTo);
   };
@@ -57,29 +50,9 @@ function RouteComponent() {
 
         <div className="flex flex-col items-center gap-4">
           <p className="font-medium text-sm md:text-lg">To continue, please sign in below.</p>
-          <Button variant="primary" onClick={handleSignIn} disabled={loading}>
-            {loading ? "Signing in…" : "Log in with Google"}
+          <Button variant="primary" onClick={handleSignIn}>
+            Log in with Google
           </Button>
-          {error && (
-            <p role="alert" className="max-w-sm text-sm text-text-primary">
-              {error}
-              {import.meta.env.DEV &&
-                window.location.hostname === "127.0.0.1" &&
-                error.includes("auth/unauthorized-domain") && (
-                  <>
-                    {" "}
-                    For local testing, use{" "}
-                    <a
-                      className="underline underline-offset-2"
-                      href={`http://localhost:${window.location.port}${window.location.pathname}${window.location.search}`}
-                    >
-                      Portal on localhost
-                    </a>
-                    .
-                  </>
-                )}
-            </p>
-          )}
         </div>
       </div>
     </GradientBackground>
