@@ -49,10 +49,8 @@ import {
   fetchAttendance,
   fetchAttendingApplicants,
   fetchCommitDetail,
-  fetchDayOfSchedule,
   fetchEventInfo,
   fetchGithubRateLimit,
-  fetchPreHackathonWorkshops,
   fetchRepoCommits,
   fetchSocials,
   fetchStamps,
@@ -61,7 +59,7 @@ import {
   submitNuggetBatch,
 } from "./sources.ts";
 import type { NuggetRequest } from "./sources.ts";
-import { STAGE_SCHEMA_VERSION, STAGES } from "./types.ts";
+import { STAGE_SCHEMA_VERSION, STAGES, STAMP_CATEGORIES } from "./types.ts";
 import type {
   AssembleOutput,
   EnrichOutput,
@@ -140,18 +138,27 @@ async function stageFetch(ctx: RunContext): Promise<void> {
   }
   ui.info(`${applicants.length - included.length} opted out, ${included.length} remaining`);
 
-  const [dayOf, attendance, stamps, preHackathonWorkshops] = await Promise.all([
-    fetchDayOfSchedule(ctx),
-    fetchAttendance(ctx),
-    fetchStamps(ctx),
-    fetchPreHackathonWorkshops(ctx),
-  ]);
-  ui.info(
-    `${dayOf.length} DayOf items, ${attendance.length} attendance records, ` +
-      `${stamps.length} stamps, ${preHackathonWorkshops.length} pre-hackathon workshops`,
+  const [attendance, stamps] = await Promise.all([fetchAttendance(ctx), fetchStamps(ctx)]);
+  const byCategory = STAMP_CATEGORIES.map(
+    (category) => `${category} ${stamps.filter((stamp) => (stamp.category ?? "other") === category).length}`,
   );
+  ui.info(`${attendance.length} attendance records, ${stamps.length} stamps: ${byCategory.join(", ")}`);
+  // A raw/stamps.json cached before `category` was read gives every hacker 0 attendance.
+  if (stamps.length > 0 && stamps.every((stamp) => !stamp.category)) {
+    ui.warn("No stamp has a category; raw/stamps.json may be stale. Rerun with bypassCache on.");
+  }
+  // An id with no Stamps doc for this event (e.g. a stamp missing its `hackathon`) counts nowhere.
+  const knownStampIds = new Set(stamps.map((stamp) => stamp.id));
+  const unknownStampIds = new Set(
+    included
+      .flatMap((applicant) => socialByUid.get(applicant.uid)?.unlockedStamps?.[event.eventId] ?? [])
+      .filter((id) => !knownStampIds.has(id)),
+  );
+  if (unknownStampIds.size > 0) {
+    ui.warn(`${unknownStampIds.size} unlocked stamp ids match no ${event.eventId} stamp; they count nowhere`);
+  }
 
-  const lookups = buildHackerLookups(event.eventId, dayOf, attendance, stamps, preHackathonWorkshops);
+  const lookups = buildHackerLookups(event.eventId, attendance, stamps);
   const hackers = included.map((applicant) =>
     buildHacker(applicant, socialByUid.get(applicant.uid), lookups),
   );
@@ -160,6 +167,7 @@ async function stageFetch(ctx: RunContext): Promise<void> {
   ui.success(`${devpostRows.length} projects parsed`);
 
   await ctx.cache.writeStage<FetchOutput>("fetch", {
+    schemaVersion: STAGE_SCHEMA_VERSION,
     event,
     hackers,
     optedOutEmails: [...new Set(optedOutEmails)],
@@ -562,7 +570,11 @@ async function reviewNuggets(ctx: RunContext, projects: Project[], store: Nugget
 // ---------------------------------------------------------------------------
 
 async function stageAssemble(ctx: RunContext): Promise<void> {
-  const { event, hackers } = await ctx.cache.readStage<FetchOutput>("fetch");
+  const fetched = await ctx.cache.readStage<FetchOutput>("fetch");
+  if (fetched.schemaVersion !== STAGE_SCHEMA_VERSION) {
+    throw new Error("stages/fetch.json is from an older schema; run pnpm wrapped write --from fetch");
+  }
+  const { event, hackers } = fetched;
   const match = await ctx.cache.readStage<MatchOutput>("match");
   const enrich = await ctx.cache.readStage<EnrichOutput>("enrich");
   if (enrich.schemaVersion !== STAGE_SCHEMA_VERSION) {

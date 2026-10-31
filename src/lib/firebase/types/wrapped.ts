@@ -100,8 +100,11 @@ export interface WrappedDoc {
     techStack: string[];
   } | null;
   showedUp: {
+    /** Every unlocked stamp for this event, any category. */
     stamps: WrappedStamp[];
+    /** Unlocked stamps per `Stamps/{id}.category`. */
     dayOfWorkshopCount: number;
+    dayOfActivityCount: number;
     preHackathonWorkshopCount: number;
   };
   /** Written only by the prize run. */

@@ -37,7 +37,12 @@ const full: WrappedDoc = {
     githubLineCount: 7309,
     techStack: ["TypeScript", "React", "Firebase", "Claude"],
   },
-  showedUp: { stamps: STAMPS, dayOfWorkshopCount: 3, preHackathonWorkshopCount: 2 },
+  showedUp: {
+    stamps: STAMPS,
+    dayOfWorkshopCount: 3,
+    dayOfActivityCount: 2,
+    preHackathonWorkshopCount: 2,
+  },
   prize: ["Best Use of Firebase", "Hacker's Choice"],
   archetype: "THE_PRIZEWINNER",
   crossHackerComparison: {
@@ -122,7 +127,12 @@ const noComparison: WrappedDoc = {
 const minimal: WrappedDoc = {
   ...noProject,
   survival: null,
-  showedUp: { stamps: [], dayOfWorkshopCount: 0, preHackathonWorkshopCount: 0 },
+  showedUp: {
+    stamps: [],
+    dayOfWorkshopCount: 0,
+    dayOfActivityCount: 0,
+    preHackathonWorkshopCount: 0,
+  },
   archetype: "THE_WARRIOR",
   crossHackerComparison: { lines: null, stamps: null, events: null, featured: null },
   meals: 0,

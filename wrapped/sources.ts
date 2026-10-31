@@ -28,8 +28,6 @@ import type {
   RawAwardPlacement,
   RawCommit,
   RawCommitDetail,
-  RawDayOfItem,
-  RawPreHackathonWorkshop,
   RawSocial,
   RawStamp,
   RepoRef,
@@ -114,28 +112,14 @@ export async function fetchAttendingApplicants(ctx: RunContext): Promise<RawAppl
         "basicInfo.preferredName",
         "basicInfo.legalFirstName",
         "skills.github",
-        "dayOf",
-        "preDayOf",
+        // Check-in and meals only; workshop and activity attendance comes from stamps.
+        "dayOf.checkedIn",
+        "dayOf.checkedInTime",
+        "dayOf.day1",
+        "dayOf.day2",
       )
       .get();
     return snapshot.docs.map((doc) => ({ ...toPlain<Omit<RawApplicant, "uid">>(doc.data()), uid: doc.id }));
-  });
-}
-
-/** raw/dayof.json. `Hackathons/{eventId}/DayOf`, to tell workshops from other scans. */
-export async function fetchDayOfSchedule(ctx: RunContext): Promise<RawDayOfItem[]> {
-  return ctx.cache.raw("dayof", async () => {
-    const snapshot = await eventRef(ctx).collection("DayOf").select("type").get();
-    // Items with no type exist on older events; they count as neither kind.
-    return snapshot.docs.map((doc) => ({ id: doc.id, type: doc.get("type") ?? "" }));
-  });
-}
-
-/** raw/prehackathon-workshops.json. `Hackathons/{eventId}/PreHackathonWorkshops` (Q1). */
-export async function fetchPreHackathonWorkshops(ctx: RunContext): Promise<RawPreHackathonWorkshop[]> {
-  return ctx.cache.raw("prehackathon-workshops", async () => {
-    const snapshot = await eventRef(ctx).collection("PreHackathonWorkshops").select("name").get();
-    return snapshot.docs.map((doc) => ({ id: doc.id, name: doc.get("name") ?? doc.id }));
   });
 }
 
@@ -159,13 +143,16 @@ export async function fetchAttendance(ctx: RunContext): Promise<RawAttendance[]>
   });
 }
 
-/** raw/stamps.json. Top-level `Stamps` where hackathon == eventId, to resolve Socials' stamp ids (Q7). */
+/**
+ * raw/stamps.json. Top-level `Stamps` where hackathon == eventId, to resolve Socials' stamp
+ * ids (Q7) and to count attendance by `category`.
+ */
 export async function fetchStamps(ctx: RunContext): Promise<RawStamp[]> {
   return ctx.cache.raw("stamps", async () => {
     const snapshot = await ctx.db
       .collection("Stamps")
       .where("hackathon", "==", ctx.config.eventId)
-      .select("name", "imgURL", "description")
+      .select("name", "imgURL", "description", "category")
       .get();
     return snapshot.docs.map((doc) => ({ ...(doc.data() as Omit<RawStamp, "id">), id: doc.id }));
   });

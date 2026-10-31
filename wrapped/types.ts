@@ -36,9 +36,10 @@ export type StageStatus = "pending" | "running" | "done" | "skipped";
 
 /**
  * Bumped when a stage output's shape changes, so a later stage refuses a stale one instead
- * of writing old-shape docs. Carried by EnrichOutput and AssembleOutput; absent means 1.
+ * of writing old-shape docs. Carried by FetchOutput, EnrichOutput and AssembleOutput; absent
+ * means 1. 3: attendance counts from stamp categories, `showedUp.dayOfActivityCount`.
  */
-export const STAGE_SCHEMA_VERSION = 2;
+export const STAGE_SCHEMA_VERSION = 3;
 
 /** `cache/{env}/{eventId}/progress.json` */
 export interface Progress {
@@ -99,18 +100,7 @@ export interface RawApplicant {
     /** Meal slot -> scan times. Hand-edited rows sometimes hold a non-array; ignored. */
     day1?: Record<string, unknown>;
     day2?: Record<string, unknown>;
-    /** Every day-of scan (workshops, mini-events, ...), typed via `DayOf` (Q11d). */
-    events?: Array<{ eventId?: string }>;
   };
-  /** Pre-hackathon workshop scans; `eventId` is a `PreHackathonWorkshops` doc id (Q1). */
-  preDayOf?: { events?: Array<{ eventId?: string }> };
-}
-
-/** `Hackathons/{eventId}/DayOf/{id}` */
-export interface RawDayOfItem {
-  id: string;
-  /** "workshops" | "minievents" | ... */
-  type: string;
 }
 
 /**
@@ -122,12 +112,18 @@ export interface RawAttendance {
   hackathonId: string;
 }
 
+/** `Stamps/{id}.category`: which attendance count a stamp feeds. */
+export const STAMP_CATEGORIES = ["preHackathonWorkshop", "dayOfWorkshop", "dayOfActivity", "other"] as const;
+export type StampCategory = (typeof STAMP_CATEGORIES)[number];
+
 /** `Stamps/{id}` where `hackathon == eventId`. Socials stores these ids (Q7). */
 export interface RawStamp {
   id: string;
   name: string;
   imgURL?: string;
   description?: string;
+  /** A StampCategory. Absent on older stamps, which count as "other". */
+  category?: string;
 }
 
 /** A stamp as written to the Wrapped doc. */
@@ -135,12 +131,6 @@ export interface WrappedStamp {
   id: string;
   name: string;
   imgURL: string | null;
-}
-
-/** `Hackathons/{eventId}/PreHackathonWorkshops/{id}` (Q1). */
-export interface RawPreHackathonWorkshop {
-  id: string;
-  name: string;
 }
 
 /** One `award_placement` row from the judging portal (Supabase), joined to its award and project. */
@@ -216,15 +206,19 @@ export interface Hacker {
   mealCount: number;
   /** `dayOf.day1.snack` scanned. Archetype input only. */
   claimedMidnightSnack: boolean;
+  /** Unlocked stamps with category "dayOfWorkshop". */
   dayOfWorkshopCount: number;
-  /** Archetype input only (THE_REGULAR). From `dayOf.events` (Q11d). */
-  miniEventCount: number;
+  /** Unlocked stamps with category "dayOfActivity". */
+  dayOfActivityCount: number;
+  /** Unlocked stamps with category "preHackathonWorkshop". */
   preHackathonWorkshopCount: number;
   stamps: WrappedStamp[];
   lifetimeEventCount: number;
 }
 
 export interface FetchOutput {
+  /** STAGE_SCHEMA_VERSION when written; absent means 1. */
+  schemaVersion?: number;
   event: EventInfo;
   hackers: Hacker[];
   /** Opted-out hackers' emails, so the match report doesn't list them as unmatched. */
@@ -434,8 +428,11 @@ export interface WrappedDoc {
     techStack: string[];
   } | null;
   showedUp: {
+    /** Every unlocked stamp for this event, any category. */
     stamps: WrappedStamp[];
+    /** Unlocked stamps per category; see Hacker. */
     dayOfWorkshopCount: number;
+    dayOfActivityCount: number;
     preHackathonWorkshopCount: number;
   };
   /** Written only by the prize run. `write` carries an existing value over. */

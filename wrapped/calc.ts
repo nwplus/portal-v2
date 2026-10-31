@@ -23,12 +23,11 @@ import type {
   RawAwardPlacement,
   RawCommit,
   RawCommitDetail,
-  RawDayOfItem,
-  RawPreHackathonWorkshop,
   RawSocial,
   RawStamp,
   RankedStat,
   RepoRef,
+  StampCategory,
   WrappedDoc,
   WrappedStamp,
 } from "./types.ts";
@@ -46,20 +45,15 @@ export function isOptedOut(social: RawSocial | undefined): boolean {
 /** Event-wide reads, indexed once so buildHacker is a lookup per hacker. */
 export interface HackerLookups {
   eventId: string;
-  /** DayOf id -> type. */
-  dayOfTypes: Map<string, string>;
   /** uid -> hackathonIds from Attendance. */
   attendanceByUid: Map<string, string[]>;
   stampsById: Map<string, RawStamp>;
-  preHackathonWorkshopIds: Set<string>;
 }
 
 export function buildHackerLookups(
   eventId: string,
-  dayOf: RawDayOfItem[],
   attendance: RawAttendance[],
   stamps: RawStamp[],
-  preHackathonWorkshops: RawPreHackathonWorkshop[],
 ): HackerLookups {
   const attendanceByUid = new Map<string, string[]>();
   for (const { uid, hackathonId } of attendance) {
@@ -67,10 +61,8 @@ export function buildHackerLookups(
   }
   return {
     eventId,
-    dayOfTypes: new Map(dayOf.map((item) => [item.id, item.type])),
     attendanceByUid,
     stampsById: new Map(stamps.map((stamp) => [stamp.id, stamp])),
-    preHackathonWorkshopIds: new Set(preHackathonWorkshops.map((workshop) => workshop.id)),
   };
 }
 
@@ -83,6 +75,7 @@ export function buildHacker(
   const applicantEmail = applicant.basicInfo?.email?.trim().toLowerCase();
   const socialEmail = social?.email?.trim().toLowerCase();
   const checkedIn = applicant.dayOf?.checkedIn === true;
+  const unlocked = resolveUnlockedStamps(social, lookups.eventId, lookups.stampsById);
 
   return {
     uid: applicant.uid,
@@ -94,10 +87,10 @@ export function buildHacker(
     checkedInAt: checkedIn ? parseCheckInTime(applicant) : null,
     mealCount: countMeals(applicant),
     claimedMidnightSnack: claimedMidnightSnack(applicant),
-    dayOfWorkshopCount: countDayOfEvents(applicant, lookups.dayOfTypes, "workshops"),
-    miniEventCount: countDayOfEvents(applicant, lookups.dayOfTypes, "minievents"),
-    preHackathonWorkshopCount: countPreHackathonWorkshops(applicant, lookups.preHackathonWorkshopIds),
-    stamps: getStamps(social, lookups.eventId, lookups.stampsById),
+    dayOfWorkshopCount: countStampsByCategory(unlocked, "dayOfWorkshop"),
+    dayOfActivityCount: countStampsByCategory(unlocked, "dayOfActivity"),
+    preHackathonWorkshopCount: countStampsByCategory(unlocked, "preHackathonWorkshop"),
+    stamps: toWrappedStamps(unlocked),
     lifetimeEventCount: countLifetimeEvents(
       lookups.attendanceByUid.get(applicant.uid) ?? [],
       lookups.eventId,
@@ -132,34 +125,28 @@ export function claimedMidnightSnack(applicant: RawApplicant): boolean {
   return Array.isArray(scans) && scans.length > 0;
 }
 
-/** Distinct dayOf.events[].eventId whose DayOf item has the given type (Q11d). */
-export function countDayOfEvents(
-  applicant: RawApplicant,
-  dayOfTypes: Map<string, string>,
-  type: "workshops" | "minievents",
-): number {
-  const ids = (applicant.dayOf?.events ?? []).map((event) => event?.eventId);
-  return new Set(ids.filter((id) => id && dayOfTypes.get(id) === type)).size;
-}
-
-/** Distinct preDayOf.events[].eventId that exist in Hackathons/{eventId}/PreHackathonWorkshops. */
-export function countPreHackathonWorkshops(applicant: RawApplicant, workshopIds: Set<string>): number {
-  const ids = (applicant.preDayOf?.events ?? []).map((event) => event?.eventId);
-  return new Set(ids.filter((id) => id && workshopIds.has(id))).size;
-}
-
-/** Socials.unlockedStamps[eventId] (stamp doc ids) mapped to `Stamps` docs, or []. Q7. */
-export function getStamps(
+/**
+ * Socials.unlockedStamps[eventId] (stamp doc ids), deduped and mapped to `Stamps` docs, or [].
+ * Ids with no stamp for this event are dropped. Q7.
+ */
+export function resolveUnlockedStamps(
   social: RawSocial | undefined,
   eventId: string,
   stampsById: Map<string, RawStamp>,
-): WrappedStamp[] {
+): RawStamp[] {
   const ids = social?.unlockedStamps?.[eventId];
   if (!Array.isArray(ids)) return [];
-  return [...new Set(ids)].flatMap((id) => {
-    const stamp = stampsById.get(id);
-    return stamp ? [{ id, name: stamp.name, imgURL: stamp.imgURL ?? null }] : [];
-  });
+  return [...new Set(ids)].flatMap((id) => stampsById.get(id) ?? []);
+}
+
+/** The stamps as written to the doc: every category. */
+export function toWrappedStamps(stamps: RawStamp[]): WrappedStamp[] {
+  return stamps.map(({ id, name, imgURL }) => ({ id, name, imgURL: imgURL ?? null }));
+}
+
+/** Unlocked stamps in one category. Ids are already distinct, so each stamp counts once. */
+export function countStampsByCategory(stamps: RawStamp[], category: StampCategory): number {
+  return stamps.filter((stamp) => stamp.category === category).length;
 }
 
 /** Parses dayOf.checkedInTime (a `Date.toString()` value) to ISO, or null. */
@@ -923,7 +910,7 @@ export function assignArchetype(
 
   if (hacker.claimedMidnightSnack) return "THE_NIGHT_OWL";
   if (hacker.lifetimeEventCount === 0) return "THE_ORIGIN_STORY";
-  if (hacker.dayOfWorkshopCount >= 1 && hacker.mealCount >= 1 && hacker.miniEventCount >= 1) {
+  if (hacker.dayOfWorkshopCount >= 1 && hacker.mealCount >= 1 && hacker.dayOfActivityCount >= 1) {
     return "THE_REGULAR";
   }
   return "THE_WARRIOR";
@@ -992,7 +979,8 @@ export function pickFeatured(
 /**
  * Ranks lines, stamps and events across their cohorts, once for the whole run, and picks
  * each hacker's featured stat. Lines: hackers with a githubLineCount. Stamps and events
- * (day-of workshops + pre-hackathon workshops + mini-events): checked-in hackers.
+ * (day-of workshops + pre-hackathon workshops + day-of activities, all counted from
+ * stamps): checked-in hackers.
  * uid -> comparison for every hacker; one outside a cohort gets null for that stat.
  */
 export function computeCrossHackerComparison(
@@ -1005,7 +993,7 @@ export function computeCrossHackerComparison(
     stamps: rankCohort(Object.fromEntries(checkedIn.map((h) => [h.uid, h.stamps.length]))),
     events: rankCohort(
       Object.fromEntries(
-        checkedIn.map((h) => [h.uid, h.dayOfWorkshopCount + h.preHackathonWorkshopCount + h.miniEventCount]),
+        checkedIn.map((h) => [h.uid, h.dayOfWorkshopCount + h.preHackathonWorkshopCount + h.dayOfActivityCount]),
       ),
     ),
   };
@@ -1072,6 +1060,7 @@ export function buildWrappedDoc(inputs: DocInputs): WrappedDoc {
     showedUp: {
       stamps: hacker.stamps,
       dayOfWorkshopCount: hacker.dayOfWorkshopCount,
+      dayOfActivityCount: hacker.dayOfActivityCount,
       preHackathonWorkshopCount: hacker.preHackathonWorkshopCount,
     },
     archetype,

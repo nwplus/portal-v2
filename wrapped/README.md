@@ -89,14 +89,17 @@ Resume points, and why each one is at a boundary worth stopping on:
 `--from write` clears that list to rewrite every doc. `--from fetch` reruns everything
 but still reads `raw/` unless `bypassCache` is on.
 
-`stages/enrich.json` and `stages/assemble.json` carry `schemaVersion`
-(`STAGE_SCHEMA_VERSION` in `types.ts`; absent means 1). Bump it when either shape
-changes. `assemble` refuses an older enrich ("run --from enrich"), and `write` refuses
-an older assemble ("run --from assemble") even on a plain resume, which would otherwise
-push old-shape docs.
+`stages/fetch.json`, `stages/enrich.json` and `stages/assemble.json` carry
+`schemaVersion` (`STAGE_SCHEMA_VERSION` in `types.ts`; absent means 1). Bump it when any
+of those shapes changes. `assemble` refuses an older fetch ("run --from fetch") or enrich
+("run --from enrich"), and `write` refuses an older assemble ("run --from assemble") even
+on a plain resume, which would otherwise push old-shape docs.
 
 ### Failure recovery
 
+- **Attendance from stamps (schema 3):** rerun `--from fetch` with `bypassCache` on (or
+  delete `raw/stamps.json`): a `stamps.json` cached before `category` was read gives every
+  hacker 0 workshops and activities. fetch warns when no stamp has a category.
 - **Lines committed (schema 2):** rerun `--from enrich`. Commit lists come from
   `raw/github/`; only the per-commit stats are new requests, one per in-window commit
   (about 1,340 for cmd-f2026).
@@ -140,8 +143,7 @@ Keyed by env as well as event, so a dev run never reuses prod data.
 ```
 cache/{env}/{eventId}/
   raw/
-    event-portal.json  applicants.json  socials.json  dayof.json  attendance.json
-    stamps.json  prehackathon-workshops.json
+    event-portal.json  applicants.json  socials.json  attendance.json  stamps.json
     awards.json                      prize run: judging-portal award placements
     github/{owner}__{repo}.json      one per repo; null if private or missing
     github-commits/{sha}.json        one per counted commit: parents and per-file additions;
@@ -240,11 +242,9 @@ flowchart LR
       a_ci[dayOf.checkedIn]
       a_cit[dayOf.checkedInTime]
       a_meal[dayOf.day1.* / day2.*]
-      a_ev[dayOf.events.eventId]
-      a_pre[pre-hackathon workshops]
     end
-    dayof[DayOf/id.type]
     att[Attendance uid, hackathonId]
+    stamps[Stamps/id.category]
     subgraph SOC[Socials/uid]
       s_opt[hackerWrappedOptIn]
       s_st[unlockedStamps.eventId]
@@ -278,9 +278,9 @@ flowchart LR
     countLifetimeEvents
     countMeals
     claimedMidnightSnack
-    countDayOfEvents
-    countPreHackathonWorkshops
-    getStamps
+    resolveUnlockedStamps
+    countStampsByCategory
+    toWrappedStamps
     parseCheckInTime
     extractGithubLogin
     matchHackersToProjects
@@ -315,6 +315,7 @@ flowchart LR
     o_meals[meals]
     o_stamps[showedUp.stamps / summary.stamps]
     o_dow[showedUp.dayOfWorkshopCount]
+    o_act[showedUp.dayOfActivityCount]
     o_pre[showedUp.preHackathonWorkshopCount]
     o_pname[summary.projectName]
     o_desc[project.nugget]
@@ -335,9 +336,9 @@ flowchart LR
   e_end --> computeSurvival
   a_meal --> countMeals --> o_meals
   a_meal --> claimedMidnightSnack
-  a_ev & dayof --> countDayOfEvents --> o_dow
-  a_pre -.-> countPreHackathonWorkshops --> o_pre
-  s_st --> getStamps --> o_stamps
+  s_st & stamps --> resolveUnlockedStamps
+  resolveUnlockedStamps --> toWrappedStamps --> o_stamps
+  resolveUnlockedStamps --> countStampsByCategory --> o_dow & o_act & o_pre
 
   a_email & s_email & d_emails & d_url --> matchHackersToProjects
   matchHackersToProjects & d_title --> o_pname
@@ -353,7 +354,7 @@ flowchart LR
   matchHackersToProjects --> attributeLines
   attributeLines --> o_team & o_mine
   attributeLines --> computeCrossHackerComparison
-  getStamps & countDayOfEvents & countPreHackathonWorkshops & a_ci --> computeCrossHackerComparison
+  toWrappedStamps & countStampsByCategory & a_ci --> computeCrossHackerComparison
   computeCrossHackerComparison --> rankCohort --> pickFeatured --> o_cmp
   filterToHackathonWindow --> latestCommitAt --> computeEarlySubmission
   filterToHackathonWindow --> detectAiTools --> buildTechStack
@@ -363,7 +364,7 @@ flowchart LR
   e_open -.-> buildArchetypeCohort
   buildArchetypeCohort --> assignArchetype
   countLifetimeEvents & matchHackersToProjects & attributeCommits & claimedMidnightSnack & countMeals --> assignArchetype
-  countDayOfEvents -.->|mini-events| assignArchetype
+  countStampsByCategory -->|workshops, activities| assignArchetype
   assignArchetype --> o_arch
   p_prize --> applyPrizes --> o_prize & o_arch
 ```
@@ -382,16 +383,17 @@ flowchart LR
 | `survival`                           | `parseCheckInTime`, `computeSurvival`              | `Portal.hackingEnd` − `dayOf.checkedInTime`                        | null if not checked in                  |
 | `earlySubmission`                    | `latestCommitAt`, `computeEarlySubmission`         | `Portal.hackingEnd` − project's latest in-window commit            | null with no project or no commits      |
 | `meals`                              | `countMeals`                                         | `dayOf.day1.*`, `dayOf.day2.*`                                     | `0` (**Q18**)                           |
-| `showedUp.dayOfWorkshopCount`        | `countDayOfEvents(…, "workshops")`                 | `dayOf.events[].eventId` ⋈ `DayOf/{id}.type`                       | `0`                                     |
-| `showedUp.preHackathonWorkshopCount` | `countPreHackathonWorkshops`                       | `preDayOf.events` ∩ `PreHackathonWorkshops`                        | `0`                                     |
-| `showedUp.stamps`, `summary.stamps`  | `getStamps`                                        | `Socials.unlockedStamps[eventId]` (stamp ids) → `Stamps`           | `[]`                                    |
+| `showedUp.dayOfWorkshopCount`        | `countStampsByCategory(…, "dayOfWorkshop")`        | unlocked stamps with `Stamps/{id}.category == "dayOfWorkshop"`     | `0`                                     |
+| `showedUp.dayOfActivityCount`        | `countStampsByCategory(…, "dayOfActivity")`        | unlocked stamps with `category == "dayOfActivity"`                 | `0`                                     |
+| `showedUp.preHackathonWorkshopCount` | `countStampsByCategory(…, "preHackathonWorkshop")` | unlocked stamps with `category == "preHackathonWorkshop"`          | `0`                                     |
+| `showedUp.stamps`, `summary.stamps`  | `resolveUnlockedStamps`, `toWrappedStamps`         | `Socials.unlockedStamps[eventId]` (stamp ids) → `Stamps`, any category | `[]`                                |
 | `project`                            | `matchHackersToProjects`                           | Devpost emails ↔ applicant / Socials emails                        | null with no project                    |
 | `summary.projectName`                | `matchHackersToProjects`                           | Devpost Project Title                                              | null with no project                    |
 | `project.nugget`                     | `generateNuggets` + organizer review                | Devpost About The Project → Nugget ([NUGGET.md](NUGGET.md))        | null                                    |
 | `project.techStack`                  | `buildTechStack`, `detectAiTools`                  | Devpost Built With + AI tools from co-author trailers / bot authors | `[]`                                    |
 | `project.githubTeamLineCount`        | `filterToHackathonWindow`, `countCommitLines`, `attributeLines` | Try it out links → additions of commits in [`hackathonStart`, `hackathonEnd`]; bots, merges, excluded files dropped | null with no readable repo |
 | `project.githubLineCount`            | `attributeLines`                                   | commit `author.login` = username from `skills.github`              | null if no `skills.github`              |
-| `crossHackerComparison.lines` / `.stamps` / `.events` | `computeCrossHackerComparison`, `rankCohort` | every `githubLineCount`; checked-in hackers' stamp count; their workshops + pre-hackathon workshops + mini-events (**Q10**) | null outside that stat's cohort |
+| `crossHackerComparison.lines` / `.stamps` / `.events` | `computeCrossHackerComparison`, `rankCohort` | every `githubLineCount`; checked-in hackers' stamp count; their day-of workshops + pre-hackathon workshops + day-of activities (**Q10**) | null outside that stat's cohort |
 | `crossHackerComparison.featured`     | `pickFeatured`                                     | the three ranked stats and their cohort sizes                      | null: no stat qualifies, slide hidden   |
 | `archetype`, `summary.archetype`     | `buildArchetypeCohort`, `assignArchetype`, `applyPrizes` | see [Archetypes](#archetypes)                                | `THE_WARRIOR`                           |
 | `prize`                              | `applyPrizes` (prize run)                          | carried over by `write`                                            | absent until the prize run              |
@@ -413,7 +415,7 @@ project's latest in-window commit (`lastCommitAt`).
 | 7  | `THE_FINISHER`     | submission time 0–3 min before `hackathonEnd`                                                    | `lastCommitAt`                          |
 | 8  | `THE_NIGHT_OWL`    | claimed the midnight snack (`dayOf.day1.snack`)                                                  | `claimedMidnightSnack`                  |
 | 9  | `THE_ORIGIN_STORY` | first-timer                                                                                      | `countLifetimeEvents` == 0              |
-| 10 | `THE_REGULAR`      | ≥ 1 workshop, ≥ 1 meal and ≥ 1 mini-event                                                        | `countDayOfEvents` (`dayOf.events`), `countMeals` |
+| 10 | `THE_REGULAR`      | ≥ 1 day-of workshop, ≥ 1 meal and ≥ 1 day-of activity                                            | `countStampsByCategory`, `countMeals`   |
 | 11 | `THE_WARRIOR`      | always                                                                                           | none                                    |
 
 A tie for most commits means no one on that team is `ANCHOR`. Only hackers with
@@ -454,8 +456,17 @@ after the prize run never downgrades a winner.
   return (404/409/422/451) adds 0.
 - The cross-hacker comparison ranks three stats. **Lines**: hackers with a non-null
   `githubLineCount`. **Stamps**: checked-in hackers, `stamps.length`. **Events**:
-  checked-in hackers, `dayOfWorkshopCount + preHackathonWorkshopCount + miniEventCount`.
-  A hacker outside a cohort gets `null` for that stat.
+  checked-in hackers, `dayOfWorkshopCount + preHackathonWorkshopCount + dayOfActivityCount`.
+  A hacker outside a cohort gets `null` for that stat. Every events stamp is also a stamp,
+  so a hacker's events count is never above their stamps count.
+- Workshop and activity attendance is **stamps collected**, by `Stamps/{id}.category`
+  (`preHackathonWorkshop`, `dayOfWorkshop`, `dayOfActivity`, `other`; absent counts as
+  `other`). A hacker who attended without unlocking the stamp counts 0, and one stamp
+  counts once. The key is `Socials/{uid}.unlockedStamps[eventId]`: the Portal writes
+  `dbCollectionName` (the `Hackathons/` doc id, e.g. `HackCamp2026`), and qr-check-in
+  writes its `DB_HACKATHON` constant, which must be set to the same id for each event.
+  Only stamps with `hackathon == eventId` resolve; fetch warns about unlocked ids that
+  match none.
 - A stat **qualifies** for the slide with `count ≥ 1`, `topPercentage ≤ 40`
   (`COMPARISON_MAX_TOP_PERCENTAGE`) and a cohort of ≥ 10 (`COMPARISON_MIN_COHORT`). The
   cohort-size guard only affects `featured`; the ranked stat is still written.
@@ -489,14 +500,15 @@ after the prize run never downgrades a winner.
   `Socials/{uid}.unlockedStamps[eventId]` is an array of **stamp doc ids** from the
   top-level `Stamps` collection, keyed by exactly the `Hackathons/` doc id (e.g.
   `cmd-f2026`), written with `arrayUnion`. Stamp docs carry `name`, `imgURL`,
-  `description`, `hackathon`, `isEventUnlockable`. So fetch adds a
-  `Stamps where hackathon == eventId` read, and `getStamps` maps ids to stamp records,
-  dropping ids with no matching stamp.
+  `description`, `hackathon`, `isEventUnlockable`, `category`. So fetch adds a
+  `Stamps where hackathon == eventId` read, and `resolveUnlockedStamps` maps ids to stamp
+  records, dropping ids with no matching stamp.
 - **Q9.** Default branch only. Merge commits count as commits but add 0 lines.
 - **Q11d.** Checked on dev: `Attendance` docs are flat, one per (hacker, hackathon),
   `{uid, hackathonId, eventYear, recordedAt, sourceVersion, backfillRunId}`, with no
-  per-event list. They feed only the lifetime count. Workshop and mini-event attendance
-  comes from `Applicants/{uid}.dayOf.events[].eventId`, joined to `DayOf` for the type.
+  per-event list. They feed only the lifetime count. Workshop and activity attendance
+  came from `Applicants/{uid}.dayOf.events[]` joined to `DayOf`; it now comes from stamp
+  categories (see [Decisions](#decisions)).
 - **Q14.** A hacker on two submissions gets the later row in the CSV (the export has no
   submission time). Duplicates shouldn't happen, so the match report lists every one
   with the row it picked; `uidToProject` overrides the pick.
@@ -507,12 +519,9 @@ after the prize run never downgrades a winner.
 - **Q2.** The display name (`event`, `summary.event`) is `CONFIG.eventName` in
   `script.ts`, e.g. "HackCamp 2026".
 
-- **Q1.** Pre-hackathon workshops are the docs in
-  `Hackathons/{eventId}/PreHackathonWorkshops`. A hacker's attendance is stored at
-  `Hackathons/{eventId}/Applicants/{uid}` in `preDayOf.events`, an array of
-  `{eventId, eventName, timestamp}` like `dayOf.events` (checked on dev).
-  `countPreHackathonWorkshops` = distinct `eventId`s in `preDayOf.events` that exist in
-  `PreHackathonWorkshops`.
+- **Q1.** Superseded: pre-hackathon workshop attendance was `preDayOf.events` ∩
+  `PreHackathonWorkshops`; it is now unlocked stamps with category
+  `preHackathonWorkshop`.
 - **Q5.** `Attendance` should not include the current event when the script runs; it
   can on dev, so `countLifetimeEvents` drops this event's id anyway.
   `isFirstTimer = countLifetimeEvents == 0`; `summary.attendance = count + 1`;
@@ -554,6 +563,8 @@ against a real export, once submissions open. Until then `parseDevpostCsv` and
 
 ## Implementation plan
 
+**Status (2026-10-31):** attendance counts read stamp categories (step 11).
+
 **Status (2026-10-26):** lines committed and the three-stat comparison are done
 (step 10). Checked against a copy of cmd-f2026's cached prod data with `writeToFirestore` off;
 the docs in dev Firestore are still the old shape until the next `write`.
@@ -591,4 +602,10 @@ Node's `fetch` reaches GitHub.
 9. **Cleanup** (done): the old script is removed and this folder moved up to `wrapped/`.
 10. **Lines committed + comparison** (done): per-commit stats (`fetchCommitDetail`, cached
     per sha), `countCommitLines`, `attributeLines`, `rankCohort`, `pickFeatured`, stage
-    `schemaVersion` guards, and the frontend's comparison slide.
+    `schemaVersion` guards, and the frontend's comparison slide. The coded slide was
+    later replaced by the cross-hacker video and Lottie comp; `comparison-slide.tsx` and
+    `public/assets/wrapped/comparison/` are unused until they're deleted.
+11. **Attendance from stamps** (done, 2026-10-31): `DayOf`, `PreHackathonWorkshops`,
+    `dayOf.events` and `preDayOf` are no longer read; the three counts come from
+    `Stamps/{id}.category`, and the doc gains `showedUp.dayOfActivityCount` (schema 3).
+    Checked on synthetic stamps; not yet run against stamps that carry a category.
