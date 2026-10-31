@@ -7,6 +7,7 @@ import { type RsvpFormValues, rsvpSchema } from "@/lib/application/rsvp-schema";
 import { functions } from "@/lib/firebase/client";
 import { useApplicantStore } from "@/lib/stores/applicant-store";
 import { useAuthStore } from "@/lib/stores/auth-store";
+import { useHackerStore } from "@/lib/stores/hacker-store";
 import { usePortalStore } from "@/lib/stores/portal-store";
 import { fireSideCannons, formatPortalDateTime, getHackathonIcon } from "@/lib/utils";
 import { confirmRsvp } from "@/services/applicants";
@@ -116,6 +117,8 @@ function RouteComponent() {
     try {
       const formValues = formMethods.getValues();
       await confirmRsvp(dbCollectionName, uid, formValues);
+      // route gates cache the applicant; drop it so RSVP-only pages like the CTF refetch it
+      useHackerStore.getState().reset();
 
       const sendRsvpEmail = httpsCallable(functions, "sendRsvpEmail");
       await sendRsvpEmail({

@@ -20,6 +20,7 @@ function RouteComponent() {
   const { activeHackathon } = useHackathon();
   const { displayNameFull } = useHackathonInfo();
   const applicationsOpen = usePortalStore((state) => state.applicationsOpen);
+  const ctfOpen = usePortalStore((state) => state.ctfOpen);
   const hackathonWeekend = usePortalStore((state) => state.hackathonWeekend);
   const hackathonStart = usePortalStore((state) => state.hackathonStart);
   const hackathonStartDate = hackathonStart ? new Date(hackathonStart[activeHackathon]) : null;
@@ -149,6 +150,13 @@ function RouteComponent() {
             <Button variant="primary" asChild>
               <Link to="/$activeHackathon/application/rsvp" params={{ activeHackathon }}>
                 RSVP
+              </Link>
+            </Button>
+          )}
+          {applicationStatus === "acceptedAndAttending" && ctfOpen?.[activeHackathon] === true && (
+            <Button variant="primary" asChild>
+              <Link to="/$activeHackathon/ctf" params={{ activeHackathon }}>
+                Join the CTF →
               </Link>
             </Button>
           )}

@@ -1,26 +1,6 @@
 const assert = require('node:assert/strict');
-const { readFileSync } = require('node:fs');
-const { resolve } = require('node:path');
 const { test } = require('node:test');
-const vm = require('node:vm');
-const ts = require('typescript');
-
-// Exercise production modules without initializing Firebase or adding a test dependency.
-function load(file, dependencies = {}) {
-  const exports = {};
-  const code = ts.transpileModule(readFileSync(resolve(file), 'utf8'), {
-    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
-  }).outputText;
-  vm.runInNewContext(code, {
-    exports,
-    require(name) {
-      if (!(name in dependencies)) throw new Error(`Unexpected dependency: ${name}`);
-      return dependencies[name];
-    },
-    console,
-  }, { filename: file });
-  return exports;
-}
+const { load } = require('./load-ts.cjs');
 
 const records = ['nwHacks2025', 'nwHacks2026', 'cmd-f2024'].map((hackathonId) => ({
   uid: 'profile-owner', hackathonId, eventYear: Number(hackathonId.slice(-4)),

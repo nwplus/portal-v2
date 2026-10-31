@@ -40,6 +40,7 @@ type PortalStore = {
   upNextHackathon?: HackathonsFlagMap;
   visitWebsite?: HackathonsFlagMap;
   walletAvailable?: HackathonsFlagMap;
+  ctfOpen?: HackathonsFlagMap;
   isLegacy?: HackathonsFlagMap;
   legacyStatementUrl?: HackathonsInfoMap;
   notionLinks?: HackathonsNotionLinksMap;
