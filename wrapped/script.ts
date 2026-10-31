@@ -30,6 +30,11 @@ const CONFIG: RunConfig = {
   eventId: "HackCamp2026",
   /** Display name on the slides (`event`, `summary.event`). */
   eventName: "HackCamp 2026",
+  /**
+   * Key into `InternalWebsites/Portal.hackingStart` / `.hackingEnd`, which give the
+   * commit window and submission deadline: "hackcamp" | "nwhacks" | "cmd-f".
+   */
+  portalKey: "hackcamp",
   env: "prod",
   /** Off: the run stops after writing cache/.../output/docs.json. */
   writeToFirestore: false,

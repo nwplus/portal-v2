@@ -21,6 +21,7 @@ Set these at the top of `script.ts` before each run:
 | Field              | Meaning                                                         |
 | ------------------ | --------------------------------------------------------------- |
 | `eventId`          | Doc id under `Hackathons/`, e.g. `hackcamp2026`                 |
+| `portalKey`        | `hackcamp`, `nwhacks` or `cmd-f`: key into `InternalWebsites/Portal.hackingStart` / `.hackingEnd` |
 | `env`              | `dev` or `prod`; picks the service-account credential           |
 | `writeToFirestore` | Off: the run stops after writing `output/docs.json` locally     |
 | `bypassCache`      | On: re-fetch every source instead of reading `raw/`             |
@@ -139,7 +140,7 @@ Keyed by env as well as event, so a dev run never reuses prod data.
 ```
 cache/{env}/{eventId}/
   raw/
-    event.json  applicants.json  socials.json  dayof.json  attendance.json
+    event-portal.json  applicants.json  socials.json  dayof.json  attendance.json
     stamps.json  prehackathon-workshops.json
     awards.json                      prize run: judging-portal award placements
     github/{owner}__{repo}.json      one per repo; null if private or missing
@@ -251,9 +252,11 @@ flowchart LR
     end
     subgraph EV[Hackathons/eventId]
       e_name[CONFIG.eventName]
-      e_start[wrapped.hackathonStart]
-      e_end[wrapped.hackathonEnd]
       e_open[check-in opens Q20]
+    end
+    subgraph PORTAL[InternalWebsites/Portal]
+      e_start[hackingStart.portalKey]
+      e_end[hackingEnd.portalKey]
     end
     subgraph DP[Devpost CSV Q17]
       d_title[Project Title]
@@ -376,8 +379,8 @@ flowchart LR
 | `isFirstTimer`                       | `countLifetimeEvents`                              | `Attendance` (uid, hackathonId); excludes this event               | `count == 0`                            |
 | `summary.attendance`                 | `countLifetimeEvents` + 1                          | `Attendance`; excludes this event                                  | `1`                                     |
 | `checkIn`                            | none                                               | `dayOf.checkedIn === true`                                         | `false`                                 |
-| `survival`                           | `parseCheckInTime`, `computeSurvival`              | `wrapped.hackathonEnd` − `dayOf.checkedInTime`                     | null if not checked in                  |
-| `earlySubmission`                    | `latestCommitAt`, `computeEarlySubmission`         | `wrapped.hackathonEnd` − project's latest in-window commit         | null with no project or no commits      |
+| `survival`                           | `parseCheckInTime`, `computeSurvival`              | `Portal.hackingEnd` − `dayOf.checkedInTime`                        | null if not checked in                  |
+| `earlySubmission`                    | `latestCommitAt`, `computeEarlySubmission`         | `Portal.hackingEnd` − project's latest in-window commit            | null with no project or no commits      |
 | `meals`                              | `countMeals`                                         | `dayOf.day1.*`, `dayOf.day2.*`                                     | `0` (**Q18**)                           |
 | `showedUp.dayOfWorkshopCount`        | `countDayOfEvents(…, "workshops")`                 | `dayOf.events[].eventId` ⋈ `DayOf/{id}.type`                       | `0`                                     |
 | `showedUp.preHackathonWorkshopCount` | `countPreHackathonWorkshops`                       | `preDayOf.events` ∩ `PreHackathonWorkshops`                        | `0`                                     |
@@ -429,8 +432,11 @@ after the prize run never downgrades a winner.
 - `earlySubmission` = `hackathonEnd − lastCommitAt`, where `lastCommitAt` is the
   project's latest commit inside the window (committer date). It's never negative.
   `survival` = `hackathonEnd − checkedInAt`. Both are durations.
-- The deadline is `Hackathons/{eventId}.wrapped.hackathonEnd`. The commit window is
-  `[wrapped.hackathonStart, wrapped.hackathonEnd]`.
+- The deadline is `InternalWebsites/Portal.hackingEnd[portalKey]`. The commit window is
+  `[hackingStart[portalKey], hackingEnd[portalKey]]`, held as `EventInfo.hackathonStart` /
+  `.hackathonEnd`. These are the Portal countdown's times, not `Portal.hackathonStart` /
+  `.hackathonEnd`. They are cached in `raw/event-portal.json` and copied into
+  `stages/fetch.json`, so a change to them needs that file deleted and `--from fetch`.
 - A commit belongs to a hacker when its `author.login` equals the username in
   `Applicants/{uid}.skills.github`. With no `skills.github`, the hacker has no GitHub
   section.

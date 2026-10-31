@@ -59,28 +59,41 @@ function eventRef(ctx: RunContext) {
 }
 
 /**
- * raw/event.json
- * `Hackathons/{eventId}.wrapped.{hackathonStart, hackathonEnd}` (Timestamps).
- * name comes from CONFIG.eventName. checkInOpensAt: `wrapped.checkInOpensAt` if set (Q20).
+ * raw/event-portal.json
+ * hackathonStart/End: `InternalWebsites/Portal.{hackingStart, hackingEnd}[portalKey]`
+ * (ISO strings), the same values as the Portal's countdown.
+ * name comes from CONFIG.eventName. checkInOpensAt: `Hackathons/{eventId}.wrapped.checkInOpensAt`
+ * if set (Q20).
  */
 export async function fetchEventInfo(ctx: RunContext): Promise<EventInfo> {
-  return ctx.cache.raw("event", async () => {
-    const snap = await eventRef(ctx).get();
-    if (!snap.exists) throw new Error(`Hackathons/${ctx.config.eventId} does not exist`);
+  // Renamed from "event" when the times moved to the Portal doc, so an old cache isn't reused.
+  return ctx.cache.raw("event-portal", async () => {
+    const { eventId, eventName, portalKey } = ctx.config;
+    const [eventSnap, portalSnap] = await Promise.all([
+      eventRef(ctx).get(),
+      ctx.db.collection("InternalWebsites").doc("Portal").get(),
+    ]);
+    if (!eventSnap.exists) throw new Error(`Hackathons/${eventId} does not exist`);
+    if (!portalSnap.exists) throw new Error("InternalWebsites/Portal does not exist");
 
-    const wrapped = toPlain<Record<string, string | undefined>>(snap.get("wrapped") ?? {});
     // Both bound the commit window and every duration; no sensible default exists.
-    if (!wrapped.hackathonStart || !wrapped.hackathonEnd) {
-      throw new Error(
-        `Hackathons/${ctx.config.eventId}.wrapped.hackathonStart and .hackathonEnd must be set`,
-      );
-    }
+    const portalTime = (field: "hackingStart" | "hackingEnd"): string => {
+      const value = toPlain<string | undefined>(portalSnap.get(field)?.[portalKey]);
+      if (!value || Number.isNaN(Date.parse(value))) {
+        throw new Error(
+          `InternalWebsites/Portal.${field}.${portalKey} must be an ISO date, got ${JSON.stringify(value)}`,
+        );
+      }
+      return value;
+    };
+
+    const wrapped = toPlain<Record<string, string | undefined>>(eventSnap.get("wrapped") ?? {});
 
     return {
-      eventId: ctx.config.eventId,
-      name: ctx.config.eventName,
-      hackathonStart: wrapped.hackathonStart,
-      hackathonEnd: wrapped.hackathonEnd,
+      eventId,
+      name: eventName,
+      hackathonStart: portalTime("hackingStart"),
+      hackathonEnd: portalTime("hackingEnd"),
       checkInOpensAt: wrapped.checkInOpensAt ?? null,
     };
   });

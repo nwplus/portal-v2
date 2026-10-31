@@ -15,6 +15,9 @@ export type Env = "dev" | "prod";
 
 export type Mode = "write" | "prize" | "stats" | "delete";
 
+/** Keys of the per-hackathon maps in `InternalWebsites/Portal`; `VALID_HACKATHONS` in src/lib/constants.ts. */
+export type PortalKey = "hackcamp" | "nwhacks" | "cmd-f";
+
 /** Write-run stages, in execution order. */
 export const STAGES = ["fetch", "match", "enrich", "assemble", "write"] as const;
 export type Stage = (typeof STAGES)[number];
@@ -66,10 +69,10 @@ export interface EventInfo {
   eventId: string;
   /** CONFIG.eventName, e.g. "HackCamp 2026". */
   name: string;
-  /** `Hackathons/{eventId}.wrapped.hackathonStart`. Start of the commit window. */
+  /** `InternalWebsites/Portal.hackingStart[portalKey]`. Start of the commit window. */
   hackathonStart: string;
   /**
-   * `Hackathons/{eventId}.wrapped.hackathonEnd`. End of the commit window, the
+   * `InternalWebsites/Portal.hackingEnd[portalKey]`. End of the commit window, the
    * submission deadline, and the end of `survival`.
    */
   hackathonEnd: string;

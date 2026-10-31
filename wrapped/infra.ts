@@ -13,7 +13,7 @@ import { getFirestore } from "firebase-admin/firestore";
 import type { Firestore } from "firebase-admin/firestore";
 
 import { STAGES } from "./types.ts";
-import type { Env, Progress, RestartPoint, Stage, StageStatus } from "./types.ts";
+import type { Env, PortalKey, Progress, RestartPoint, Stage, StageStatus } from "./types.ts";
 
 /** Placeholder body for skeleton functions. */
 export function todo(what: string): never {
@@ -27,6 +27,7 @@ export function todo(what: string): never {
 export interface RunConfig {
   eventId: string;
   eventName: string;
+  portalKey: PortalKey;
   env: Env;
   writeToFirestore: boolean;
   bypassCache: boolean;
