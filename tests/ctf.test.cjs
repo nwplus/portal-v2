@@ -58,6 +58,11 @@ test('callable error codes map to the spec copy, with or without the functions/ 
   assert.equal(ctf.describeSubmitError(undefined), 'Something went wrong. Try again.');
 });
 
+test('flag placeholder uses the hackathon slug and year', () => {
+  assert.equal(ctf.flagPlaceholder('hackcamp', 2026), 'hackcamp2026{...}');
+  assert.equal(ctf.flagPlaceholder('cmd-f', 2027), 'cmd-f2027{...}');
+});
+
 test('solve summary and challenge sorting', () => {
   assert.deepEqual(ctf.summarizeSolves([{ points: 10 }, { points: 1 }]), { points: 11, solved: 2 });
   assert.deepEqual(ctf.summarizeSolves([]), { points: 0, solved: 0 });

@@ -4,7 +4,12 @@ import { FlagForm } from "@/components/features/ctf/flag-form";
 import { GradientBackground } from "@/components/layout/gradient-background";
 import { useHackathon } from "@/hooks/use-hackathon";
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
-import { describeSubmitError, describeSubmitResult, sortChallenges } from "@/lib/ctf";
+import {
+  describeSubmitError,
+  describeSubmitResult,
+  flagPlaceholder,
+  sortChallenges,
+} from "@/lib/ctf";
 import type { CtfChallenge, CtfSolve } from "@/lib/firebase/types/ctf";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useHackerStore } from "@/lib/stores/hacker-store";
@@ -58,7 +63,7 @@ const onSubscriptionError = (error: FirestoreError) => {
 function RouteComponent() {
   const { stampImages } = Route.useLoaderData();
   const { activeHackathon } = useHackathon();
-  const { dbCollectionName } = useHackathonInfo();
+  const { dbCollectionName, hackathonYear } = useHackathonInfo();
   const uid = useAuthStore((state) => state.user?.uid);
   const [challenges, setChallenges] = useState<CtfChallenge[]>([]);
   const [solves, setSolves] = useState<CtfSolve[]>([]);
@@ -116,7 +121,11 @@ function RouteComponent() {
           </p>
         </div>
         <CtfSummary solves={solves} challengeCount={challenges.length} />
-        <FlagForm submitting={submitting} onSubmit={handleSubmit} />
+        <FlagForm
+          submitting={submitting}
+          placeholder={flagPlaceholder(activeHackathon, hackathonYear)}
+          onSubmit={handleSubmit}
+        />
         <div className="grid gap-4 md:grid-cols-2">
           {sortChallenges(challenges).map((challenge) => (
             <ChallengeCard

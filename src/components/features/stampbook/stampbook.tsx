@@ -1,8 +1,7 @@
-import { useIsMobile } from "@/hooks/use-mobile";
 import type { StampWithUnlockState } from "@/lib/firebase/types/stamps";
 import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { forwardRef, useCallback, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import HTMLFlipBook from "react-pageflip";
 import { StampbookPage } from "./stampbook-page";
 import { organizeIntoSpreads } from "./utils";
@@ -10,7 +9,7 @@ import { organizeIntoSpreads } from "./utils";
 const DESKTOP_PAGE_WIDTH = 480;
 const DESKTOP_PAGE_HEIGHT = 600;
 const MOBILE_PAGE_WIDTH = 320;
-const MOBILE_PAGE_HEIGHT = 420;
+const MOBILE_PAGE_HEIGHT = 480;
 
 interface StampbookProps {
   stamps: StampWithUnlockState[];
@@ -23,9 +22,22 @@ const Page = forwardRef<HTMLDivElement, { children: React.ReactNode }>(({ childr
 Page.displayName = "Page";
 
 export function Stampbook({ stamps, displayName }: StampbookProps) {
-  const isMobile = useIsMobile();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [availableWidth, setAvailableWidth] = useState(320);
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const observer = new ResizeObserver(([entry]) => {
+      setAvailableWidth(entry.contentRect.width);
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
+  const isMobile = availableWidth < 800;
 
-  const pageWidth = isMobile ? MOBILE_PAGE_WIDTH : DESKTOP_PAGE_WIDTH;
+  const pageWidth = isMobile
+    ? Math.min(MOBILE_PAGE_WIDTH, Math.max(240, availableWidth - 16))
+    : Math.min(DESKTOP_PAGE_WIDTH, Math.floor((availableWidth - 112) / 2));
   const pageHeight = isMobile ? MOBILE_PAGE_HEIGHT : DESKTOP_PAGE_HEIGHT;
 
   const stampsToDisplay = stamps.filter((stamp) => !stamp.isHidden || stamp.isUnlocked);
@@ -82,14 +94,6 @@ export function Stampbook({ stamps, displayName }: StampbookProps) {
   const canGoBack = isMobile ? currentPage > 0 : currentPage > 1;
   const canGoForward = isMobile ? currentPage < pages.length - 1 : currentPage < pages.length - 2;
 
-  if (pages.length === 0) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <p className="text-text-secondary">No stamps available yet.</p>
-      </div>
-    );
-  }
-
   const PrevButton = (
     <button
       onClick={handlePrev}
@@ -127,7 +131,7 @@ export function Stampbook({ stamps, displayName }: StampbookProps) {
   );
 
   const PageIndicators = (isMobile ? pages.length > 1 : spreads.length > 1) && (
-    <div className="flex gap-2">
+    <div className="flex max-w-48 flex-wrap justify-center gap-2">
       {isMobile
         ? pages.map((_, index) => (
             <button
@@ -166,6 +170,7 @@ export function Stampbook({ stamps, displayName }: StampbookProps) {
     <div className="overflow-hidden rounded-lg shadow-md">
       {/* @ts-expect-error - react-pageflip types are incomplete */}
       <HTMLFlipBook
+        key={`${isMobile}-${pageWidth}`}
         ref={bookRef}
         width={pageWidth}
         height={pageHeight}
@@ -180,6 +185,7 @@ export function Stampbook({ stamps, displayName }: StampbookProps) {
         useMouseEvents={true}
         swipeDistance={30}
         onFlip={handleFlip}
+        onInit={() => setCurrentPage(0)}
         startPage={0}
         drawShadow={true}
         maxShadowOpacity={0.15}
@@ -206,21 +212,27 @@ export function Stampbook({ stamps, displayName }: StampbookProps) {
     </div>
   );
 
-  return isMobile ? (
-    <div className="flex flex-col items-center gap-6 py-4">
-      {FlipBook}
-      <div className="flex items-center gap-6">
-        {PrevButton}
-        {PageIndicators}
-        {NextButton}
-      </div>
-    </div>
-  ) : (
-    <div className="relative flex items-center justify-center gap-4 py-8">
-      {PrevButton}
-      {FlipBook}
-      {NextButton}
-      <div className="-translate-x-1/2 absolute bottom-0 left-1/2">{PageIndicators}</div>
+  return (
+    <div ref={containerRef} className="w-full min-w-0">
+      {pages.length === 0 ? (
+        <p className="p-8 text-center text-text-secondary">No stamps available yet.</p>
+      ) : isMobile ? (
+        <div className="flex flex-col items-center gap-6 py-4">
+          {FlipBook}
+          <div className="flex w-full items-center justify-center gap-2">
+            {PrevButton}
+            {PageIndicators}
+            {NextButton}
+          </div>
+        </div>
+      ) : (
+        <div className="relative flex items-center justify-center gap-4 py-8">
+          {PrevButton}
+          {FlipBook}
+          {NextButton}
+          <div className="-translate-x-1/2 absolute bottom-0 left-1/2">{PageIndicators}</div>
+        </div>
+      )}
     </div>
   );
 }
