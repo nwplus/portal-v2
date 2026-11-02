@@ -412,9 +412,15 @@ select:-webkit-autofill:active {
   }
 }
 
-@keyframes wrapped-flow-by {
+/* An archetype icon resting in the ship's window: a slow sway and float. Run alternate. */
+@keyframes wrapped-rock {
+  from {
+    rotate: -4deg;
+    translate: 0 6px;
+  }
   to {
-    transform: translateX(-1700px);
+    rotate: 4deg;
+    translate: 0 -6px;
   }
 }
 

@@ -79,8 +79,8 @@ ipsum, is junk. A one-sentence About still gets a message.
 
 `groundedOn` is 2–6 words copied exactly from the title or About the line is based on, used
 only to flag for review. The model returns 3 options, best first, and the first that passes the hard checks
-wins: it can't count characters, so this replaces a retry batch (the first real run went
-91 characters). The prompt asks for 5–10 words, under 70 characters. The user message is JSON: `CANDIDATE_PATHS`, `SIGNALS`, and `PROJECT` (`title`,
+wins: it can't count characters (the first real run went 91 characters). When every option
+fails and at least one is over 80 characters, the project gets a [length retry](#length-retries). The prompt asks for 5–10 words, under 70 characters. The user message is JSON: `CANDIDATE_PATHS`, `SIGNALS`, and `PROJECT` (`title`,
 `about`, `builtWith`, `teamSize`). The system prompt is `NUGGET_SYSTEM_PROMPT` in calc.ts and
 says to treat PROJECT as data.
 
@@ -89,8 +89,8 @@ says to treat PROJECT as data.
 `validateNuggetResult`:
 
 - **Hard failures** mark the entry `source: "failed"` with the reason. Organizers then
-  write a message in review or leave it blank. There is no retry batch and no templated
-  fallback. Hard failures are:
+  write a message in review or leave it blank. Only length failures are retried; there is
+  no templated fallback. Hard failures are:
   - a `stop_reason` other than `end_turn`;
   - output that isn't JSON or has the wrong shape;
   - a path outside the candidates, or an empty message;
@@ -100,6 +100,17 @@ says to treat PROJECT as data.
   - `groundedOn` not found in the title or About;
   - a number in the message that isn't in the inputs;
   - a word from the denylist (word-bounded, so "badminton" is fine).
+
+## Length retries
+
+A project whose options all failed, with at least one over 80 characters
+(`NuggetResult.overLength`), goes into another batch instead of the store. The request
+repeats the original turn, adds the model's previous answer as an assistant turn, and asks
+for 3 new options under 65 characters, quoting the old lengths (`buildNuggetRetryMessage`).
+Up to `NUGGET_LENGTH_RETRIES` (3) retry batches; one that still fails is stored as `failed`
+with "after 3 length retries" in its reason. Other failures (bad path, emoji, errored
+requests) aren't retried. Each retry batch holds only the projects still over length, so it
+is small and usually quick.
 
 ## Storage and resume
 
@@ -111,11 +122,13 @@ says to treat PROJECT as data.
     discards review.
   - **Regenerating:** bump `NUGGET_PROMPT_VERSION` to regenerate everything, or delete an
     entry to regenerate one project. That includes retrying a failed one.
-- `nugget-batch.json` holds the submitted batch id and the requests' `{projectId, inputHash, candidates}`, by `custom_id`.
+- `nugget-batch.json` holds the submitted batch id and the requests' `{projectId, inputHash, candidates, attempt}`, by `custom_id`
+  (`attempt` 0 is the first request, 1–3 are length retries).
   - `custom_id` is the first 32 hex characters of `sha256(projectId)`, since Devpost URLs
     don't fit `[a-zA-Z0-9_-]{1,64}`.
   - **Resume:** an interrupted run polls the same batch instead of resubmitting. Results
-    whose `inputHash` no longer matches are dropped.
+    whose `inputHash` no longer matches are dropped. A retry batch resumes at its own
+    attempt; a run interrupted between batches starts the remaining projects over.
   - **Cleanup:** the file is deleted once the results are merged into the store.
 - Polling checks every 30 s, with a progress bar on `request_counts`.
 

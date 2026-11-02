@@ -4,10 +4,13 @@ import type { WrappedDoc } from "@/lib/firebase/types/wrapped";
 import {
   LOTTIE_FONT_FAMILY,
   LOTTIE_FONT_WEIGHT,
+  LOTTIE_RENDERER_SETTINGS,
+  type LayerText,
+  lottieAssetsPath,
   setLayerText,
   withWebfont,
 } from "@/lib/wrapped/lottie";
-import { SCENES, type VideoScene } from "@/lib/wrapped/scenes";
+import { SCENES, type VideoScene, sceneVideo } from "@/lib/wrapped/scenes";
 import type { SlideId } from "@/lib/wrapped/slides";
 import { toBlob } from "html-to-image";
 import lottie from "lottie-web";
@@ -24,10 +27,11 @@ import { createRoot } from "react-dom/client";
  *    fast-forwarded to its end, then rasterised by html-to-image.
  */
 
-/** Where in a clip its still is taken, as a fraction of its length — after the text lands. */
+/**
+ * Where in a clip its still is taken, as a fraction of its length — after the text lands.
+ * A scene's own `stillAt` wins.
+ */
 const VIDEO_STILL_AT = 0.85;
-/** The archetype's planet drifts across the window; catch it here rather than gone. */
-const FLOW_BY_STILL_AT = 0.4;
 /** Stands in for any image html-to-image can't fetch (e.g. a stamp host without CORS). */
 const BLANK_IMAGE =
   "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
@@ -110,10 +114,10 @@ async function renderVideoSlide(scene: VideoScene, doc: WrappedDoc): Promise<Blo
   let time = 0;
   try {
     const loaded = waitFor(video, "loadeddata");
-    video.src = scene.video;
+    video.src = sceneVideo(scene, doc);
     video.load();
     await loaded;
-    time = video.duration * VIDEO_STILL_AT;
+    time = video.duration * (scene.stillAt ?? VIDEO_STILL_AT);
     const seeked = waitFor(video, "seeked");
     video.currentTime = time;
     await seeked;
@@ -142,7 +146,7 @@ async function renderVideoSlide(scene: VideoScene, doc: WrappedDoc): Promise<Blo
 async function drawLottie(
   context: CanvasRenderingContext2D,
   src: string,
-  texts: Record<string, string>,
+  texts: Record<string, LayerText>,
   time: number,
 ) {
   const [data] = await Promise.all([
@@ -157,7 +161,8 @@ async function drawLottie(
     loop: false,
     autoplay: false,
     animationData: withWebfont(data),
-    rendererSettings: { preserveAspectRatio: "xMidYMid slice" },
+    assetsPath: lottieAssetsPath(src),
+    rendererSettings: LOTTIE_RENDERER_SETTINGS,
   });
   try {
     await new Promise<void>((resolve) => animation.addEventListener("DOMLoaded", () => resolve()));
@@ -169,6 +174,17 @@ async function drawLottie(
     animation.destroy();
     host.remove();
   }
+}
+
+const XLINK = "http://www.w3.org/1999/xlink";
+
+async function fetchAsDataUrl(url: string): Promise<string> {
+  const blob = await (await fetch(url)).blob();
+  return new Promise<string>((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.readAsDataURL(blob);
+  });
 }
 
 /** The Lottie font's stylesheet; its faces are inlined into each rasterised comp. */
@@ -187,13 +203,7 @@ function embeddedFontCss(): Promise<string> {
     const urls = [...new Set(css.match(/https:[^)\s]+\.woff2/g) ?? [])];
     let embedded = css;
     for (const url of urls) {
-      const blob = await (await fetch(url)).blob();
-      const dataUrl = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result));
-        reader.readAsDataURL(blob);
-      });
-      embedded = embedded.replaceAll(url, dataUrl);
+      embedded = embedded.replaceAll(url, await fetchAsDataUrl(url));
     }
     return embedded;
   })().catch((error) => {
@@ -204,12 +214,25 @@ function embeddedFontCss(): Promise<string> {
   return fontFaceCss;
 }
 
-/** Rasterises a live `<svg>` at comp size, with the Lottie font embedded. */
+/**
+ * Rasterises a live `<svg>` at comp size, with the Lottie font and any comp images (the
+ * cross-hacker star) embedded, since the rasterised SVG can't fetch them itself.
+ */
 async function svgToImage(svg: SVGSVGElement): Promise<HTMLImageElement> {
   const clone = svg.cloneNode(true) as SVGSVGElement;
   clone.setAttribute("width", String(COMP_WIDTH));
   clone.setAttribute("height", String(COMP_HEIGHT));
   clone.removeAttribute("style");
+  await Promise.all(
+    [...clone.querySelectorAll("image")].map(async (image) => {
+      // lottie-web sets the href in the xlink namespace.
+      const href = image.getAttributeNS(XLINK, "href") ?? image.getAttribute("href");
+      if (!href || href.startsWith("data:")) return;
+      const dataUrl = await fetchAsDataUrl(href);
+      image.removeAttributeNS(XLINK, "href");
+      image.setAttribute("href", dataUrl);
+    }),
+  );
   const style = document.createElementNS("http://www.w3.org/2000/svg", "style");
   style.textContent = await embeddedFontCss();
   clone.prepend(style);
@@ -276,10 +299,7 @@ function settleAnimations(host: HTMLElement) {
   for (const animation of host.getAnimations({ subtree: true })) {
     const timing = animation.effect?.getComputedTiming();
     if (!timing) continue;
-    if (animation instanceof CSSAnimation && animation.animationName === "wrapped-flow-by") {
-      animation.pause();
-      animation.currentTime = (timing.delay ?? 0) + Number(timing.duration) * FLOW_BY_STILL_AT;
-    } else if (timing.endTime !== Number.POSITIVE_INFINITY) {
+    if (timing.endTime !== Number.POSITIVE_INFINITY) {
       animation.finish();
     } else {
       animation.pause();

@@ -12,7 +12,10 @@ import type { CSSProperties } from "react";
  * the rows hold their layout. Images are each stamp's `Stamps/{id}.imgURL`, copied onto
  * the deck doc by the batch script.
  *
- * The rings are a mesh-gradient shader in Figma; they ship as a rasterised PNG here.
+ * The rings are a mesh-gradient shader in Figma; they ship as a PNG rasterised at 4x
+ * from the shader's own parameters. Each ring is drawn as Figma lays it out for the top
+ * book: the hole on the page side, the bar running out past the page edge. The bottom
+ * book mirrors the column, so its holes sit on the right.
  */
 
 const ASSETS = "/assets/wrapped/stamps";
@@ -155,14 +158,14 @@ function StampSlot({
 
 function Rings({ className }: { className?: string }) {
   return (
-    <div className={cn("flex w-[74.012px] flex-col gap-[98px]", className)}>
+    <div className={cn("flex w-[74.012px] flex-col gap-[102px]", className)}>
       {Array.from({ length: RING_COUNT }, (_, i) => (
         <img
           // biome-ignore lint/suspicious/noArrayIndexKey: identical, fixed decorations
           key={i}
           alt=""
           src={`${ASSETS}/ring.png`}
-          className="block h-[35px] w-[56px] max-w-none"
+          className="block h-[31px] w-[74.012px] max-w-none"
           draggable={false}
         />
       ))}
@@ -198,7 +201,9 @@ function TopBook() {
           )}
         />
       </div>
-      <div className="absolute top-[386.43px] left-[1012.37px] flex h-[566.459px] w-[108.114px] items-center justify-center">
+      {/* Figma's position moved 37px down the page, so the space above the top ring
+          equals the space below the bottom one. */}
+      <div className="absolute top-[423.38px] left-[1010.12px] flex h-[566.459px] w-[108.114px] items-center justify-center">
         <Rings className="flex-none rotate-[3.49deg]" />
       </div>
     </>
@@ -225,7 +230,9 @@ function BottomBook() {
       <div className="absolute top-[1098.47px] left-[-50.22px] flex h-[755.374px] w-[974.107px] items-center justify-center">
         <div className={cn("h-[703px] w-[935.413px] flex-none rotate-[-3.28deg]", PAGE_FILL)} />
       </div>
-      <div className="absolute top-[1179.57px] left-[-19.33px] flex h-[566.313px] w-[106.107px] items-center justify-center">
+      {/* Moved 36px down the page to centre the rings between its edges, and 19px out
+          past the left edge so the bottom ring is cut off as far as the top book's is. */}
+      <div className="absolute top-[1217.06px] left-[-36.26px] flex h-[566.313px] w-[106.107px] items-center justify-center">
         <Rings className="-scale-y-100 flex-none rotate-[176.72deg]" />
       </div>
     </>

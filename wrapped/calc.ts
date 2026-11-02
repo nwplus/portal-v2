@@ -31,6 +31,8 @@ import type {
   WrappedDoc,
   WrappedStamp,
 } from "./types.ts";
+import { parseGithubLogin } from "../src/lib/github-login.ts";
+import { ARCHETYPE_RULES } from "../src/lib/wrapped/archetype-rules.ts";
 import { NUGGET_PATHS } from "./types.ts";
 
 // ---------------------------------------------------------------------------
@@ -157,19 +159,13 @@ export function parseCheckInTime(applicant: RawApplicant): string | null {
   return Number.isNaN(ms) ? null : new Date(ms).toISOString();
 }
 
-/** GitHub usernames: alphanumerics and single inner hyphens, at most 39 chars. */
-const GITHUB_LOGIN = /^[a-z\d](?:[a-z\d-]{0,37}[a-z\d])?$/i;
-
 /**
- * Lowercased username from skills.github, or null. Takes "https://github.com/{username}"
- * and the bare username some applicants type instead.
+ * Lowercased username from skills.github, or null. Parsed by the same function the
+ * application form validates the field with (`src/lib/github-login.ts`), so every value
+ * the form accepts is readable here.
  */
 export function extractGithubLogin(applicant: RawApplicant): string | null {
-  const raw = applicant.skills?.github?.trim();
-  if (!raw) return null;
-  const fromUrl = raw.match(/github\.com\/([^/?#\s]+)/i)?.[1];
-  const login = (fromUrl ?? raw.replace(/^@/, "")).toLowerCase();
-  return GITHUB_LOGIN.test(login) ? login : null;
+  return parseGithubLogin(applicant.skills?.github);
 }
 
 // ---------------------------------------------------------------------------
@@ -548,10 +544,12 @@ const ABOUT_MIN_CHARS = 25;
 /** Metadata-backed paths a project can be offered, besides CURIOUS. */
 const NUGGET_CANDIDATES = 2;
 /**
- * Options per request. The model can't count characters, so instead of a retry batch the
- * first option that passes the hard checks wins.
+ * Options per request. The model can't count characters, so the first option that passes
+ * the hard checks wins.
  */
 const NUGGET_OPTIONS = 3;
+/** Retry batches for a project whose options all failed and at least one was over NUGGET_MAX_CHARS. */
+export const NUGGET_LENGTH_RETRIES = 3;
 
 /** Strips markdown, images and URLs, and collapses whitespace. */
 export function cleanAbout(about: string): string {
@@ -716,6 +714,13 @@ export function buildNuggetUserMessage(input: NuggetInput, candidates: NuggetPat
   return JSON.stringify({ CANDIDATE_PATHS: candidates, SIGNALS: signals, PROJECT: project }, null, 1);
 }
 
+/** The follow-up turn of a length retry: the previous answer's lengths, and a shorter ask. */
+export function buildNuggetRetryMessage(previousText: string): string {
+  const options = (JSON.parse(previousText) as { options: { message: string }[] }).options;
+  const lengths = options.map((option) => option.message.trim().length).join(", ");
+  return `Too long: those options are ${lengths} characters and every line must fit in ${NUGGET_MAX_CHARS}. Return ${NUGGET_OPTIONS} new options under 65 characters each: one detail, fewer words, never a list.`;
+}
+
 /**
  * Rules a message must pass, from the model or from an organizer's edit. Returns the
  * failures, empty when the message is fine.
@@ -737,7 +742,8 @@ const NUGGET_DENYLIST =
 
 export type NuggetResult =
   | { ok: true; path: NuggetPath; message: string; flags: string[] }
-  | { ok: false; reason: string };
+  /** overLength: an option went over NUGGET_MAX_CHARS, so a length retry may fix it. */
+  | { ok: false; reason: string; overLength?: boolean };
 
 /**
  * Hard failures (bad JSON, a path outside the candidates, checkNuggetMessage, truncation)
@@ -765,12 +771,14 @@ export function validateNuggetResult(
 
   // The first option that passes wins; if none does, every reason goes to review.
   const reasons: string[] = [];
+  let overLength = false;
   for (const option of options) {
     const result = validateNuggetOption(option, candidates, input);
     if (result.ok) return result;
     reasons.push(result.reason);
+    overLength ||= result.overLength === true;
   }
-  return { ok: false, reason: reasons.join(" | ") };
+  return { ok: false, reason: reasons.join(" | "), overLength };
 }
 
 function validateNuggetOption(option: unknown, candidates: NuggetPath[], input: NuggetInput): NuggetResult {
@@ -784,7 +792,9 @@ function validateNuggetOption(option: unknown, candidates: NuggetPath[], input: 
   if (!line) return { ok: false, reason: "empty message" };
   const errors = checkNuggetMessage(line);
   // In full: review shows it, and a near-miss is often one edit from usable.
-  if (errors.length > 0) return { ok: false, reason: `"${line}": ${errors.join(", ")}` };
+  if (errors.length > 0) {
+    return { ok: false, reason: `"${line}": ${errors.join(", ")}`, overLength: line.length > NUGGET_MAX_CHARS };
+  }
 
   const flags: string[] = [];
   const source = `${input.title} ${input.about}`.toLowerCase();
@@ -868,11 +878,12 @@ export function buildArchetypeCohort(
   };
 }
 
-const VETERAN_MIN_EVENTS = 4;
-const ANCHOR_MIN_SHARE = 0.5;
-const SPEEDRUNNER_MIN_SHARE = 0.8;
-const EARLY_BIRD_WINDOW_MS = 20 * MINUTE_MS;
-const FINISHER_WINDOW_MS = 3 * MINUTE_MS;
+// Thresholds live in src/lib/wrapped/archetype-rules.ts, which the deck's copy reads too.
+const VETERAN_MIN_EVENTS = ARCHETYPE_RULES.veteranMinEvents;
+const ANCHOR_MIN_SHARE = ARCHETYPE_RULES.anchorMinShare;
+const SPEEDRUNNER_MIN_SHARE = ARCHETYPE_RULES.speedrunnerMinShare;
+const EARLY_BIRD_WINDOW_MS = ARCHETYPE_RULES.earlyBirdWindowMinutes * MINUTE_MS;
+const FINISHER_WINDOW_MS = ARCHETYPE_RULES.finisherWindowMinutes * MINUTE_MS;
 
 /**
  * First matching rule wins; THE_WARRIOR always matches. Rules in README.md

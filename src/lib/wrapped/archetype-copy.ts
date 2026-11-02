@@ -1,4 +1,5 @@
 import type { ArchetypeId } from "@/lib/firebase/types/wrapped";
+import { ARCHETYPE_RULES } from "@/lib/wrapped/archetype-rules";
 
 /**
  * Archetype wording, keyed by id.
@@ -7,55 +8,79 @@ import type { ArchetypeId } from "@/lib/firebase/types/wrapped";
  * purpose, so copy can be reworded by shipping the frontend without re-running the
  * batch script over every hacker.
  *
- * `ANCHOR` keeps its article-less label; the other ten read "The ___".
+ * Every label reads "The ___", `ANCHOR` included: its id has no `THE_` prefix, its label does.
  */
 /** The archetype every hacker falls back to — the deck must never render a blank one. */
 export const DEFAULT_ARCHETYPE: ArchetypeId = "THE_WARRIOR";
 
+const {
+  veteranMinEvents,
+  anchorMinShare,
+  speedrunnerMinShare,
+  earlyBirdWindowMinutes,
+  finisherWindowMinutes,
+} = ARCHETYPE_RULES;
+
+/** 4 → "4th". */
+function ordinal(n: number): string {
+  const teen = n % 100 >= 11 && n % 100 <= 13;
+  const suffix = teen ? "th" : (["th", "st", "nd", "rd"][n % 10] ?? "th");
+  return `${n}${suffix}`;
+}
+
+const percent = (share: number) => `${Math.round(share * 100)}%`;
+
+/**
+ * Each description says what earned the archetype, with the rule's own numbers from
+ * `ARCHETYPE_RULES`, so the copy can't drift from the script that assigns it.
+ */
 export const ARCHETYPE_COPY: Record<ArchetypeId, { label: string; description: string }> = {
   THE_PRIZEWINNER: {
     label: "The Prizewinner",
-    description: "Won a prize. Big W.",
+    description:
+      "The judges saw it too. You built something worth a prize, and now it's on the record.",
   },
   THE_VETERAN: {
     label: "The Veteran",
-    description: "A living legend. You've basically seen it all.",
+    description: `This is at least your ${ordinal(veteranMinEvents)} nwPlus hackathon. You've watched this place grow up.`,
   },
   ANCHOR: {
-    label: "Anchor",
-    description: "The team goes as far as you take them. You're the glue.",
+    label: "The Anchor",
+    description: `You pushed the most commits on your team, at least ${percent(anchorMinShare)} of them. When the repo moved, it was usually you.`,
   },
   THE_LONE_WOLF: {
     label: "The Lone Wolf",
-    description: "No team, no problem. Built the whole thing solo.",
+    description: "A team of one. Every idea, commit and bug fix in that project was yours.",
   },
   THE_SPEEDRUNNER: {
     label: "The Speedrunner",
-    description: "Submitted with hours to spare. Deadline? What deadline?",
+    description: `Your last commit landed before ${percent(speedrunnerMinShare)} of hackers'. You shipped while others were still debugging.`,
   },
   THE_EARLY_BIRD: {
     label: "The Early Bird",
-    description: "First in the door. The coffee wasn't even ready.",
+    description: `Checked in within ${earlyBirdWindowMinutes} minutes of doors opening, before most people had found a seat.`,
   },
   THE_FINISHER: {
     label: "The Finisher",
-    description: "Made it to the end and shipped with minutes to spare.",
+    description: `Your final commit landed in the last ${finisherWindowMinutes} minutes before the deadline. Clutch.`,
   },
   THE_NIGHT_OWL: {
     label: "The Night Owl",
-    description: "Midnight snack claimed. You operate after dark.",
+    description: "Still up for the midnight snack. Your best work happens after dark.",
   },
   THE_ORIGIN_STORY: {
     label: "The Origin Story",
-    description: "Every legend has a first chapter. This is yours.",
+    description: "Your first nwPlus hackathon. Every veteran started exactly where you are.",
   },
   THE_REGULAR: {
     label: "The Regular",
-    description: "Workshops, activities, all of it. You showed up for everything.",
+    description:
+      "A workshop, an activity and a meal: you did the whole hackathon, not just the hacking.",
   },
   THE_WARRIOR: {
     label: "The Warrior",
-    description: "You're a warrior for surviving the hackathon.",
+    description:
+      "You checked in, built something and saw it through. Plenty of people sign up; you showed up.",
   },
 };
 

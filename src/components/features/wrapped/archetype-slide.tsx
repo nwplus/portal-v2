@@ -1,15 +1,16 @@
+import { ArchetypeIcon, archetypeIconCentre } from "@/components/features/wrapped/archetype-icons";
 import { CompCanvas } from "@/components/features/wrapped/comp-canvas";
 import type { ArchetypeId } from "@/lib/firebase/types/wrapped";
 import { archetypeCopy } from "@/lib/wrapped/archetype-copy";
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 /**
  * The archetype reveal: the hacker's archetype over a ship's hexagonal window onto space.
  *
  * Built from the "(Animation) Overall Archetype" frame in Figma's Hacker Wrapped "Final
- * Handoff" section, laid out in comp pixels. The ringed planet ("prizewinner icon" in
- * Figma, and the only icon drawn so far) starts off-canvas to the right and drifts past
- * through the window, so every archetype gets it until each has its own.
+ * Handoff" section, laid out in comp pixels. The archetype's icon pops in where its
+ * static "Overall Archetype - ___" frame has it and rocks there: the prizewinner's ringed
+ * planet drawn below, every other icon from `archetype-icons.tsx`.
  */
 
 const ASSETS = "/assets/wrapped/archetype";
@@ -28,8 +29,15 @@ const TIMING = {
   description: 1500,
   icon: 500,
 } as const;
-/** How long the planet takes to drift across and out of the window. */
-const ICON_FLOW_MS = 6500;
+/** One swing of the icon's rock, side to side. */
+const ICON_ROCK_MS = 3500;
+
+/**
+ * The planet's parts are placed as in the animated Figma frame, which starts it off-canvas
+ * to fly past; this moves it onto the static frame's spot, its body centred on `PLANET_CENTRE`.
+ */
+const PLANET_SHIFT_X = -862.07;
+const PLANET_CENTRE = { x: 521.5, y: 952.5 } as const;
 
 /** The label is set at 150px for "Prizewinner"; longer labels shrink to keep one line. */
 const LABEL_SIZE = 150;
@@ -73,7 +81,7 @@ function enter(name: string, delay: number, duration = 800): CSSProperties {
   return { animation: `${name} ${duration}ms cubic-bezier(0.22, 1, 0.36, 1) ${delay}ms both` };
 }
 
-/** Splits "The Prizewinner" into its article and name; `ANCHOR` has no article. */
+/** Splits "The Prizewinner" into its article and name. */
 function splitLabel(label: string): { article: string | null; name: string } {
   const match = label.match(/^(The)\s+(.+)$/);
   return match ? { article: match[1], name: match[2] } : { article: null, name: label };
@@ -130,7 +138,7 @@ export function ArchetypeSlide({ archetype, active }: { archetype: ArchetypeId; 
               src={`${ASSETS}/window-frame.svg`}
               className="absolute top-[596.4px] left-[33.43px] h-[726px] w-[1015.001px] max-w-none"
             />
-            <SpaceView />
+            <SpaceView archetype={archetype} />
           </div>
 
           {article && (
@@ -167,7 +175,7 @@ export function ArchetypeSlide({ archetype, active }: { archetype: ArchetypeId; 
 }
 
 /** Everything seen through the window, clipped to its hexagon. */
-function SpaceView() {
+function SpaceView({ archetype }: { archetype: ArchetypeId }) {
   const at = (x: number, y: number) => ({ left: x - WINDOW.x, top: y - WINDOW.y });
 
   return (
@@ -224,7 +232,11 @@ function SpaceView() {
           className="absolute inset-[-2.03%_-1.65%] block size-full max-w-none"
         />
       </div>
-      <FlowingIcon at={at} />
+      <IconStage
+        centre={archetype === "THE_PRIZEWINNER" ? PLANET_CENTRE : archetypeIconCentre(archetype)}
+      >
+        {archetype === "THE_PRIZEWINNER" ? <PlanetIcon /> : <ArchetypeIcon archetype={archetype} />}
+      </IconStage>
       {WINDOW_SPARKS.map((spark) => (
         <img
           key={`${spark.src}-${spark.x}-${spark.y}`}
@@ -238,13 +250,40 @@ function SpaceView() {
   );
 }
 
-/** The ringed planet: back ring, planet, then the front ring clipped to sit across it. */
-function FlowingIcon({ at }: { at: (x: number, y: number) => CSSProperties }) {
+/**
+ * A comp-sized layer the icon is drawn in, in comp coordinates. It pops in, then rocks
+ * slowly about the icon's centre for as long as the slide is up.
+ *
+ * The rock runs `alternate` from a negative half-swing delay, so at time 0 it is mid-swing
+ * and upright: the still a saved slide takes (looping animations held at 0) is level.
+ */
+function IconStage({
+  centre,
+  children,
+}: { centre: { x: number; y: number }; children: ReactNode }) {
   return (
     <div
-      className="absolute inset-0"
-      style={{ animation: `wrapped-flow-by ${ICON_FLOW_MS}ms linear ${TIMING.icon}ms both` }}
+      className="absolute h-[1920px] w-[1080px]"
+      style={{
+        left: -WINDOW.x,
+        top: -WINDOW.y,
+        transformOrigin: `${centre.x}px ${centre.y}px`,
+        animation: [
+          `wrapped-pop 900ms cubic-bezier(0.22, 1, 0.36, 1) ${TIMING.icon}ms both`,
+          `wrapped-rock ${ICON_ROCK_MS}ms ease-in-out ${-ICON_ROCK_MS / 2}ms infinite alternate`,
+        ].join(", "),
+      }}
     >
+      {children}
+    </div>
+  );
+}
+
+/** The ringed planet: back ring, planet, then the front ring clipped to sit across it. */
+function PlanetIcon() {
+  const at = (x: number, y: number): CSSProperties => ({ left: x + PLANET_SHIFT_X, top: y });
+  return (
+    <>
       <div
         className="absolute flex h-[635.566px] w-[635.569px] items-center justify-center"
         style={at(1071.96, 642.89)}
@@ -284,6 +323,6 @@ function FlowingIcon({ at }: { at: (x: number, y: number) => CSSProperties }) {
           />
         </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -16,6 +16,7 @@ import {
   NUGGET_MODEL,
   NUGGET_OUTPUT_SCHEMA,
   NUGGET_SYSTEM_PROMPT,
+  buildNuggetRetryMessage,
 } from "./calc.ts";
 import type { RunContext } from "./infra.ts";
 import type {
@@ -200,8 +201,15 @@ const COLUMN_ALIASES = {
 
 type Column = keyof typeof COLUMN_ALIASES;
 
-/** Submitter and every "Team Member N Email" column; at least one must exist. */
-const EMAIL_HEADER = /^(submitter|team member \d+) email$/;
+/**
+ * Any header with the word "email": Devpost's "Submitter Email" / "Team Member N Email",
+ * and the custom question asking for the email each hacker applied with. At least one
+ * must exist.
+ */
+const EMAIL_HEADER = /\bemails?\b/;
+
+/** A cell can hold several emails ("a@x.com, b@y.com"); anything else in it is ignored. */
+const EMAIL = /[^\s,;<>()"']+@[^\s,;<>()"']+\.[a-z]{2,}/gi;
 
 function normalizeHeader(header: string): string {
   return header
@@ -275,7 +283,7 @@ export async function parseDevpostCsv(ctx: RunContext): Promise<DevpostRow[]> {
       about: cell(row, "about"),
       tryItOutLinks: splitList(cell(row, "tryItOut")),
       memberEmails: [
-        ...new Set(emailColumns.map((column) => row[column]?.trim().toLowerCase()).filter(Boolean)),
+        ...new Set(emailColumns.flatMap((column) => (row[column] ?? "").toLowerCase().match(EMAIL) ?? [])),
       ],
     });
   }
@@ -530,6 +538,8 @@ export interface NuggetRequest {
   customId: string;
   input: NuggetInput;
   candidates: NuggetPath[];
+  /** A length retry: the previous answer, sent back with a shorter ask. */
+  previousText?: string;
 }
 
 /** What came back for one request: the text and stop reason, or why it failed. */
@@ -538,13 +548,21 @@ export type NuggetResponse = { text: string; stopReason: string | null } | { err
 /** Submits one Message Batch for every request. Returns the batch id. */
 export async function submitNuggetBatch(requests: NuggetRequest[]): Promise<string> {
   const batch = await anthropicClient().messages.batches.create({
-    requests: requests.map(({ customId, input, candidates }) => ({
+    requests: requests.map(({ customId, input, candidates, previousText }) => ({
       custom_id: customId,
       params: {
         model: NUGGET_MODEL,
         max_tokens: 600,
         system: NUGGET_SYSTEM_PROMPT,
-        messages: [{ role: "user", content: buildNuggetUserMessage(input, candidates) }],
+        messages: [
+          { role: "user" as const, content: buildNuggetUserMessage(input, candidates) },
+          ...(previousText === undefined
+            ? []
+            : [
+                { role: "assistant" as const, content: previousText },
+                { role: "user" as const, content: buildNuggetRetryMessage(previousText) },
+              ]),
+        ],
         output_config: { format: { type: "json_schema", schema: NUGGET_OUTPUT_SCHEMA } },
       },
     })),

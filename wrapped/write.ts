@@ -34,6 +34,8 @@ import {
   isOptedOut,
   latestCommitAt,
   matchHackersToProjects,
+  NUGGET_LENGTH_RETRIES,
+  NUGGET_MAX_CHARS,
   NUGGET_PROMPT_VERSION,
   nuggetCandidates,
   nuggetInputHash,
@@ -42,7 +44,7 @@ import {
   topQuartileCommitCount,
   validateNuggetResult,
 } from "./calc.ts";
-import type { MatchReport } from "./calc.ts";
+import type { MatchReport, NuggetResult } from "./calc.ts";
 import type { RunContext } from "./infra.ts";
 import {
   collectNuggetBatch,
@@ -367,12 +369,17 @@ const NUGGET_REVIEW = "output/nugget-review.json";
 /** A submitted batch not yet merged into the store, so an interrupted run resumes polling. */
 interface PendingNuggetBatch {
   batchId: string;
-  requests: Record<string, { projectId: string; inputHash: string; candidates: NuggetPath[] }>;
+  /** attempt: 0 for the first request, then 1..NUGGET_LENGTH_RETRIES for length retries. */
+  requests: Record<string, { projectId: string; inputHash: string; candidates: NuggetPath[]; attempt?: number }>;
 }
+
+type WantedNugget = NuggetRequest & { projectId: string; inputHash: string; attempt: number };
 
 /**
  * Returns the store with an entry for every project whose About isn't junk. Reuses entries
  * whose promptVersion and inputHash match, then generates the rest in one Message Batch.
+ * Projects whose options all failed with one over the character limit go into another
+ * batch, with their previous answer and a shorter ask, up to NUGGET_LENGTH_RETRIES times.
  * Junk About gets no entry and no call, so its slide is hidden.
  */
 async function generateNuggets(
@@ -386,7 +393,7 @@ async function generateNuggets(
   const store = await cache.readJson<NuggetStore>(NUGGET_STORE, {});
   const quartile = topQuartileCommitCount(Object.values(byProject));
 
-  const wanted = new Map<string, NuggetRequest & { projectId: string; inputHash: string }>();
+  const wanted = new Map<string, WantedNugget>();
   let junk = 0;
   for (const project of projects) {
     const about = cleanAbout(project.about);
@@ -403,7 +410,7 @@ async function generateNuggets(
     // custom_id allows [a-zA-Z0-9_-]{1,64}; Devpost URLs don't fit.
     const customId = createHash("sha256").update(project.id).digest("hex").slice(0, 32);
     const candidates = nuggetCandidates(project.id, signals);
-    wanted.set(project.id, { customId, input, candidates, projectId: project.id, inputHash });
+    wanted.set(project.id, { customId, input, candidates, projectId: project.id, inputHash, attempt: 0 });
   }
 
   const reused = projects.length - junk - wanted.size;
@@ -432,15 +439,23 @@ async function generateNuggets(
       // Inputs changed since this batch was submitted; its answer is for an old question.
       if (current?.inputHash !== request.inputHash) continue;
       const response = responses.get(customId) ?? { error: "missing from batch results" };
-      const result =
+      const result: NuggetResult =
         "error" in response
-          ? ({ ok: false, reason: response.error } as const)
+          ? { ok: false, reason: response.error }
           : validateNuggetResult(response.text, response.stopReason, current.candidates, current.input);
+      const attempt = request.attempt ?? 0;
+      if (!result.ok && result.overLength && attempt < NUGGET_LENGTH_RETRIES && "text" in response) {
+        // Stays wanted: the next batch sends this answer back with a shorter ask.
+        wanted.set(request.projectId, { ...current, attempt: attempt + 1, previousText: response.text });
+        continue;
+      }
       store[request.projectId] = {
         path: result.ok ? result.path : null,
         message: result.ok ? result.message : null,
         source: result.ok ? "llm" : "failed",
-        flags: result.ok ? result.flags : [result.reason],
+        flags: result.ok
+          ? result.flags
+          : [attempt > 0 ? `after ${attempt} length retries: ${result.reason}` : result.reason],
         promptVersion: NUGGET_PROMPT_VERSION,
         inputHash: request.inputHash,
         reviewed: false,
@@ -458,14 +473,24 @@ async function generateNuggets(
     await merge(pending);
   }
 
-  if (wanted.size > 0) {
+  // Each pass either stores a project or raises its attempt, so this ends after at most
+  // NUGGET_LENGTH_RETRIES retry batches.
+  while (wanted.size > 0) {
     const requests = [...wanted.values()];
     const batchId = await submitNuggetBatch(requests);
-    ui.info(`Submitted Nugget batch ${batchId} (${requests.length} projects)`);
+    const retries = requests.filter((r) => r.attempt > 0).length;
+    ui.info(
+      retries > 0
+        ? `Submitted Nugget length-retry batch ${batchId} (${retries} over ${NUGGET_MAX_CHARS} characters)`
+        : `Submitted Nugget batch ${batchId} (${requests.length} projects)`,
+    );
     const submitted: PendingNuggetBatch = {
       batchId,
       requests: Object.fromEntries(
-        requests.map((r) => [r.customId, { projectId: r.projectId, inputHash: r.inputHash, candidates: r.candidates }]),
+        requests.map((r) => [
+          r.customId,
+          { projectId: r.projectId, inputHash: r.inputHash, candidates: r.candidates, attempt: r.attempt },
+        ]),
       ),
     };
     await cache.writeJson(NUGGET_PENDING, submitted);

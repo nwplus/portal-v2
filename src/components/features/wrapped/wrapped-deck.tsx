@@ -5,7 +5,7 @@ import { VideoSlide } from "@/components/features/wrapped/video-slide";
 import type { WrappedDoc } from "@/lib/firebase/types/wrapped";
 import { cn } from "@/lib/utils";
 import { dismissWrappedBanner } from "@/lib/wrapped/banner-dismissal";
-import { SCENES } from "@/lib/wrapped/scenes";
+import { SCENES, sceneVideo } from "@/lib/wrapped/scenes";
 import { type SlideId, buildSlides } from "@/lib/wrapped/slides";
 import { recordWrappedSession } from "@/services/wrapped";
 import { Share, X } from "lucide-react";
@@ -357,7 +357,7 @@ function Slide({ slideId, doc, active, skipRocketEntrance, onShare }: SlideProps
   if (scene.kind === "video") {
     return (
       <VideoSlide
-        video={scene.video}
+        video={sceneVideo(scene, doc)}
         lottie={scene.lottie}
         texts={scene.texts?.(doc)}
         active={active}

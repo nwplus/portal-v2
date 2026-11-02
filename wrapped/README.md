@@ -401,7 +401,10 @@ flowchart LR
 ## Archetypes
 
 Rules run in order and the first match wins, so the order is the hierarchy. Output ids
-match `ArchetypeId` in `src/lib/firebase/types/wrapped.ts`. "Submission time" means the
+match `ArchetypeId` in `src/lib/firebase/types/wrapped.ts`. The numbers below are
+`ARCHETYPE_RULES` in `src/lib/wrapped/archetype-rules.ts`, the one place to change them:
+`assignArchetype` and the deck's archetype copy (`src/lib/wrapped/archetype-copy.ts`)
+both read it. "Submission time" means the
 project's latest in-window commit (`lastCommitAt`).
 
 | #  | Id                 | Rule                                                                                             | Inputs                                  |
@@ -476,8 +479,24 @@ after the prize run never downgrades a winner.
   events 5% gives stamps.
 - The comparison slide follows the featured stat's own slide: `lines` after `github`,
   `stamps` after `stamps`, `events` after `attendance`. Percentages show one decimal with
-  a trailing `.0` dropped ("Top 0.3%", "Top 12%"). One Figma frame serves all three
-  stats; only the copy changes.
+  a trailing `.0` dropped ("Top 0.3%", "Top 12%"). One comp serves all three stats; only
+  the copy changes.
+- The comparison slide is a video slide like the others
+  (`public/assets/wrapped/cross-hacker/`: `cross-hacker-bg.mp4` under `cross-hacker.json`,
+  whose green star is `img_0.png`). "Top" and "of" are in the video. `SCENES.comparison`
+  in `src/lib/wrapped/scenes.ts` fills the comp's three text layers from
+  `crossHackerComparison[featured]`:
+
+  | Layer         | lines                             | stamps                       | events                      |
+  | ------------- | --------------------------------- | ---------------------------- | --------------------------- |
+  | `.caption`    | You pushed N lines of code.       | You collected N stamps.      | You attended N events.      |
+  | `.comparison` | `topPercentage` + "%"             | same                         | same                        |
+  | `.category`   | Lines Committed                   | Stamps Collected             | Events Attended             |
+
+  `.caption`'s second line, "You were in the", is fixed, and "line", "stamp" and "event"
+  are singular for 1. `.caption` is point text and can't wrap, so a line over about 982px
+  shrinks from 70px (Hanken Grotesk 800 averages 0.48em a character); "You pushed 161,959
+  lines of code." comes out at 61px. `.category` breaks over two lines.
 - Archetypes are assigned before the cross-hacker comparison. `THE_PRIZEWINNER` is
   applied as an upgrade by the prize run. `ANCHOR` is on, and the Finisher window stays
   at 3 minutes.

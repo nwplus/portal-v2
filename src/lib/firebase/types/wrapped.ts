@@ -25,8 +25,8 @@
  *
  * The doc carries only this id. Label, description and the "why you got this" copy
  * live in the frontend keyed by id (`src/lib/wrapped/archetype-copy.ts`), so wording
- * can change without a re-run. `ANCHOR` keeps the article-less form its label has
- * always had.
+ * can change without a re-run. `ANCHOR` alone has no `THE_` prefix; its label still
+ * reads "The Anchor".
  */
 export type ArchetypeId =
   | "THE_PRIZEWINNER"

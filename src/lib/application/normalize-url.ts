@@ -1,3 +1,5 @@
+import { isBareGithubLogin } from "@/lib/github-login";
+
 /**
  * Normalizes loosely entered URLs into a canonical `https://host/path` form.
  *
@@ -49,4 +51,16 @@ export function normalizeUrl(raw: unknown): string {
     // surface a useful error instead of silently changing the value.
     return candidate;
   }
+}
+
+/**
+ * `normalizeUrl` for the GitHub field, which also takes a bare username: "octocat" and
+ * "@octocat" become "https://github.com/octocat" instead of the unusable
+ * "https://octocat/".
+ */
+export function normalizeGithubUrl(raw: unknown): string {
+  if (typeof raw === "string" && isBareGithubLogin(raw)) {
+    return `https://github.com/${raw.trim().replace(/^@/, "")}`;
+  }
+  return normalizeUrl(raw);
 }

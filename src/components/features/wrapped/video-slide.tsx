@@ -2,6 +2,9 @@ import { cn } from "@/lib/utils";
 import {
   LOTTIE_FONT_FAMILY,
   LOTTIE_FONT_WEIGHT,
+  LOTTIE_RENDERER_SETTINGS,
+  type LayerText,
+  lottieAssetsPath,
   setLayerText,
   withWebfont,
 } from "@/lib/wrapped/lottie";
@@ -14,7 +17,7 @@ export interface VideoSlideProps {
   /** Optional After Effects text layer drawn over the clip. */
   lottie?: string;
   /** Text per Lottie layer name. Layers not listed keep the comp's baked text. */
-  texts?: Record<string, string>;
+  texts?: Record<string, LayerText>;
   active: boolean;
 }
 
@@ -44,7 +47,7 @@ export function VideoSlide({ video: src, lottie: lottieSrc, texts, active }: Vid
   useEffect(() => {
     const host = lottieHostRef.current;
     if (!host || !lottieSrc) return;
-    const layerTexts: Record<string, string> = JSON.parse(textsKey);
+    const layerTexts: Record<string, LayerText> = JSON.parse(textsKey);
 
     let cancelled = false;
     let teardown = () => {};
@@ -58,7 +61,8 @@ export function VideoSlide({ video: src, lottie: lottieSrc, texts, active }: Vid
         loop: false,
         autoplay: false,
         animationData,
-        rendererSettings: { preserveAspectRatio: "xMidYMid slice" },
+        assetsPath: lottieAssetsPath(lottieSrc),
+        rendererSettings: LOTTIE_RENDERER_SETTINGS,
       });
 
       // The video is the clock: driving the Lottie off `currentTime` keeps the text

@@ -1,5 +1,4 @@
 import { ArchetypeSlide } from "@/components/features/wrapped/archetype-slide";
-import { ComparisonSlide } from "@/components/features/wrapped/comparison-slide";
 import { IntroSlide } from "@/components/features/wrapped/intro-slide";
 import { StampsSlide } from "@/components/features/wrapped/stamps-slide";
 import { SummarySlide } from "@/components/features/wrapped/summary-slide";
@@ -35,8 +34,6 @@ export function CodedSlideContent({
       );
     case "stamps":
       return <StampsSlide stamps={doc.showedUp.stamps} active={active} />;
-    case "comparison":
-      return <ComparisonSlide comparison={doc.crossHackerComparison} active={active} />;
     case "archetype":
       return <ArchetypeSlide archetype={doc.archetype} active={active} />;
     case "summary":
