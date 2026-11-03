@@ -1,16 +1,22 @@
 import { CompCanvas } from "@/components/features/wrapped/comp-canvas";
-import type { WrappedStamp } from "@/lib/firebase/types/wrapped";
 import { cn } from "@/lib/utils";
+import type { StampSlot as StampSlotData } from "@/lib/wrapped/stamp-slots";
 import type { CSSProperties } from "react";
 
 /**
- * The stamps the hacker collected, laid into two ring-bound stampbooks.
+ * The event's stamps, laid into two ring-bound stampbooks: collected ones in colour,
+ * the rest as their locked art.
  *
  * Built from the "stamps collected" frame in Figma's Hacker Wrapped "Final Handoff"
- * section, laid out in comp pixels. Each book holds two rows of four. Only collected
- * stamps appear, filling the slots in order; the rest stay empty but keep their space so
- * the rows hold their layout. Images are each stamp's `Stamps/{id}.imgURL`, copied onto
- * the deck doc by the batch script.
+ * section, laid out in comp pixels. Each book holds two rows of five (the design's four,
+ * narrowed), filled in order from `buildStampSlots` (`lib/wrapped/stamp-slots.ts`); slots
+ * past the event's stamps stay blank but keep their space so the rows hold their layout.
+ * Stamps past the 20th are not shown. Art is read from `Stamps` when the deck loads, not
+ * from the deck doc.
+ *
+ * Ordered by category, then name (`buildStampSlots`). Every slot's locked art and name are
+ * printed on its book and slide in with it; collected stamps then paste their art over the
+ * locked art, one by one, once both books have landed.
  *
  * The rings are a mesh-gradient shader in Figma; they ship as a PNG rasterised at 4x
  * from the shader's own parameters. Each ring is drawn as Figma lays it out for the top
@@ -19,14 +25,14 @@ import type { CSSProperties } from "react";
  */
 
 const ASSETS = "/assets/wrapped/stamps";
-const SLOTS_PER_ROW = 4;
+const SLOTS_PER_ROW = 5;
 const RING_COUNT = 5;
 
 const TIMING = {
   title: 0,
   topBook: 250,
   bottomBook: 550,
-  /** First stamp lands after both books; each next one follows by `stampStep`. */
+  /** First collected stamp pastes in after both books land; each next follows by `stampStep`. */
   stamps: 1100,
   stampStep: 140,
 } as const;
@@ -55,7 +61,16 @@ function enter(name: string, delay: number, duration = 800): CSSProperties {
   return { animation: `${name} ${duration}ms cubic-bezier(0.22, 1, 0.36, 1) ${delay}ms both` };
 }
 
-export function StampsSlide({ stamps, active }: { stamps: WrappedStamp[]; active: boolean }) {
+export function StampsSlide({ slots, active }: { slots: StampSlotData[]; active: boolean }) {
+  // Collected stamps paste in one after another, over locked art printed on their book.
+  let pasted = 0;
+  const pasteDelays = slots.map((slot) =>
+    slot.collected ? TIMING.stamps + pasted++ * TIMING.stampStep : null,
+  );
+  const bookStamps = (bookIndex: number) => (
+    <BookStamps bookIndex={bookIndex} slots={slots} pasteDelays={pasteDelays} />
+  );
+
   return (
     <CompCanvas className="bg-[#2c2543]">
       {active && (
@@ -67,43 +82,15 @@ export function StampsSlide({ stamps, active }: { stamps: WrappedStamp[]; active
             style={enter("wrapped-slide-left", TIMING.bottomBook, 900)}
           >
             <BottomBook />
+            {bookStamps(1)}
           </div>
           <div
             className="absolute inset-0"
             style={enter("wrapped-slide-right", TIMING.topBook, 900)}
           >
             <TopBook />
+            {bookStamps(0)}
           </div>
-
-          {BOOKS.map((book, bookIndex) =>
-            book.rows.map((row, rowIndex) => {
-              const rowStart = (bookIndex * 2 + rowIndex) * SLOTS_PER_ROW;
-              return (
-                <div
-                  key={`${row.x}-${row.y}`}
-                  className="absolute flex items-center justify-center"
-                  style={{ left: row.x, top: row.y, width: row.w, height: row.h }}
-                >
-                  <div
-                    className="flex flex-none items-start justify-center gap-[4px]"
-                    style={{ rotate: `${book.rowRotate}deg` }}
-                  >
-                    {Array.from({ length: SLOTS_PER_ROW }, (_, slot) => {
-                      const index = rowStart + slot;
-                      return (
-                        <StampSlot
-                          key={index}
-                          stamp={stamps[index] ?? null}
-                          imageRotate={book.imageRotate}
-                          delay={TIMING.stamps + index * TIMING.stampStep}
-                        />
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            }),
-          )}
 
           <p
             className="-translate-x-1/2 -translate-y-1/2 absolute top-[194.5px] left-1/2 w-[816px] text-center font-bold text-[#fff] text-[100px] leading-[82.773px] tracking-[0.5912px]"
@@ -117,38 +104,90 @@ export function StampsSlide({ stamps, active }: { stamps: WrappedStamp[]; active
   );
 }
 
+/** One book's two rows, drawn inside the book so they move with it. */
+function BookStamps({
+  bookIndex,
+  slots,
+  pasteDelays,
+}: {
+  bookIndex: number;
+  slots: StampSlotData[];
+  pasteDelays: (number | null)[];
+}) {
+  const book = BOOKS[bookIndex];
+  return book.rows.map((row, rowIndex) => {
+    const rowStart = (bookIndex * book.rows.length + rowIndex) * SLOTS_PER_ROW;
+    return (
+      <div
+        key={`${row.x}-${row.y}`}
+        className="absolute flex items-center justify-center"
+        style={{ left: row.x, top: row.y, width: row.w, height: row.h }}
+      >
+        <div
+          className="flex flex-none items-start justify-center gap-[4px]"
+          style={{ rotate: `${book.rowRotate}deg` }}
+        >
+          {Array.from({ length: SLOTS_PER_ROW }, (_, slot) => {
+            const index = rowStart + slot;
+            return (
+              <StampSlot
+                key={index}
+                stamp={slots[index] ?? null}
+                imageRotate={book.imageRotate}
+                pasteDelay={pasteDelays[index] ?? null}
+              />
+            );
+          })}
+        </div>
+      </div>
+    );
+  });
+}
+
 function StampSlot({
   stamp,
   imageRotate,
-  delay,
+  pasteDelay,
 }: {
-  stamp: WrappedStamp | null;
+  stamp: StampSlotData | null;
   imageRotate: number;
-  delay: number;
+  /** When a collected stamp pastes in; null for a locked one, which needs no entrance. */
+  pasteDelay: number | null;
 }) {
-  // Uncollected slots keep their width so the collected ones stay where the design puts them.
-  if (!stamp) return <div className="w-[196px] shrink-0" />;
+  // Slots past the event's stamps stay blank but keep their width, so the rest hold the layout.
+  if (!stamp) return <div className="w-[158px] shrink-0" />;
 
   return (
-    <div className="flex w-[196px] shrink-0 justify-center">
-      <div className="flex w-[182.667px] rotate-[3.49deg] flex-col items-center gap-[13px]">
-        <div
-          className="size-[150px] rounded-full bg-[#c9b8f5]"
-          style={{ rotate: `${imageRotate}deg`, ...enter("wrapped-stamp", delay, 600) }}
-        >
-          {stamp.imgURL && (
-            <img
-              alt={stamp.name}
-              src={stamp.imgURL}
-              className="block size-full rounded-full object-cover"
-              draggable={false}
-            />
+    <div className="flex w-[158px] shrink-0 justify-center">
+      <div className="flex w-[152px] rotate-[3.49deg] flex-col items-center gap-[12px]">
+        {/* Every slot's locked art and name are printed on the page; a collected stamp
+            pastes its own art over the locked art. */}
+        <div className="relative size-[128px]" style={{ rotate: `${imageRotate}deg` }}>
+          <img
+            alt={stamp.collected ? "" : `${stamp.name} (not collected)`}
+            src={stamp.lockedImgURL}
+            className="block size-full rounded-full object-cover"
+            draggable={false}
+          />
+          {stamp.collected && (
+            <div
+              className={cn("absolute inset-0 rounded-full", !stamp.imgURL && "bg-[#c9b8f5]")}
+              style={pasteDelay !== null ? enter("wrapped-stamp", pasteDelay, 600) : undefined}
+            >
+              {stamp.imgURL && (
+                <img
+                  alt={stamp.name}
+                  src={stamp.imgURL}
+                  className="block size-full rounded-full object-cover"
+                  draggable={false}
+                />
+              )}
+            </div>
           )}
         </div>
-        <p
-          className="w-full break-words text-center font-semibold text-[#000] text-[30px] leading-[28px] tracking-[0.5912px]"
-          style={enter("wrapped-fade", delay + 200, 500)}
-        >
+        {/* Wider than the stamp column, up to the slot pitch, so the longest words in the
+            event's names ("Superpowers!") fit on a line instead of breaking. */}
+        <p className="w-[160px] shrink-0 break-words text-center font-semibold text-[#000] text-[24px] leading-[24px] tracking-[0.5912px]">
           {stamp.name}
         </p>
       </div>

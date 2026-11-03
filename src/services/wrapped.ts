@@ -4,7 +4,18 @@ import type {
   WrappedShareCard,
   WrappedStatsSession,
 } from "@/lib/firebase/types/wrapped";
-import { type DocumentData, type DocumentReference, doc, getDoc, setDoc } from "firebase/firestore";
+import type { LiveStamp } from "@/lib/wrapped/stamp-slots";
+import {
+  type DocumentData,
+  type DocumentReference,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  setDoc,
+  where,
+} from "firebase/firestore";
 
 /**
  * Utility to get a typed reference to a hacker's Wrapped deck document
@@ -80,6 +91,30 @@ export async function fetchWrappedDoc(
   }
 
   return snap.data() as WrappedDoc;
+}
+
+/**
+ * Fetches an event's stamps for the stamps slide, read fresh each time the deck opens so
+ * stamp edits made after the batch run still show
+ *
+ * Matches the batch script: only `Stamps` whose `hackathon` is exactly this event.
+ *
+ * @param eventId - the deck's `eventId`, a `Hackathons/` doc id
+ * @returns every stamp of the event, hidden ones included
+ */
+export async function fetchEventStamps(eventId: string): Promise<LiveStamp[]> {
+  const snap = await getDocs(query(collection(db, "Stamps"), where("hackathon", "==", eventId)));
+  return snap.docs.map((stamp) => {
+    const data = stamp.data();
+    return {
+      id: stamp.id,
+      name: data.name,
+      imgURL: data.imgURL,
+      lockedImgURL: data.lockedImgURL,
+      category: data.category,
+      isHidden: data.isHidden,
+    };
+  });
 }
 
 /**

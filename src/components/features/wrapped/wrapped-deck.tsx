@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { dismissWrappedBanner } from "@/lib/wrapped/banner-dismissal";
 import { SCENES, sceneVideo } from "@/lib/wrapped/scenes";
 import { type SlideId, buildSlides } from "@/lib/wrapped/slides";
+import type { StampSlot } from "@/lib/wrapped/stamp-slots";
 import { recordWrappedSession } from "@/services/wrapped";
 import { Share, X } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -14,6 +15,8 @@ import type { RefObject } from "react";
 
 interface WrappedDeckProps {
   doc: WrappedDoc;
+  /** The stamps slide's stampbook, built when the deck was loaded. */
+  stampSlots: StampSlot[];
   /** Firestore collection name for the hackathon; null suppresses telemetry (dev fixtures). */
   dbCollectionName: string | null;
   /** Viewing hacker's uid; null suppresses telemetry. */
@@ -104,6 +107,7 @@ function useLaunchGeometry(
  */
 export function WrappedDeck({
   doc,
+  stampSlots,
   dbCollectionName,
   uid,
   launchedFromBanner = false,
@@ -258,6 +262,7 @@ export function WrappedDeck({
                 key={i === safeIndex ? `${slideId}-${replay}` : slideId}
                 slideId={slideId}
                 doc={doc}
+                stampSlots={stampSlots}
                 active={i === safeIndex}
                 skipRocketEntrance={launchedFromBanner}
                 onShare={() => setIsSharing(true)}
@@ -328,6 +333,7 @@ export function WrappedDeck({
         {isSharing && (
           <ShareSheet
             doc={doc}
+            stampSlots={stampSlots}
             slides={slides}
             onClose={() => setIsSharing(false)}
             onSave={() => {
@@ -345,6 +351,7 @@ export function WrappedDeck({
 interface SlideProps {
   slideId: SlideId;
   doc: WrappedDoc;
+  stampSlots: StampSlot[];
   active: boolean;
   /** The launch fly-up already played the rocket's climb, so the intro's own skips it. */
   skipRocketEntrance?: boolean;
@@ -352,7 +359,7 @@ interface SlideProps {
   onShare: () => void;
 }
 
-function Slide({ slideId, doc, active, skipRocketEntrance, onShare }: SlideProps) {
+function Slide({ slideId, doc, stampSlots, active, skipRocketEntrance, onShare }: SlideProps) {
   const scene = SCENES[slideId];
   if (scene.kind === "video") {
     return (
@@ -369,6 +376,7 @@ function Slide({ slideId, doc, active, skipRocketEntrance, onShare }: SlideProps
       <CodedSlideContent
         slideId={slideId}
         doc={doc}
+        stampSlots={stampSlots}
         active={active}
         skipRocketEntrance={skipRocketEntrance}
         summaryAction={<ShareButton onClick={onShare} />}

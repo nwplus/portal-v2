@@ -4,6 +4,7 @@ import { StampsSlide } from "@/components/features/wrapped/stamps-slide";
 import { SummarySlide } from "@/components/features/wrapped/summary-slide";
 import type { WrappedDoc } from "@/lib/firebase/types/wrapped";
 import type { SlideId } from "@/lib/wrapped/slides";
+import type { StampSlot } from "@/lib/wrapped/stamp-slots";
 import type { ReactNode } from "react";
 
 /**
@@ -17,12 +18,15 @@ import type { ReactNode } from "react";
 export function CodedSlideContent({
   slideId,
   doc,
+  stampSlots,
   active,
   skipRocketEntrance = false,
   summaryAction,
 }: {
   slideId: SlideId;
   doc: WrappedDoc;
+  /** The stamps slide's stampbook, built when the deck was loaded. */
+  stampSlots: StampSlot[];
   active: boolean;
   skipRocketEntrance?: boolean;
   summaryAction?: ReactNode;
@@ -33,7 +37,7 @@ export function CodedSlideContent({
         <IntroSlide event={doc.event} active={active} skipRocketEntrance={skipRocketEntrance} />
       );
     case "stamps":
-      return <StampsSlide stamps={doc.showedUp.stamps} active={active} />;
+      return <StampsSlide slots={stampSlots} active={active} />;
     case "archetype":
       return <ArchetypeSlide archetype={doc.archetype} active={active} />;
     case "summary":

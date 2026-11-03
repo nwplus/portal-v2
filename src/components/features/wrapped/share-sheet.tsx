@@ -2,6 +2,7 @@ import { renderSlide, saveSlideImages } from "@/components/features/wrapped/expo
 import type { WrappedDoc } from "@/lib/firebase/types/wrapped";
 import { cn } from "@/lib/utils";
 import { SLIDE_LABELS, type SlideId } from "@/lib/wrapped/slides";
+import type { StampSlot } from "@/lib/wrapped/stamp-slots";
 import { Check, Download, Loader2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -22,11 +23,13 @@ type Render =
  */
 export function ShareSheet({
   doc,
+  stampSlots,
   slides,
   onClose,
   onSave,
 }: {
   doc: WrappedDoc;
+  stampSlots: StampSlot[];
   slides: SlideId[];
   onClose: () => void;
   /** Fired on each download, before saving (telemetry). */
@@ -48,7 +51,7 @@ export function ShareSheet({
         if (cancelled) return;
         setRender(slideId, { status: "pending" });
         try {
-          const blob = await renderSlide(slideId, doc);
+          const blob = await renderSlide(slideId, doc, stampSlots);
           const url = URL.createObjectURL(blob);
           urls.push(url);
           setRender(slideId, { status: "ready", blob, url });
@@ -63,7 +66,7 @@ export function ShareSheet({
       cancelled = true;
       for (const url of urls) URL.revokeObjectURL(url);
     };
-  }, [doc, slides]);
+  }, [doc, stampSlots, slides]);
 
   const toggle = (slideId: SlideId) =>
     setSelected((current) => {

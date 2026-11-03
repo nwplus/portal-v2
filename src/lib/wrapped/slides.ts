@@ -57,7 +57,7 @@ const EARLY_SUBMISSION_MIN_HOURS = 1;
  *  - `github`           the project has a readable repo (team line count)
  *  - `techStack`        the project lists at least one tool
  *  - `attendance`       always — zero workshops is still a number the comp can show
- *  - `stamps`           always
+ *  - `stamps`           collected at least one stamp
  *  - `comparison`       a featured stat (`crossHackerComparison.featured`, picked by the
  *                       script); right after that stat's own slide: `github` for lines,
  *                       `stamps` for stamps, `attendance` for events
@@ -97,8 +97,10 @@ export function buildSlides(doc: WrappedDoc): SlideId[] {
   slides.push("attendance");
   if (featured === "events") slides.push("comparison");
 
-  slides.push("stamps");
-  if (featured === "stamps") slides.push("comparison");
+  if (doc.showedUp.stamps.length > 0) {
+    slides.push("stamps");
+    if (featured === "stamps") slides.push("comparison");
+  }
 
   if (doc.prize && doc.prize.length > 0) {
     slides.push("prizes");

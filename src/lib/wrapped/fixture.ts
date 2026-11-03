@@ -12,13 +12,37 @@ import type { WrappedDoc } from "@/lib/firebase/types/wrapped";
  * back to these when the search param is present in a dev build.
  */
 
-/** Stand-in images from the summary art; real decks carry each stamp's `Stamps/{id}.imgURL`. */
+/**
+ * Real HackCamp2026 stamp ids (prod's, also copied to dev), so the stamps slide merges them
+ * with the event's live `Stamps` like a real deck. The images are stand-ins from the
+ * summary art, shown only if `Stamps` can't be read.
+ */
 const STAMPS = [
-  { id: "first-commit", name: "First Commit", imgURL: "/assets/wrapped/summary/stamp-yellow.svg" },
-  { id: "night-owl", name: "Night Owl", imgURL: "/assets/wrapped/summary/stamp-blue.svg" },
-  { id: "team-player", name: "Team Player", imgURL: "/assets/wrapped/summary/stamp-pink.svg" },
-  { id: "demo-time", name: "Demo Time", imgURL: "/assets/wrapped/summary/stamp-green.svg" },
-  { id: "opening", name: "Opening Ceremony", imgURL: "/assets/wrapped/summary/stamp-purple.svg" },
+  {
+    id: "06mx5Xy0AFoSY1CakmHf",
+    name: "Give It a Memory!",
+    imgURL: "/assets/wrapped/summary/stamp-yellow.svg",
+  },
+  {
+    id: "0tsYTXBmk81SUQqH2fIB",
+    name: "CTF: Git",
+    imgURL: "/assets/wrapped/summary/stamp-blue.svg",
+  },
+  {
+    id: "8948zbUIveoyJviAkvPk",
+    name: "Prompt to Prototype",
+    imgURL: "/assets/wrapped/summary/stamp-pink.svg",
+  },
+  {
+    id: "OzRhThwyKggvvVJ6WvHi",
+    name: "Vibe Responsibly!",
+    imgURL: "/assets/wrapped/summary/stamp-green.svg",
+  },
+  {
+    id: "t2BzYCLTMGjo70trI3yM",
+    name: "How Do I Even Start?",
+    imgURL: "/assets/wrapped/summary/stamp-purple.svg",
+  },
 ];
 
 /** Every slide qualifies — the longest deck the gating can produce. Ranks on lines. */
@@ -123,7 +147,7 @@ const noComparison: WrappedDoc = {
   },
 };
 
-/** The floor: intro, returning, origin, attendance, stamps, archetype, summary. */
+/** The floor: intro, returning, origin, attendance, archetype, summary. No stamps, no stamps slide. */
 const minimal: WrappedDoc = {
   ...noProject,
   survival: null,

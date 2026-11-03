@@ -12,6 +12,7 @@ import {
 } from "@/lib/wrapped/lottie";
 import { SCENES, type VideoScene, sceneVideo } from "@/lib/wrapped/scenes";
 import type { SlideId } from "@/lib/wrapped/slides";
+import type { StampSlot } from "@/lib/wrapped/stamp-slots";
 import { toBlob } from "html-to-image";
 import lottie from "lottie-web";
 import { createRoot } from "react-dom/client";
@@ -36,9 +37,15 @@ const VIDEO_STILL_AT = 0.85;
 const BLANK_IMAGE =
   "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
 
-export async function renderSlide(slideId: SlideId, doc: WrappedDoc): Promise<Blob> {
+export async function renderSlide(
+  slideId: SlideId,
+  doc: WrappedDoc,
+  stampSlots: StampSlot[],
+): Promise<Blob> {
   const scene = SCENES[slideId];
-  return scene.kind === "video" ? renderVideoSlide(scene, doc) : renderCodedSlide(slideId, doc);
+  return scene.kind === "video"
+    ? renderVideoSlide(scene, doc)
+    : renderCodedSlide(slideId, doc, stampSlots);
 }
 
 /** How long any one media event may take before the slide is given up on. */
@@ -250,13 +257,17 @@ async function svgToImage(svg: SVGSVGElement): Promise<HTMLImageElement> {
   }
 }
 
-async function renderCodedSlide(slideId: SlideId, doc: WrappedDoc): Promise<Blob> {
+async function renderCodedSlide(
+  slideId: SlideId,
+  doc: WrappedDoc,
+  stampSlots: StampSlot[],
+): Promise<Blob> {
   const host = offscreenHost();
   const root = createRoot(host);
   try {
     // Rendered asynchronously, then waited for: callers are often inside an effect, where
     // React won't flush a render synchronously.
-    root.render(<CodedSlideContent slideId={slideId} doc={doc} active />);
+    root.render(<CodedSlideContent slideId={slideId} doc={doc} stampSlots={stampSlots} active />);
     let comp: HTMLElement | null = null;
     for (let frame = 0; frame < 60 && !comp; frame++) {
       await nextFrame();
