@@ -138,8 +138,8 @@ export const SCENES: Record<SlideId, Scene> = {
     kind: "video",
     video: `${ASSETS}/cross-hacker/cross-hacker-bg.mp4`,
     lottie: `${ASSETS}/cross-hacker/cross-hacker.json`,
-    // The category types itself in until frame 89 of 90, so the still waits for it; not 1,
-    // since seeking to the very end of a clip isn't reliable everywhere.
+    // Everything's in by 3s and holds to the clip's 10s end; the still is taken near that end,
+    // not at 1, since seeking to the very end of a clip isn't reliable everywhere.
     stillAt: 0.99,
     // Which stat is shown is the script's call (`featured`); buildSlides only includes this
     // slide when there is one.
