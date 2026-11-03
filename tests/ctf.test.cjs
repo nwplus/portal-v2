@@ -19,27 +19,28 @@ test('card state covers coming soon, open, sold out, closed and solved', () => {
 });
 
 test('card status line', () => {
-  assert.equal(ctf.describeCardStatus('open', challenge()), '4/30 claimed');
-  assert.equal(ctf.describeCardStatus('soldOut', challenge()), 'All flags claimed');
-  assert.equal(ctf.describeCardStatus('closed', challenge()), 'Closed');
-  assert.equal(ctf.describeCardStatus('comingSoon', challenge()), 'Coming soon');
-  assert.equal(ctf.describeCardStatus('solved', challenge(), { rank: 2, points: 7 }), 'Rank #2 · +7 points');
-  assert.equal(ctf.describeCardStatus('solved', challenge(), { rank: 9, points: 1 }), 'Rank #9 · +1 point');
+  assert.equal(ctf.describeCardStatus('open'), null);
+  assert.equal(ctf.describeCardStatus('soldOut'), 'All flags claimed');
+  assert.equal(ctf.describeCardStatus('closed'), 'Closed');
+  assert.equal(ctf.describeCardStatus('comingSoon'), 'Coming soon');
+  assert.equal(ctf.describeCardStatus('solved', { points: 7 }), 'Solved · +7 points');
+  assert.equal(ctf.describeCardStatus('solved', { points: 1 }), 'Solved · +1 point');
+  assert.equal(ctf.describeCardStatus('solved'), 'Solved');
 });
 
 test('submit results map to the spec copy', () => {
   const titles = { day1: 'Night one' };
   assert.deepEqual(
     ctf.describeSubmitResult({ status: 'solved', challengeId: 'day1', rank: 1, points: 10, stampName: 'S' }, titles),
-    { tone: 'success', message: 'Rank #1 on Night one — +10 points. Stamp unlocked!' },
+    { tone: 'success', message: 'Solved Night one — +10 points. Stamp unlocked!' },
   );
   assert.deepEqual(
     ctf.describeSubmitResult({ status: 'solved', challengeId: 'dayX', rank: 7, points: 1, stampName: 'S' }, titles),
-    { tone: 'success', message: 'Rank #7 on this challenge — +1 point. Stamp unlocked!' },
+    { tone: 'success', message: 'Solved this challenge — +1 point. Stamp unlocked!' },
   );
   assert.deepEqual(
     ctf.describeSubmitResult({ status: 'alreadySolved', challengeId: 'day1', rank: 3, points: 5 }, titles),
-    { tone: 'info', message: "You've already solved Night one (rank #3)." },
+    { tone: 'info', message: "You've already solved Night one." },
   );
   assert.deepEqual(ctf.describeSubmitResult({ status: 'invalid' }, titles), { tone: 'error', message: "That's not a valid flag." });
   assert.deepEqual(ctf.describeSubmitResult({ status: 'claimed' }, titles), {
