@@ -17,6 +17,7 @@
     "lint": "biome lint",
     "prepare": "husky",
     "wrapped": "tsx wrapped/script.ts",
+    "wrapped:compress": "node wrapped/compress-clips.ts",
     "typecheck:wrapped": "tsc -p wrapped/tsconfig.json --noEmit"
   },
   "dependencies": {

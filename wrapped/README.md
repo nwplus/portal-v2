@@ -160,15 +160,18 @@ cache/{env}/{eventId}/
 `raw/socials.json` holds opt-in flags, so a hacker who opts out after the first fetch is
 only picked up with `bypassCache` on.
 
-### Opt-out
+### Opt-out and no-shows
 
 After `Socials/{uid}` is fetched, hackers with `hackerWrappedOptIn === false` are
-dropped. A missing field or a missing Socials doc means included. Opted-out hackers get
-no doc, aren't in any cohort figure, and have their emails kept only so the match report
+dropped, and so are hackers never scanned in at the event (`dayOf.checkedIn` absent or
+`false`, `isCheckedIn`). A missing opt-in field or a missing Socials doc means included.
+If nobody is checked in, fetch stops rather than let `write` delete every existing deck
+as stale. Excluded hackers get no doc, aren't in any cohort figure, and have their emails kept only so the match report
 doesn't list them as unmatched. Their commits and lines still count toward their team's
 total. Because they leave every cohort, an opt-out also moves other hackers'
 `crossHackerComparison` percentiles (and possibly their `featured` stat), not only their
-own doc, so picking one up means rewriting every doc, not just deleting theirs.
+own doc, so picking one up means rewriting every doc, not just deleting theirs. A no-show
+who is still listed on a Devpost row keeps counting toward that row's `teamSize`.
 
 ### Match review pause
 
@@ -513,8 +516,11 @@ after the prize run never downgrades a winner.
   (Haiku 4.5 via the Batches API, ≤ 80 chars, organizer review pause in enrich, hidden
   when the About text is junk). Run against the real API on 2 dev test projects.
 
-- **Q6.** Every `acceptedAndAttending` applicant, checked in or not. Simpler, and the
-  count barely differs.
+- **Q6.** `acceptedAndAttending` applicants who checked in (`dayOf.checkedIn === true`)
+  only. Reversed from "checked in or not": on cmd-f2026, 42 of 185 attending applicants
+  were never scanned in (143 `true`, 2 `false`, 40 absent; the 143 matches `Attendance`),
+  the deck thanks the hacker for coming, and admin-v2's Wrapped email queries the same
+  `dayOf.checkedIn == true`. See [Opt-out and no-shows](#opt-out-and-no-shows).
 - **Q7.** Verified in the `qr-check-in` repo (`src/lib/firebase.ts`):
   `Socials/{uid}.unlockedStamps[eventId]` is an array of **stamp doc ids** from the
   top-level `Stamps` collection, keyed by exactly the `Hackathons/` doc id (e.g.

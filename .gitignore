@@ -12,5 +12,7 @@ dist-ssr
 wrapped/service-account*.json
 wrapped/cache/
 wrapped/csv/
+# Compressed Wrapped clips: uploaded to Firebase Storage, never committed.
+public/assets/wrapped/compressed/
 
 .pnpm-store/

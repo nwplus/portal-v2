@@ -1,6 +1,6 @@
 import { CodedSlideContent } from "@/components/features/wrapped/coded-slide-content";
 import { ROCKET_HEIGHT, ROCKET_WIDTH, RocketShip } from "@/components/features/wrapped/rocket-ship";
-import { ShareSheet } from "@/components/features/wrapped/share-sheet";
+import { ShareSheet, useShareImage } from "@/components/features/wrapped/share-sheet";
 import { VideoSlide } from "@/components/features/wrapped/video-slide";
 import type { WrappedDoc } from "@/lib/firebase/types/wrapped";
 import { cn } from "@/lib/utils";
@@ -103,7 +103,7 @@ function useLaunchGeometry(
  * quickly to go back. Arrow keys do the same.
  *
  * Telemetry: `opened` on mount, `completed` on reaching the summary, `shareClicked` on
- * saving slides from the share sheet. Each is written at most once per visit.
+ * saving the image from the share sheet. Each is written at most once per visit.
  */
 export function WrappedDeck({
   doc,
@@ -127,6 +127,8 @@ export function WrappedDeck({
   // remounting (changing `?mock=` re-runs the loader), and a held index can outrun it.
   const safeIndex = Math.min(index, slides.length - 1);
   const current = slides[safeIndex];
+  // Rendered in the background from the summary on, so it's ready when Share is tapped.
+  const shareImage = useShareImage(doc, current === "summary" || isSharing);
 
   const reportedOpen = useRef(false);
   const reportedComplete = useRef(false);
@@ -332,9 +334,8 @@ export function WrappedDeck({
 
         {isSharing && (
           <ShareSheet
-            doc={doc}
-            stampSlots={stampSlots}
-            slides={slides}
+            image={shareImage.image}
+            onRetry={shareImage.retry}
             onClose={() => setIsSharing(false)}
             onSave={() => {
               if (reportedShare.current) return;

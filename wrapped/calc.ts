@@ -44,6 +44,14 @@ export function isOptedOut(social: RawSocial | undefined): boolean {
   return social?.hackerWrappedOptIn === false;
 }
 
+/**
+ * Whether the hacker was scanned in at the event: `dayOf.checkedIn`, a boolean the QR
+ * scanner sets. Only a literal `true` counts; absent or `false` is a no-show, who gets no deck.
+ */
+export function isCheckedIn(applicant: RawApplicant): boolean {
+  return applicant.dayOf?.checkedIn === true;
+}
+
 /** Event-wide reads, indexed once so buildHacker is a lookup per hacker. */
 export interface HackerLookups {
   eventId: string;
@@ -76,7 +84,7 @@ export function buildHacker(
 ): Hacker {
   const applicantEmail = applicant.basicInfo?.email?.trim().toLowerCase();
   const socialEmail = social?.email?.trim().toLowerCase();
-  const checkedIn = applicant.dayOf?.checkedIn === true;
+  const checkedIn = isCheckedIn(applicant);
   const unlocked = resolveUnlockedStamps(social, lookups.eventId, lookups.stampsById);
 
   return {
@@ -278,9 +286,9 @@ export interface MatchReport {
   projects: number;
   /** Included hackers on no project. */
   hackersWithoutProject: Array<{ uid: string; name: string; emails: string[] }>;
-  /** Rows with no matched hacker. Rows listing only opted-out emails are left out. */
+  /** Rows with no matched hacker. Rows listing only excluded hackers' emails are left out. */
   orphanRows: Array<{ title: string; emails: string[] }>;
-  /** Emails on otherwise matched rows that matched no one (opted-out emails excluded). */
+  /** Emails on otherwise matched rows that matched no one (excluded hackers' emails left out). */
   unmatchedEmails: Array<{ title: string; email: string }>;
   /** Hackers found on more than one row; `assigned` is the row they got. */
   multiProjectHackers: Array<{ uid: string; titles: string[]; assigned: string | null }>;
@@ -290,15 +298,15 @@ export function summarizeMatch(
   match: MatchOutput,
   hackers: Hacker[],
   rows: DevpostRow[],
-  optedOutEmails: string[],
+  excludedEmails: string[],
 ): MatchReport {
-  const optedOut = new Set(optedOutEmails);
+  const excluded = new Set(excludedEmails);
   const titleById = new Map(rows.map((row) => [row.submissionUrl, row.title]));
   const projectIds = new Set(match.projects.map((project) => project.id));
 
   const orphanRows = rows.flatMap((row) => {
     if (projectIds.has(row.submissionUrl)) return [];
-    const emails = row.memberEmails.filter((email) => !optedOut.has(email));
+    const emails = row.memberEmails.filter((email) => !excluded.has(email));
     return emails.length > 0 ? [{ title: row.title, emails }] : [];
   });
 
@@ -311,7 +319,7 @@ export function summarizeMatch(
     orphanRows,
     unmatchedEmails: match.projects.flatMap((project) =>
       project.unmatchedEmails
-        .filter((email) => !optedOut.has(email))
+        .filter((email) => !excluded.has(email))
         .map((email) => ({ title: project.title, email })),
     ),
     multiProjectHackers: Object.entries(match.conflicts).map(([uid, ids]) => ({

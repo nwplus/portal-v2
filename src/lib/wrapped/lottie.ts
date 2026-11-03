@@ -11,7 +11,7 @@ export const LOTTIE_FONT_FAMILY = "Hanken Grotesk";
 export const LOTTIE_FONT_WEIGHT = "800";
 
 /**
- * SVG renderer settings for every comp, shared by the deck and the image exporter.
+ * SVG renderer settings for every comp the deck plays.
  *
  * `filterSize` is the region an effect filter may paint, as a fraction of the layer's
  * bounding box. lottie-web's SVG default is the box itself (0%/100%), which cuts a glow

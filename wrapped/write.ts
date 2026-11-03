@@ -31,6 +31,7 @@ import {
   filterToHackathonWindow,
   findStaleOverrides,
   isJunkAbout,
+  isCheckedIn,
   isOptedOut,
   latestCommitAt,
   matchHackersToProjects,
@@ -125,20 +126,32 @@ async function stageFetch(ctx: RunContext): Promise<void> {
   );
   const socialByUid = new Map(socials.map((social) => [social.uid, social]));
 
-  // Dropped before anything else reads them, so they're in no cohort figure.
+  // Dropped before anything else reads them, so they're in no cohort figure. No-shows get
+  // no deck: the deck thanks the hacker for coming, and admin-v2 emails checked-in
+  // hackers only, so both lists must be the same.
   const included: RawApplicant[] = [];
-  const optedOutEmails: string[] = [];
+  const excludedEmails: string[] = [];
+  let optedOut = 0;
+  let notCheckedIn = 0;
   for (const applicant of applicants) {
     const social = socialByUid.get(applicant.uid);
-    if (!isOptedOut(social)) {
+    if (isOptedOut(social)) optedOut++;
+    else if (!isCheckedIn(applicant)) notCheckedIn++;
+    else {
       included.push(applicant);
       continue;
     }
     for (const email of [applicant.basicInfo?.email, social?.email]) {
-      if (email) optedOutEmails.push(email.trim().toLowerCase());
+      if (email) excludedEmails.push(email.trim().toLowerCase());
     }
   }
-  ui.info(`${applicants.length - included.length} opted out, ${included.length} remaining`);
+  ui.info(`${optedOut} opted out, ${notCheckedIn} not checked in, ${included.length} remaining`);
+  if (included.length === 0) {
+    throw new Error(
+      `No checked-in hackers in Hackathons/${event.eventId}/Applicants (dayOf.checkedIn). ` +
+        "Run after check-in, or rerun with bypassCache if raw/applicants.json predates it.",
+    );
+  }
 
   const [attendance, stamps] = await Promise.all([fetchAttendance(ctx), fetchStamps(ctx)]);
   const byCategory = STAMP_CATEGORIES.map(
@@ -172,7 +185,7 @@ async function stageFetch(ctx: RunContext): Promise<void> {
     schemaVersion: STAGE_SCHEMA_VERSION,
     event,
     hackers,
-    optedOutEmails: [...new Set(optedOutEmails)],
+    excludedEmails: [...new Set(excludedEmails)],
     devpostRows,
   });
 }
@@ -188,14 +201,14 @@ const REPORT_PREVIEW = 10;
 
 async function stageMatch(ctx: RunContext): Promise<void> {
   const { ui, cache } = ctx;
-  const { hackers, devpostRows, optedOutEmails } = await cache.readStage<FetchOutput>("fetch");
+  const { hackers, devpostRows, excludedEmails } = await cache.readStage<FetchOutput>("fetch");
 
   for (;;) {
     const overrides = { ...EMPTY_OVERRIDES, ...(await cache.readJson("overrides.json", EMPTY_OVERRIDES)) };
     for (const problem of findStaleOverrides(overrides, hackers, devpostRows)) ui.warn(problem);
 
     const match = matchHackersToProjects(hackers, devpostRows, overrides);
-    const report = summarizeMatch(match, hackers, devpostRows, optedOutEmails);
+    const report = summarizeMatch(match, hackers, devpostRows, excludedEmails ?? []);
     await cache.writeJson("match-report.json", report);
     printMatchReport(ctx, report, hackers.length);
 

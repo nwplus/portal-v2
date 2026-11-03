@@ -38,8 +38,9 @@ export type StageStatus = "pending" | "running" | "done" | "skipped";
  * Bumped when a stage output's shape changes, so a later stage refuses a stale one instead
  * of writing old-shape docs. Carried by FetchOutput, EnrichOutput and AssembleOutput; absent
  * means 1. 3: attendance counts from stamp categories, `showedUp.dayOfActivityCount`.
+ * 4: hackers not checked in (`dayOf.checkedIn !== true`) are dropped at fetch.
  */
-export const STAGE_SCHEMA_VERSION = 3;
+export const STAGE_SCHEMA_VERSION = 4;
 
 /** `cache/{env}/{eventId}/progress.json` */
 export interface Progress {
@@ -221,8 +222,11 @@ export interface FetchOutput {
   schemaVersion?: number;
   event: EventInfo;
   hackers: Hacker[];
-  /** Opted-out hackers' emails, so the match report doesn't list them as unmatched. */
-  optedOutEmails: string[];
+  /**
+   * Emails of hackers dropped at fetch (opted out, or never checked in), so the match
+   * report doesn't list them as unmatched.
+   */
+  excludedEmails: string[];
   devpostRows: DevpostRow[];
 }
 

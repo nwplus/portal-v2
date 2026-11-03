@@ -10,7 +10,23 @@ import type { SlideId } from "@/lib/wrapped/slides";
  * Whether a slide is in the deck at all is `buildSlides()`'s call, not this file's.
  */
 
+/** Lottie comps and images, served from `public/`. */
 const ASSETS = "/assets/wrapped";
+
+/**
+ * Where the clips live in Firebase Storage, under the bucket the build is configured for (dev or
+ * prod). They're too heavy for git and Hosting, so they're compressed and uploaded separately:
+ * `pnpm wrapped:compress --crf 24 --no-ssim --out public/assets/wrapped/compressed`, then copy
+ * `compressed/crf-24/*` to this folder. Objects are cached as immutable, so a re-encode goes to a
+ * new version folder (`v2`) rather than overwriting this one.
+ */
+const CLIPS = "hackerWrapped/v1";
+
+/** A clip's public URL. Public read on `hackerWrapped/` is granted in the Storage rules. */
+function clip(file: string): string {
+  const bucket = import.meta.env.VITE_FIREBASE_STORAGE_BUCKET;
+  return `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(`${CLIPS}/${file}`)}?alt=media`;
+}
 
 export type VideoScene = {
   kind: "video";
@@ -18,8 +34,6 @@ export type VideoScene = {
   video: string | ((doc: WrappedDoc) => string);
   lottie?: string;
   texts?: (doc: WrappedDoc) => Record<string, LayerText>;
-  /** Where a saved image's still is taken, as a fraction of the clip; the exporter's default otherwise. */
-  stillAt?: number;
 };
 
 export type CodedScene = { kind: "coded" };
@@ -82,29 +96,29 @@ export const SCENES: Record<SlideId, Scene> = {
     // place of nwHacks'; other events keep the nwHacks badge until they get their own.
     video: (doc) =>
       doc.eventId.toLowerCase().startsWith("hackcamp")
-        ? `${ASSETS}/first-timer/first-timer-hackcamp.mp4`
-        : `${ASSETS}/first-timer/first-timer.mp4`,
+        ? clip("first-timer/first-timer-hackcamp.mp4")
+        : clip("first-timer/first-timer.mp4"),
   },
-  returning: { kind: "video", video: `${ASSETS}/returning-hacker/returning-hacker.mp4` },
+  returning: { kind: "video", video: clip("returning-hacker/returning-hacker.mp4") },
   earlySubmission: {
     kind: "video",
-    video: `${ASSETS}/early-submission/early-submission-bg.mp4`,
+    video: clip("early-submission/early-submission-bg.mp4"),
     lottie: `${ASSETS}/early-submission/early-submission.json`,
     // `\r` is After Effects' line break, matching the comp's two-line placeholder.
     texts: (doc) => ({
       "You submitted 10 hours early!": `You submitted ${formatOneDecimal(doc.earlySubmission ?? 0)}\rhours early!`,
     }),
   },
-  hackerOrigin: { kind: "video", video: `${ASSETS}/hacker-origin/hacker-origin.mp4` },
+  hackerOrigin: { kind: "video", video: clip("hacker-origin/hacker-origin.mp4") },
   nugget: {
     kind: "video",
-    video: `${ASSETS}/nugget/project-descriptoins-bg.mp4`,
+    video: clip("nugget/project-descriptoins-bg.mp4"),
     lottie: `${ASSETS}/nugget/data.json`,
     texts: (doc) => ({ "this project is so cool": doc.project?.nugget ?? "" }),
   },
   github: {
     kind: "video",
-    video: `${ASSETS}/github-metrics/github-metrics-bg.mp4`,
+    video: clip("github-metrics/github-metrics-bg.mp4"),
     lottie: `${ASSETS}/github-metrics/github-metrics.json`,
     // Lines committed: team first, then this hacker's own — blank when there's no GitHub
     // username to attribute lines to, never a team number standing in for a personal one.
@@ -115,7 +129,7 @@ export const SCENES: Record<SlideId, Scene> = {
   },
   techStack: {
     kind: "video",
-    video: `${ASSETS}/tech-stack/tech-stack-base.mp4`,
+    video: clip("tech-stack/tech-stack-base.mp4"),
     lottie: `${ASSETS}/tech-stack/tech-stack-text-new.json`,
     texts: (doc) => {
       const stack = doc.project?.techStack ?? [];
@@ -126,7 +140,7 @@ export const SCENES: Record<SlideId, Scene> = {
   },
   attendance: {
     kind: "video",
-    video: `${ASSETS}/attendance/attendance-bg.mp4`,
+    video: clip("attendance/attendance-bg.mp4"),
     lottie: `${ASSETS}/attendance/attendance.json`,
     texts: (doc) => ({
       ".preHackathonWorkshops": String(doc.showedUp.preHackathonWorkshopCount),
@@ -136,11 +150,8 @@ export const SCENES: Record<SlideId, Scene> = {
   stamps: { kind: "coded" },
   comparison: {
     kind: "video",
-    video: `${ASSETS}/cross-hacker/cross-hacker-bg.mp4`,
+    video: clip("cross-hacker/cross-hacker-bg.mp4"),
     lottie: `${ASSETS}/cross-hacker/cross-hacker.json`,
-    // Everything's in by 3s and holds to the clip's 10s end; the still is taken near that end,
-    // not at 1, since seeking to the very end of a clip isn't reliable everywhere.
-    stillAt: 0.99,
     // Which stat is shown is the script's call (`featured`); buildSlides only includes this
     // slide when there is one.
     texts: (doc): Record<string, LayerText> => {
@@ -157,7 +168,7 @@ export const SCENES: Record<SlideId, Scene> = {
   },
   prizes: {
     kind: "video",
-    video: `${ASSETS}/prizes/prizes-won-bg.mp4`,
+    video: clip("prizes/prizes-won-bg.mp4"),
     lottie: `${ASSETS}/prizes/prizes-won.json`,
     texts: (doc) => ({ ".prizeNo": String(doc.prize?.length ?? 0) }),
   },

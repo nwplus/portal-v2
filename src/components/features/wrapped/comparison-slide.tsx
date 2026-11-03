@@ -11,8 +11,7 @@ import type { CSSProperties } from "react";
  * shown is the batch script's call (`crossHackerComparison.featured`), never this
  * component's.
  *
- * The percentage rolls in as a CSS odometer rather than a JS counter, so the slide
- * exporter's `settleAnimations()` can jump it to its final digits for a saved image.
+ * The percentage rolls in as a CSS odometer rather than a JS counter.
  */
 
 const ASSETS = "/assets/wrapped/comparison";

@@ -8,8 +8,7 @@ import type { StampSlot } from "@/lib/wrapped/stamp-slots";
 import type { ReactNode } from "react";
 
 /**
- * The coded slides, by id. Shared by the deck and the slide exporter so a saved image
- * is drawn by exactly the component the hacker watched.
+ * The coded slides, by id.
  *
  * @param summaryAction - rendered under the summary's sign-off (the share button)
  * @param skipRocketEntrance - the intro's rocket is already on its pad (the launch

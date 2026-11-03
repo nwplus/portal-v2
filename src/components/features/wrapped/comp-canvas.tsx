@@ -9,8 +9,8 @@ export const COMP_HEIGHT = 1920;
  * container, centred — the way the video slides' `object-cover` does, so coded slides
  * line up with them when the stage isn't exactly 9:16.
  *
- * The forwarded ref, and `[data-wrapped-comp]`, mark the unscaled comp, which is what a
- * saved slide image captures.
+ * The forwarded ref, and `[data-wrapped-comp]`, mark the unscaled comp, which is what the
+ * share card export captures.
  */
 export const CompCanvas = forwardRef<HTMLDivElement, { className?: string; children: ReactNode }>(
   function CompCanvas({ className, children }, ref) {

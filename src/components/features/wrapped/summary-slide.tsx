@@ -37,8 +37,7 @@ function enter(name: string, delay: number, duration = 700): CSSProperties {
  * Mounted hidden alongside the playing slide, so it is ready at the right size the
  * moment it is shown; `active` restarts the entrance.
  *
- * `action` renders under the sign-off (the deck's share button). It is left out when
- * the slide is exported, so the saved image is just the slide.
+ * `action` renders under the sign-off (the deck's share button).
  */
 export function SummarySlide({
   data,

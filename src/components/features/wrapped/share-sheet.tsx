@@ -1,111 +1,107 @@
-import { renderSlide, saveSlideImages } from "@/components/features/wrapped/export-slides";
+import { renderShareCard, saveImage } from "@/components/features/wrapped/export-share-card";
+import { ROCKET_HEIGHT, ROCKET_WIDTH, RocketShip } from "@/components/features/wrapped/rocket-ship";
 import type { WrappedDoc } from "@/lib/firebase/types/wrapped";
-import { cn } from "@/lib/utils";
-import { SLIDE_LABELS, type SlideId } from "@/lib/wrapped/slides";
-import type { StampSlot } from "@/lib/wrapped/stamp-slots";
-import { Check, Download, Loader2, X } from "lucide-react";
+import { shareCardFileName } from "@/lib/wrapped/share-card";
+import { Download, RotateCcw, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
-type Render =
+export type ShareImage =
+  | { status: "idle" }
   | { status: "pending" }
-  | { status: "ready"; blob: Blob; url: string }
+  | { status: "ready"; file: File; url: string }
   | { status: "failed" };
 
 /**
- * The summary's "share your Wrapped" sheet: rises from the bottom of the stage with a
- * horizontal strip of every slide, each a preview of the exact image that will be saved.
- * Tapping a preview toggles it; the Download button under the strip saves the selection
- * as 1080x1920 PNGs.
- *
- * Slides render one at a time as the sheet opens (each mounts a full-size slide or
- * decodes a video frame), and those renders are what gets downloaded. Clicks stay
- * inside the sheet so they never reach the stage's tap-to-navigate.
+ * How long after `start` the first render begins, so it doesn't land on the summary's
+ * entrance. Always over before the share button appears (`SUMMARY_SETTLE_MS`).
  */
-export function ShareSheet({
-  doc,
-  stampSlots,
-  slides,
-  onClose,
-  onSave,
-}: {
-  doc: WrappedDoc;
-  stampSlots: StampSlot[];
-  slides: SlideId[];
-  onClose: () => void;
-  /** Fired on each download, before saving (telemetry). */
-  onSave: () => void;
-}) {
-  const [renders, setRenders] = useState<Partial<Record<SlideId, Render>>>({});
-  const [selected, setSelected] = useState<Set<SlideId>>(() => new Set(slides));
-  const [saving, setSaving] = useState(false);
+const START_DELAY_MS = 1200;
+
+/**
+ * The share card's image, rendered once and kept for the visit. Rendering starts the
+ * first time `start` is true (and stays started), so it runs in the background while the
+ * summary plays and is usually done before the share button is tapped.
+ *
+ * @param start - begin rendering (the summary is up, or the sheet is open)
+ */
+export function useShareImage(doc: WrappedDoc, start: boolean) {
+  const [requested, setRequested] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const [image, setImage] = useState<ShareImage>({ status: "idle" });
+  if (start && !requested) setRequested(true);
 
   useEffect(() => {
+    if (!requested) return;
     let cancelled = false;
-    const urls: string[] = [];
-    const setRender = (slideId: SlideId, render: Render) => {
-      if (!cancelled) setRenders((current) => ({ ...current, [slideId]: render }));
-    };
+    let url: string | null = null;
 
-    (async () => {
-      for (const slideId of slides) {
-        if (cancelled) return;
-        setRender(slideId, { status: "pending" });
+    const timer = setTimeout(
+      async () => {
+        setImage({ status: "pending" });
         try {
-          const blob = await renderSlide(slideId, doc, stampSlots);
-          const url = URL.createObjectURL(blob);
-          urls.push(url);
-          setRender(slideId, { status: "ready", blob, url });
+          const blob = await renderShareCard(doc);
+          if (cancelled) return;
+          const file = new File([blob], shareCardFileName(doc.event), { type: "image/png" });
+          url = URL.createObjectURL(file);
+          setImage({ status: "ready", file, url });
         } catch (error) {
-          console.error(`[wrapped] failed to render ${slideId}`, error);
-          setRender(slideId, { status: "failed" });
+          console.error("[wrapped] failed to render the share card", error);
+          if (!cancelled) setImage({ status: "failed" });
         }
-      }
-    })();
+      },
+      attempt === 0 ? START_DELAY_MS : 0,
+    );
 
     return () => {
       cancelled = true;
-      for (const url of urls) URL.revokeObjectURL(url);
+      clearTimeout(timer);
+      if (url) URL.revokeObjectURL(url);
     };
-  }, [doc, stampSlots, slides]);
+  }, [doc, requested, attempt]);
 
-  const toggle = (slideId: SlideId) =>
-    setSelected((current) => {
-      const next = new Set(current);
-      if (next.has(slideId)) next.delete(slideId);
-      else next.add(slideId);
-      return next;
-    });
+  return { image, retry: () => setAttempt((count) => count + 1) };
+}
 
-  // Only finished renders can be saved; one still rendering joins on the next tap.
-  const ready = slides.flatMap((slideId, i) => {
-    const render = renders[slideId];
-    return selected.has(slideId) && render?.status === "ready" ? [{ slideId, i, render }] : [];
-  });
-  const isPreparing = slides.some((slideId) => {
-    const status = renders[slideId]?.status;
-    return status === undefined || status === "pending";
-  });
+/** The loader shows for at least this long, so a fast render doesn't just flash it. */
+const MIN_LOADING_MS = 900;
 
-  const handleDownload = async () => {
-    if (ready.length === 0 || saving) return;
+/**
+ * The summary's "share your Wrapped" sheet: rises from the bottom of the stage with a
+ * preview of the one image that gets saved, and a button to save it.
+ *
+ * While the image renders, the preview slot plays a loading animation. Clicks stay
+ * inside the sheet so they never reach the stage's tap-to-navigate.
+ */
+export function ShareSheet({
+  image,
+  onRetry,
+  onClose,
+  onSave,
+}: {
+  image: ShareImage;
+  onRetry: () => void;
+  onClose: () => void;
+  /** Fired on each save, before saving (telemetry). */
+  onSave: () => void;
+}) {
+  // Already rendered when the sheet opened: no loader at all.
+  const [loaderDone, setLoaderDone] = useState(image.status === "ready");
+  useEffect(() => {
+    if (loaderDone) return;
+    const timer = setTimeout(() => setLoaderDone(true), MIN_LOADING_MS);
+    return () => clearTimeout(timer);
+  }, [loaderDone]);
+
+  const ready = image.status === "ready" && loaderDone ? image : null;
+  const failed = image.status === "failed";
+
+  const handleSave = () => {
+    if (!ready) return;
     onSave();
-    setSaving(true);
-    try {
-      await saveSlideImages(
-        ready.map(
-          ({ slideId, i, render }) =>
-            new File(
-              [render.blob],
-              `${doc.eventId}-wrapped-${String(i + 1).padStart(2, "0")}-${slideId}.png`,
-              { type: "image/png" },
-            ),
-        ),
-      );
-    } catch (error) {
-      console.error("[wrapped] failed to save slides", error);
-    } finally {
-      setSaving(false);
-    }
+    // Not awaited before anything else: iOS needs the share sheet opened from the tap.
+    void saveImage(ready.file).catch((error) =>
+      console.error("[wrapped] failed to save the share card", error),
+    );
   };
 
   return (
@@ -132,8 +128,12 @@ export function ShareSheet({
         <div className="flex items-center justify-between px-5 pt-3 pb-3">
           <div>
             <h2 className="font-semibold text-lg">Share your Wrapped</h2>
-            <p className="text-[#fff]/60 text-sm">
-              {isPreparing ? "Preparing previews…" : "Tap the slides you want to save."}
+            <p className="text-[#fff]/60 text-sm" aria-live="polite">
+              {failed
+                ? "Something went wrong making your image."
+                : ready
+                  ? "Your Hacker Wrapped is ready to post."
+                  : "Making your image…"}
             </p>
           </div>
           <button
@@ -146,79 +146,124 @@ export function ShareSheet({
           </button>
         </div>
 
-        {/* Padded so the selection rings aren't clipped by the scroller's edges. */}
-        <div className="flex snap-x scroll-px-5 gap-3 overflow-x-auto px-5 py-1.5">
-          {slides.map((slideId) => (
-            <SlidePreview
-              key={slideId}
-              label={SLIDE_LABELS[slideId]}
-              render={renders[slideId]}
-              selected={selected.has(slideId)}
-              onToggle={() => toggle(slideId)}
-            />
-          ))}
+        <div className="flex justify-center px-5">
+          <div className="relative aspect-[9/16] h-[min(52dvh,560px)] overflow-hidden rounded-xl bg-[#1a1138] shadow-[0_8px_32px_rgb(0_0_0/0.45)]">
+            {ready ? (
+              // A real image, so press-and-hold can save it where the button can't.
+              <img
+                alt="Your Hacker Wrapped"
+                src={ready.url}
+                className="size-full object-cover [-webkit-touch-callout:default] [user-select:auto]"
+                style={{ animation: "wrapped-fade 400ms ease-out both" }}
+              />
+            ) : failed ? (
+              <div className="flex size-full flex-col items-center justify-center gap-3 p-4 text-center">
+                <p className="text-[#fff]/70 text-sm">We couldn't make your image.</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoaderDone(false);
+                    onRetry();
+                  }}
+                  className="flex items-center gap-1.5 rounded-full border border-[#fff]/40 px-4 py-1.5 font-semibold text-sm hover:bg-[#fff]/10"
+                >
+                  Try again
+                  <RotateCcw className="size-3.5" />
+                </button>
+              </div>
+            ) : (
+              <GeneratingPreview />
+            )}
+          </div>
         </div>
 
         <div className="px-5 pt-4">
           <button
             type="button"
-            onClick={handleDownload}
-            disabled={ready.length === 0 || saving}
-            className="flex w-full items-center justify-center gap-2 rounded-full bg-[#fff] py-3 font-semibold text-[#2c2543] text-sm disabled:opacity-50"
+            onClick={handleSave}
+            disabled={!ready}
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-[#fff] py-3 font-semibold text-[#2c2543] text-sm transition-opacity disabled:opacity-50"
           >
-            Download
-            {ready.length > 0 && ` ${ready.length} ${ready.length === 1 ? "slide" : "slides"}`}
-            {saving ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
+            Download image
+            <Download className="size-4" />
           </button>
+          {ready && (
+            <p className="pointer-coarse:block hidden pt-2 text-center text-[#fff]/50 text-xs">
+              Or press and hold the image to save it.
+            </p>
+          )}
         </div>
       </section>
     </div>
   );
 }
 
-function SlidePreview({
-  label,
-  render,
-  selected,
-  onToggle,
-}: {
-  label: string;
-  render: Render | undefined;
-  selected: boolean;
-  onToggle: () => void;
-}) {
+const LOADING_LINES = [
+  "Counting your lines of code…",
+  "Dusting off your stamps…",
+  "Fuelling the rocket…",
+  "Packing your Wrapped…",
+];
+const LOADING_LINE_MS = 1600;
+
+/**
+ * The preview slot while the image renders: the card's sky with the Wrapped rocket
+ * bobbing in it, a light sweeping across, and a line of status copy.
+ *
+ * Motion is CSS transforms and opacity only — the render holds the main thread in bursts,
+ * and compositor animations keep moving through them.
+ */
+function GeneratingPreview() {
+  const [line, setLine] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(
+      () => setLine((current) => (current + 1) % LOADING_LINES.length),
+      LOADING_LINE_MS,
+    );
+    return () => clearInterval(timer);
+  }, []);
+
+  const rocketWidth = 96;
   return (
-    <label className="flex w-24 shrink-0 cursor-pointer snap-start flex-col gap-1.5">
-      <input type="checkbox" className="peer sr-only" checked={selected} onChange={onToggle} />
-      <span
-        className={cn(
-          "relative block aspect-[9/16] overflow-hidden rounded-lg bg-[#1a1138] ring-2 transition peer-focus-visible:ring-[#fff]",
-          selected ? "ring-[#20ffaf]" : "opacity-50 ring-transparent",
-        )}
+    <div className="wrapped-share-loading relative flex size-full flex-col items-center justify-center gap-5">
+      <img
+        alt=""
+        src="/assets/wrapped/summary/background.png"
+        className="absolute inset-0 size-full object-cover opacity-70"
+      />
+      <img
+        alt=""
+        src="/assets/wrapped/share/stars.svg"
+        className="wrapped-twinkle absolute inset-0 size-full object-contain p-[6%]"
+      />
+      <div
+        className="relative"
+        style={{
+          width: rocketWidth,
+          height: (rocketWidth * ROCKET_HEIGHT) / ROCKET_WIDTH,
+          animation: "wrapped-bob 1.4s ease-in-out infinite",
+        }}
       >
-        {render?.status === "ready" ? (
-          <img alt="" src={render.url} className="size-full object-cover" draggable={false} />
-        ) : (
-          <span className="flex size-full items-center justify-center text-[#fff]/50 text-xs">
-            {render?.status === "failed" ? (
-              "Unavailable"
-            ) : (
-              <Loader2 className="size-4 animate-spin" />
-            )}
-          </span>
-        )}
-        <span
-          className={cn(
-            "absolute top-1.5 right-1.5 flex size-5 items-center justify-center rounded-full border",
-            selected
-              ? "border-[#20ffaf] bg-[#20ffaf] text-[#2c2543]"
-              : "border-[#fff]/70 bg-[#000]/30",
-          )}
+        <div
+          className="origin-top-left"
+          style={{ transform: `scale(${rocketWidth / ROCKET_WIDTH})` }}
         >
-          {selected && <Check className="size-3" strokeWidth={3} />}
-        </span>
-      </span>
-      <span className="truncate text-center text-[#fff]/80 text-xs">{label}</span>
-    </label>
+          <RocketShip />
+        </div>
+      </div>
+      <p
+        key={line}
+        className="relative px-4 text-center font-semibold text-[#c5fffb] text-sm"
+        style={{ animation: "wrapped-fade 400ms ease-out both" }}
+      >
+        {LOADING_LINES[line]}
+      </p>
+      {/* A soft band of light sweeping across, like a card being printed. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-y-0 left-0 w-full bg-gradient-to-r from-transparent via-[#fff]/12 to-transparent"
+        style={{ animation: "wrapped-shimmer 1.8s ease-in-out infinite" }}
+      />
+    </div>
   );
 }

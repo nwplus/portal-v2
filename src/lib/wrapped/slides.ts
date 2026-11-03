@@ -23,24 +23,6 @@ export type SlideId =
   | "archetype"
   | "summary";
 
-/** How each slide is named where the hacker picks slides, e.g. the share sheet. */
-export const SLIDE_LABELS: Record<SlideId, string> = {
-  intro: "Intro",
-  firstTimer: "First hackathon",
-  returning: "Returning hacker",
-  earlySubmission: "Early submission",
-  hackerOrigin: "Hacker origin",
-  nugget: "Your project",
-  github: "Lines committed",
-  comparison: "Your ranking",
-  techStack: "Tech stack",
-  attendance: "Workshops",
-  stamps: "Stamps collected",
-  prizes: "Prizes won",
-  archetype: "Your archetype",
-  summary: "Thank you",
-};
-
 /** An early submission is only worth a slide if it beat the deadline by this much. */
 const EARLY_SUBMISSION_MIN_HOURS = 1;
 

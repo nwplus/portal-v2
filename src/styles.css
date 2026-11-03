@@ -453,7 +453,20 @@ select:-webkit-autofill:active {
   animation: wrapped-typing 1.2s steps(12) both;
 }
 
+/* The share sheet's loading preview: a band of light sweeping across. */
+@keyframes wrapped-shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .wrapped-share-loading * {
+    animation: none !important;
+  }
   .wrapped-summary * {
     animation: none !important;
   }

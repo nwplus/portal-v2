@@ -255,7 +255,7 @@ function SpaceView({ archetype }: { archetype: ArchetypeId }) {
  * slowly about the icon's centre for as long as the slide is up.
  *
  * The rock runs `alternate` from a negative half-swing delay, so at time 0 it is mid-swing
- * and upright: the still a saved slide takes (looping animations held at 0) is level.
+ * and upright.
  */
 function IconStage({
   centre,
