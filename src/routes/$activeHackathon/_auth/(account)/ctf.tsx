@@ -84,7 +84,10 @@ function RouteComponent() {
     try {
       const result = await submitCtfFlag(dbCollectionName, flag);
       const titles = Object.fromEntries(
-        challenges.map((challenge) => [challenge._id, challenge.title ?? `Day ${challenge.order}`]),
+        challenges.map((challenge) => [
+          challenge._id,
+          challenge.title ?? `Challenge ${challenge.order}`,
+        ]),
       );
       const feedback = describeSubmitResult(result, titles);
 

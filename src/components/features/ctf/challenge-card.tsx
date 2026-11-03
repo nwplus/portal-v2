@@ -21,7 +21,7 @@ export function ChallengeCard({ challenge, solve, stampImgURL }: ChallengeCardPr
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <p className="text-text-secondary text-xs">Day {challenge.order}</p>
+          <p className="text-text-secondary text-xs">Challenge {challenge.order}</p>
           <h2 className="font-semibold text-lg text-text-primary">
             {challenge.title ?? "Coming soon"}
           </h2>

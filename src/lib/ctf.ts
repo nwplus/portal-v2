@@ -22,14 +22,14 @@ export function getChallengeCardState(
 
 export function describeCardStatus(
   state: ChallengeCardState,
-  challenge: Pick<CtfChallenge, "claimedCount" | "totalFlags">,
+  challenge: Pick<CtfChallenge, "claimedCount">,
   solve?: Pick<CtfSolve, "rank" | "points">,
 ): string {
   switch (state) {
     case "solved":
       return solve ? `Rank #${solve.rank} · +${pointsLabel(solve.points)}` : "Solved";
     case "open":
-      return `${challenge.claimedCount}/${challenge.totalFlags} claimed`;
+      return `${challenge.claimedCount} claimed`;
     case "soldOut":
       return "All flags claimed";
     case "closed":
