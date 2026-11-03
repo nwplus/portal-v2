@@ -10,7 +10,7 @@ interface ChallengeCardProps {
 
 export function ChallengeCard({ challenge, solve, stampImgURL }: ChallengeCardProps) {
   const state = getChallengeCardState(challenge, Boolean(solve));
-  const status = describeCardStatus(state, challenge, solve);
+  const status = describeCardStatus(state, solve);
 
   return (
     <div
@@ -43,7 +43,9 @@ export function ChallengeCard({ challenge, solve, stampImgURL }: ChallengeCardPr
           Open challenge →
         </a>
       )}
-      {state !== "comingSoon" && <p className="font-medium text-sm text-text-primary">{status}</p>}
+      {state !== "comingSoon" && status && (
+        <p className="font-medium text-sm text-text-primary">{status}</p>
+      )}
     </div>
   );
 }
