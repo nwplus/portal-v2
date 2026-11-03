@@ -19,7 +19,7 @@ test('card state covers coming soon, open, sold out, closed and solved', () => {
 });
 
 test('card status line', () => {
-  assert.equal(ctf.describeCardStatus('open', challenge()), '4 claimed');
+  assert.equal(ctf.describeCardStatus('open', challenge()), '4/30 claimed');
   assert.equal(ctf.describeCardStatus('soldOut', challenge()), 'All flags claimed');
   assert.equal(ctf.describeCardStatus('closed', challenge()), 'Closed');
   assert.equal(ctf.describeCardStatus('comingSoon', challenge()), 'Coming soon');
