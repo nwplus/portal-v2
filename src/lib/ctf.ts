@@ -73,6 +73,8 @@ export function describeSubmitError(code: string | undefined): string {
   switch (code?.replace(/^functions\//, "")) {
     case "resource-exhausted":
       return "Too many wrong attempts. Try again in a few minutes.";
+    case "unavailable":
+      return "We couldn't finish checking your flag. Keep it and submit it again; your claim is safe.";
     case "failed-precondition":
       return "The CTF is open to hackers who've RSVP'd.";
     default:

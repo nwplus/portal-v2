@@ -191,3 +191,7 @@ test('loadStampbook returns point values and a total, and survives a CTF read fa
     console.error = originalError;
   }
 });
+
+test('retryable backend failures tell players to keep their flag', () => {
+  assert.match(ctf.describeSubmitError('functions/unavailable'), /Keep it and submit it again/);
+});
