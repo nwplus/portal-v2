@@ -1,9 +1,5 @@
 import { db } from "@/lib/firebase/client";
-import type {
-  WrappedDoc,
-  WrappedShareCard,
-  WrappedStatsSession,
-} from "@/lib/firebase/types/wrapped";
+import type { WrappedDoc, WrappedStatsSession } from "@/lib/firebase/types/wrapped";
 import type { LiveStamp } from "@/lib/wrapped/stamp-slots";
 import {
   type DocumentData,
@@ -30,20 +26,6 @@ import {
  */
 function getWrappedRef(dbCollectionName: string, uid: string): DocumentReference<DocumentData> {
   return doc(db, "Hackathons", dbCollectionName, "Wrapped", uid);
-}
-
-/**
- * Utility to get a typed reference to a public share card
- * Path: `WrappedShares/{shareId}`
- *
- * Top-level and world-readable, unlike every other per-hacker path in this app —
- * the card deliberately carries no uid, email or teammate data.
- *
- * @param shareId - hashed share id, from `WrappedDoc.shareId`
- * @returns firestore document reference to the public share card
- */
-function getWrappedShareRef(shareId: string): DocumentReference<DocumentData> {
-  return doc(db, "WrappedShares", shareId);
 }
 
 /**
@@ -115,23 +97,6 @@ export async function fetchEventStamps(eventId: string): Promise<LiveStamp[]> {
       isHidden: data.isHidden,
     };
   });
-}
-
-/**
- * Fetches a public share card
- *
- * @param shareId - hashed share id from the share URL
- * @returns the share card if found; else null
- */
-export async function fetchWrappedShareCard(shareId: string): Promise<WrappedShareCard | null> {
-  const ref = getWrappedShareRef(shareId);
-  const snap = await getDoc(ref);
-
-  if (!snap.exists()) {
-    return null;
-  }
-
-  return snap.data() as WrappedShareCard;
 }
 
 /**

@@ -20,7 +20,6 @@ import { Route as ActiveHackathoninformationHomeRouteImport } from './routes/$ac
 import { Route as ActiveHackathoninformationScheduleRouteImport } from './routes/$activeHackathon/(information)/schedule'
 import { Route as ActiveHackathoninformationVenueMapRouteImport } from './routes/$activeHackathon/(information)/venue-map'
 import { Route as ActiveHackathonAuthApplicationRouteImport } from './routes/$activeHackathon/_auth/application'
-import { Route as WrappedViewShareIdRouteImport } from './routes/wrapped/view/$shareId'
 import { Route as ActiveHackathonAuthaccountCtfRouteImport } from './routes/$activeHackathon/_auth/(account)/ctf'
 import { Route as ActiveHackathonAuthaccountMyTicketRouteImport } from './routes/$activeHackathon/_auth/(account)/my-ticket'
 import { Route as ActiveHackathonAuthaccountWrappedRouteImport } from './routes/$activeHackathon/_auth/(account)/wrapped'
@@ -98,11 +97,6 @@ const ActiveHackathonAuthApplicationRoute =
     path: '/application',
     getParentRoute: () => ActiveHackathonAuthRoute,
   } as any)
-const WrappedViewShareIdRoute = WrappedViewShareIdRouteImport.update({
-  id: '/wrapped/view/$shareId',
-  path: '/wrapped/view/$shareId',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ActiveHackathonAuthaccountCtfRoute =
   ActiveHackathonAuthaccountCtfRouteImport.update({
     id: '/(account)/ctf',
@@ -210,7 +204,6 @@ export interface FileRoutesByFullPath {
   '/$activeHackathon/schedule': typeof ActiveHackathoninformationScheduleRoute
   '/$activeHackathon/venue-map': typeof ActiveHackathoninformationVenueMapRoute
   '/$activeHackathon/application': typeof ActiveHackathonAuthApplicationRouteWithChildren
-  '/wrapped/view/$shareId': typeof WrappedViewShareIdRoute
   '/$activeHackathon/ctf': typeof ActiveHackathonAuthaccountCtfRoute
   '/$activeHackathon/my-ticket': typeof ActiveHackathonAuthaccountMyTicketRoute
   '/$activeHackathon/wrapped': typeof ActiveHackathonAuthaccountWrappedRoute
@@ -236,7 +229,6 @@ export interface FileRoutesByTo {
   '/$activeHackathon/home': typeof ActiveHackathoninformationHomeRoute
   '/$activeHackathon/schedule': typeof ActiveHackathoninformationScheduleRoute
   '/$activeHackathon/venue-map': typeof ActiveHackathoninformationVenueMapRoute
-  '/wrapped/view/$shareId': typeof WrappedViewShareIdRoute
   '/$activeHackathon/ctf': typeof ActiveHackathonAuthaccountCtfRoute
   '/$activeHackathon/my-ticket': typeof ActiveHackathonAuthaccountMyTicketRoute
   '/$activeHackathon/wrapped': typeof ActiveHackathonAuthaccountWrappedRoute
@@ -266,7 +258,6 @@ export interface FileRoutesById {
   '/$activeHackathon/(information)/schedule': typeof ActiveHackathoninformationScheduleRoute
   '/$activeHackathon/(information)/venue-map': typeof ActiveHackathoninformationVenueMapRoute
   '/$activeHackathon/_auth/application': typeof ActiveHackathonAuthApplicationRouteWithChildren
-  '/wrapped/view/$shareId': typeof WrappedViewShareIdRoute
   '/$activeHackathon/_auth/(account)/ctf': typeof ActiveHackathonAuthaccountCtfRoute
   '/$activeHackathon/_auth/(account)/my-ticket': typeof ActiveHackathonAuthaccountMyTicketRoute
   '/$activeHackathon/_auth/(account)/wrapped': typeof ActiveHackathonAuthaccountWrappedRoute
@@ -297,7 +288,6 @@ export interface FileRouteTypes {
     | '/$activeHackathon/schedule'
     | '/$activeHackathon/venue-map'
     | '/$activeHackathon/application'
-    | '/wrapped/view/$shareId'
     | '/$activeHackathon/ctf'
     | '/$activeHackathon/my-ticket'
     | '/$activeHackathon/wrapped'
@@ -323,7 +313,6 @@ export interface FileRouteTypes {
     | '/$activeHackathon/home'
     | '/$activeHackathon/schedule'
     | '/$activeHackathon/venue-map'
-    | '/wrapped/view/$shareId'
     | '/$activeHackathon/ctf'
     | '/$activeHackathon/my-ticket'
     | '/$activeHackathon/wrapped'
@@ -352,7 +341,6 @@ export interface FileRouteTypes {
     | '/$activeHackathon/(information)/schedule'
     | '/$activeHackathon/(information)/venue-map'
     | '/$activeHackathon/_auth/application'
-    | '/wrapped/view/$shareId'
     | '/$activeHackathon/_auth/(account)/ctf'
     | '/$activeHackathon/_auth/(account)/my-ticket'
     | '/$activeHackathon/_auth/(account)/wrapped'
@@ -374,7 +362,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ActiveHackathonRoute: typeof ActiveHackathonRouteWithChildren
-  WrappedViewShareIdRoute: typeof WrappedViewShareIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -455,13 +442,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/$activeHackathon/application'
       preLoaderRoute: typeof ActiveHackathonAuthApplicationRouteImport
       parentRoute: typeof ActiveHackathonAuthRoute
-    }
-    '/wrapped/view/$shareId': {
-      id: '/wrapped/view/$shareId'
-      path: '/wrapped/view/$shareId'
-      fullPath: '/wrapped/view/$shareId'
-      preLoaderRoute: typeof WrappedViewShareIdRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/$activeHackathon/_auth/(account)/ctf': {
       id: '/$activeHackathon/_auth/(account)/ctf'
@@ -693,7 +673,6 @@ const ActiveHackathonRouteWithChildren = ActiveHackathonRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ActiveHackathonRoute: ActiveHackathonRouteWithChildren,
-  WrappedViewShareIdRoute: WrappedViewShareIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

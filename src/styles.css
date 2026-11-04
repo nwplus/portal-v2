@@ -284,12 +284,6 @@ select:-webkit-autofill:active {
   }
 }
 
-@keyframes wrapped-spin {
-  to {
-    rotate: 360deg;
-  }
-}
-
 @keyframes wrapped-twinkle {
   50% {
     opacity: 0.55;
@@ -306,13 +300,6 @@ select:-webkit-autofill:active {
 @keyframes wrapped-pan {
   from {
     transform: translateY(var(--wrapped-pan-from));
-  }
-}
-
-/* One digit column of the comparison's percentage: rolls its 0–9 strip to the digit. */
-@keyframes wrapped-odometer {
-  to {
-    transform: translateY(var(--wrapped-odometer-to));
   }
 }
 
@@ -441,21 +428,8 @@ select:-webkit-autofill:active {
   }
 }
 
-@keyframes wrapped-typing {
-  from {
-    clip-path: inset(0 0 100% 0);
-  }
-  to {
-    clip-path: inset(0 0 0 0);
-  }
-}
-
 .wrapped-bob {
   animation: wrapped-bob 4s ease-in-out infinite;
-}
-
-.wrapped-spin {
-  animation: wrapped-spin 80s linear infinite;
 }
 
 .wrapped-twinkle {
@@ -464,10 +438,6 @@ select:-webkit-autofill:active {
 
 .wrapped-flicker {
   animation: wrapped-flicker 180ms ease-in-out infinite;
-}
-
-.wrapped-typing {
-  animation: wrapped-typing 1.2s steps(12) both;
 }
 
 /* The share sheet's loading preview: a band of light sweeping across. */

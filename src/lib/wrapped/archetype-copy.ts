@@ -92,7 +92,7 @@ export const ARCHETYPE_COPY: Record<ArchetypeId, { label: string; description: s
  * has never heard of. Only `null`/`undefined` would be caught by `??`, and every other
  * miss would destructure `undefined` — on the one slide that renders for every hacker.
  *
- * @param id - the archetype id from a `WrappedDoc` or `WrappedShareCard`
+ * @param id - the archetype id from a `WrappedDoc`
  * @returns the matching copy, or The Warrior's
  */
 export function archetypeCopy(id: ArchetypeId | null | undefined): {

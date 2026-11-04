@@ -135,31 +135,6 @@ export interface WrappedDoc {
   };
 }
 
-/**
- * The slim public card at top-level `WrappedShares/{shareId}` — world-readable, read by
- * `/wrapped/view/{shareId}`.
- *
- * Derived from the finished `WrappedDoc` rather than assembled in parallel, so it
- * cannot drift from it. Carries no uid, email, teammates, or emails of any kind — that
- * boundary is the reason this type is separate, so never widen it toward `WrappedDoc`.
- */
-export interface WrappedShareCard {
-  schemaVersion: 1;
-  eventId: string;
-  preferredName: string;
-  archetype: ArchetypeId;
-  /** Headline numbers only, all derivable from the deck. */
-  stats: {
-    projectTitle: string | null;
-    mealCount: number;
-    workshopCount: number;
-    miniEventCount: number;
-    stampCount: number;
-    prizes: string[];
-  };
-  generatedAt: string;
-}
-
 // ---------------------------------------------------------------------------
 // Organizer statistics
 // ---------------------------------------------------------------------------
