@@ -1,6 +1,7 @@
 import { CompCanvas } from "@/components/features/wrapped/comp-canvas";
-import { RocketShip } from "@/components/features/wrapped/rocket-ship";
-import type { CSSProperties } from "react";
+import { ROCKET_IMAGES, RocketShip } from "@/components/features/wrapped/rocket-ship";
+import { preloadFont, preloadImages } from "@/lib/wrapped/preload";
+import { type CSSProperties, useEffect, useRef } from "react";
 
 /**
  * The opening slide: a rocket lifting off, then the camera pans up the 1080x3908 comp to
@@ -33,21 +34,62 @@ function enter(name: string, delay: number, duration = 900): CSSProperties {
 
 const titleGlow = "2.847px 2.847px 142.329px #c4b2f0";
 
+/** Every image the slide draws, the ship's included, for preloading before the entrances. */
+const INTRO_IMAGES = [
+  ...[
+    "glow-mask.svg",
+    "glow.svg",
+    "noise.png",
+    "stars.svg",
+    "moon.svg",
+    "steam-clouds.svg",
+    "steam-trail.svg",
+  ].map((file) => `${ASSETS}/${file}`),
+  ...ROCKET_IMAGES,
+];
+
+/** The title's faces: "Your {year}" and "Wrapped" at 400, the event name at 700. */
+const INTRO_FONTS = ['400 86px "Hanken Grotesk"', '700 141px "Hanken Grotesk"'];
+
+/**
+ * Calls `onReady` once the slide's images are decoded and its fonts loaded. The entrances
+ * only mount when the slide is active, and the deck holds `active` until this fires, so
+ * nothing animates in over artwork that's still arriving.
+ */
+function useIntroAssets(onReady: (() => void) | undefined) {
+  const onReadyRef = useRef(onReady);
+  onReadyRef.current = onReady;
+
+  useEffect(() => {
+    let cancelled = false;
+    void Promise.all([preloadImages(INTRO_IMAGES), ...INTRO_FONTS.map(preloadFont)]).then(() => {
+      if (!cancelled) onReadyRef.current?.();
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+}
+
 /**
  * @param event - display name, e.g. "HackCamp 2026"; the trailing year is split off onto
  *   its own line
  * @param skipRocketEntrance - render the rocket already on its pad instead of rising
  *   into view — the launch fly-up climbing past it just played that same move
+ * @param onReady - called once the slide's images and fonts are loaded
  */
 export function IntroSlide({
   event,
   active,
   skipRocketEntrance = false,
+  onReady,
 }: {
   event: string;
   active: boolean;
   skipRocketEntrance?: boolean;
+  onReady?: () => void;
 }) {
+  useIntroAssets(onReady);
   const match = event.match(/^(.*?)\s*(\d{4})$/);
   const name = match ? match[1] : event;
   const year = match?.[2];

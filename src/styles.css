@@ -220,6 +220,23 @@ select:-webkit-autofill:active {
   }
 }
 
+/* To fully opaque, for elements that sit at opacity 0 until shown (the deck's spinner). */
+@keyframes wrapped-fade-in {
+  to {
+    opacity: 1;
+  }
+}
+
+/* The current slide's story bar filling. */
+@keyframes wrapped-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
 @keyframes wrapped-sheet-up {
   from {
     transform: translateY(100%);

@@ -2,6 +2,7 @@ import { CodedSlideContent } from "@/components/features/wrapped/coded-slide-con
 import { ROCKET_HEIGHT, ROCKET_WIDTH, RocketShip } from "@/components/features/wrapped/rocket-ship";
 import { ShareSheet, useShareImage } from "@/components/features/wrapped/share-sheet";
 import { VideoSlide } from "@/components/features/wrapped/video-slide";
+import { Spinner } from "@/components/ui/spinner";
 import type { WrappedDoc } from "@/lib/firebase/types/wrapped";
 import { cn } from "@/lib/utils";
 import { dismissWrappedBanner } from "@/lib/wrapped/banner-dismissal";
@@ -10,7 +11,7 @@ import { type SlideId, buildSlides } from "@/lib/wrapped/slides";
 import type { StampSlot } from "@/lib/wrapped/stamp-slots";
 import { recordWrappedSession } from "@/services/wrapped";
 import { Share, X } from "lucide-react";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { RefObject } from "react";
 
 interface WrappedDeckProps {
@@ -34,6 +35,11 @@ interface WrappedDeckProps {
 const STORY_MS = 10000;
 /** Tapping "back" within this long of a slide's start goes to the previous slide. */
 const RESTART_THRESHOLD_MS = 1500;
+/**
+ * The longest a slide waits for its assets before starting anyway: on a slow connection
+ * a clip that streams in as it plays beats a deck that never moves.
+ */
+const READY_TIMEOUT_MS = 5000;
 
 /**
  * The launch fly-up, staged on the deck's 1080x1920 design canvas: a full-stage-width
@@ -98,8 +104,9 @@ function useLaunchGeometry(
  * Which slides exist is `buildSlides(doc)`'s decision and what each plays is `SCENES`'s,
  * so this component never inspects the doc's fields to decide either.
  *
- * Each slide's bar fills over `STORY_MS`, then the slide holds: nothing advances on its
- * own. Tap the right half to skip ahead; the left half restarts the slide, and again
+ * A slide starts (shows, plays, and starts its bar) once its assets are in, or after
+ * `READY_TIMEOUT_MS`; a spinner covers a wait that runs long. Each slide's bar fills over
+ * `STORY_MS`, then the slide holds: nothing advances on its own. Tap the right half to skip ahead; the left half restarts the slide, and again
  * quickly to go back. Arrow keys do the same.
  *
  * Telemetry: `opened` on mount, `completed` on reaching the summary, `shareClicked` on
@@ -115,10 +122,14 @@ export function WrappedDeck({
 }: WrappedDeckProps) {
   const slides = useMemo(() => buildSlides(doc), [doc]);
   const [index, setIndex] = useState(0);
-  const [progress, setProgress] = useState(0);
   // Bumped to replay the current slide from the top (remounting it).
   const [replay, setReplay] = useState(0);
-  const startedAtRef = useRef(0);
+  // Slides whose assets are in, reported by each slide as it's mounted ahead of time.
+  const [ready, setReady] = useState<ReadonlySet<SlideId>>(() => new Set());
+  // The current slide's wait that ran out, as `${index}-${replay}`.
+  const [timedOut, setTimedOut] = useState<string | null>(null);
+  // When the current slide started; +Infinity until it has, so "back" leaves it.
+  const startedAtRef = useRef(Number.POSITIVE_INFINITY);
   const [isSharing, setIsSharing] = useState(false);
   const stageRef = useRef<HTMLDivElement>(null);
   const launch = useLaunchGeometry(stageRef, launchedFromBanner);
@@ -127,6 +138,8 @@ export function WrappedDeck({
   // remounting (changing `?mock=` re-runs the loader), and a held index can outrun it.
   const safeIndex = Math.min(index, slides.length - 1);
   const current = slides[safeIndex];
+  const playKey = `${safeIndex}-${replay}`;
+  const started = ready.has(current) || timedOut === playKey;
   // Rendered in the background from the summary on, so it's ready when Share is tapped.
   const shareImage = useShareImage(doc, current === "summary" || isSharing);
 
@@ -158,24 +171,26 @@ export function WrappedDeck({
     report({ completed: true });
   }, [current, report]);
 
-  // The story clock: restarts on every slide change or replay, and stops when full.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: `replay` only restarts the clock
+  const markReady = useCallback((slideId: SlideId) => {
+    setReady((prev) => (prev.has(slideId) ? prev : new Set(prev).add(slideId)));
+  }, []);
+
+  // A slide that's slow to load starts anyway once its wait runs out.
   useEffect(() => {
-    const startedAt = performance.now();
-    startedAtRef.current = startedAt;
-    let frame = 0;
-    const tick = () => {
-      const fraction = Math.min((performance.now() - startedAt) / STORY_MS, 1);
-      setProgress(fraction);
-      if (fraction < 1) frame = requestAnimationFrame(tick);
-    };
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [safeIndex, replay]);
+    if (started) return;
+    const timer = setTimeout(() => setTimedOut(playKey), READY_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [started, playKey]);
+
+  // The story clock runs from the moment the slide starts; the bar itself is a CSS
+  // animation, so the deck doesn't re-render on every frame.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a new `playKey` is a new start
+  useEffect(() => {
+    startedAtRef.current = started ? performance.now() : Number.POSITIVE_INFINITY;
+  }, [started, playKey]);
 
   const goTo = useCallback(
     (target: number) => {
-      setProgress(0);
       setIndex(Math.min(Math.max(target, 0), slides.length - 1));
     },
     [slides.length],
@@ -187,11 +202,19 @@ export function WrappedDeck({
 
   const back = useCallback(() => {
     if (performance.now() - startedAtRef.current > RESTART_THRESHOLD_MS) {
+      // The replay remounts the slide, which reports ready again once rebuilt.
+      setReady((prev) => {
+        const next = new Set(prev);
+        next.delete(current);
+        return next;
+      });
       setReplay((count) => count + 1);
     } else {
       goTo(safeIndex - 1);
     }
-  }, [safeIndex, goTo]);
+  }, [safeIndex, current, goTo]);
+
+  const openShare = useCallback(() => setIsSharing(true), []);
 
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
@@ -265,11 +288,22 @@ export function WrappedDeck({
                 slideId={slideId}
                 doc={doc}
                 stampSlots={stampSlots}
-                active={i === safeIndex}
+                active={i === safeIndex && started}
                 skipRocketEntrance={launchedFromBanner}
-                onShare={() => setIsSharing(true)}
+                onShare={openShare}
+                onReady={markReady}
               />
             ),
+          )}
+
+          {/* Only once the wait is noticeable, so a quick load doesn't flash a spinner. */}
+          {!started && (
+            <div
+              className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0"
+              style={{ animation: "wrapped-fade-in 300ms ease-out 400ms forwards" }}
+            >
+              <Spinner className="size-8 text-[#fff]/80" />
+            </div>
           )}
 
           {/* Stories-style progress: one segment per slide, the current one filling as it
@@ -282,10 +316,14 @@ export function WrappedDeck({
                 className="h-[3px] flex-1 overflow-hidden rounded-full bg-[#fff]/35"
               >
                 <div
+                  // A new key on each start restarts the fill from empty.
+                  key={i === safeIndex ? playKey : "idle"}
                   className="h-full origin-left rounded-full bg-[#fff]"
-                  style={{
-                    transform: `scaleX(${i < safeIndex ? 1 : i === safeIndex ? progress : 0})`,
-                  }}
+                  style={
+                    i === safeIndex && started
+                      ? { animation: `wrapped-progress ${STORY_MS}ms linear both` }
+                      : { transform: `scaleX(${i < safeIndex ? 1 : 0})` }
+                  }
                 />
               </div>
             ))}
@@ -358,9 +396,24 @@ interface SlideProps {
   skipRocketEntrance?: boolean;
   /** Opens the share sheet, from the summary's share button. */
   onShare: () => void;
+  /** The slide's assets are in and it can start. */
+  onReady: (slideId: SlideId) => void;
 }
 
-function Slide({ slideId, doc, stampSlots, active, skipRocketEntrance, onShare }: SlideProps) {
+/**
+ * Memoized, with stable callbacks from the deck, so a slide re-renders only when its own
+ * props change: when it starts or stops, not when a neighbour does.
+ */
+const Slide = memo(function Slide({
+  slideId,
+  doc,
+  stampSlots,
+  active,
+  skipRocketEntrance,
+  onShare,
+  onReady,
+}: SlideProps) {
+  const handleReady = useCallback(() => onReady(slideId), [onReady, slideId]);
   const scene = SCENES[slideId];
   if (scene.kind === "video") {
     return (
@@ -369,6 +422,7 @@ function Slide({ slideId, doc, stampSlots, active, skipRocketEntrance, onShare }
         lottie={scene.lottie}
         texts={scene.texts?.(doc)}
         active={active}
+        onReady={handleReady}
       />
     );
   }
@@ -381,10 +435,11 @@ function Slide({ slideId, doc, stampSlots, active, skipRocketEntrance, onShare }
         active={active}
         skipRocketEntrance={skipRocketEntrance}
         summaryAction={<ShareButton onClick={onShare} />}
+        onReady={handleReady}
       />
     </div>
   );
-}
+});
 
 /** Laid out in comp pixels: it sits inside the summary comp, under the sign-off. */
 function ShareButton({ onClick }: { onClick: () => void }) {

@@ -6,21 +6,26 @@
  *   pnpm wrapped:compress --crf 22,26,30       pick the quality levels to compare
  *   pnpm wrapped:compress --only prizes,nugget clips whose path contains any of these
  *   pnpm wrapped:compress --height 1280        also downscale (default: keep 1080x1920)
+ *   pnpm wrapped:compress --fps 30             also drop the frame rate (default: keep it)
  *   pnpm wrapped:compress --all                every mp4 under public/assets/wrapped
  *   pnpm wrapped:compress --no-ssim            skip the quality score (faster)
- *   pnpm wrapped:compress --crf 24 --no-ssim --out public/assets/wrapped/compressed
+ *   pnpm wrapped:compress --crf 24 --fps 30 --no-ssim --out public/assets/wrapped/compressed
  *                                              the upload set for Firebase Storage
  *
- * Writes wrapped/cache/compressed/crf-{n}/{same path as in public} (or `--out`/crf-{n}/…),
+ * Writes wrapped/cache/compressed/crf-{n}[-h{height}][-{fps}fps]/{same path as in public}
+ * (or under `--out`),
  * plus compare.html in the default folder only: each clip's original next to every variant,
  * played in sync, with sizes and SSIM. Open it in Safari and Chrome to judge quality.
  *
  * Needs ffmpeg with libx264 (`brew install ffmpeg`), or set FFMPEG / FFPROBE to binaries.
  *
  * Encoding: H.264 High profile, yuv420p, `+faststart` (playback starts before the whole
- * file arrives), no audio (the deck plays every clip muted). Frame rate, frame count and
- * duration are kept exactly: each clip's Lottie text layer is driven off the video's
- * `currentTime`, so retiming a clip would put the text out of step.
+ * file arrives), no audio (the deck plays every clip muted), at most 4 reference frames so
+ * the stream stays within level 4.2 like the originals (a smaller decode buffer on phones).
+ * Duration is kept exactly: each clip's Lottie text layer is driven off the video's
+ * `currentTime`, so a clip that ran longer or shorter would put the text out of step. The
+ * frame rate can drop (`--fps`) because the text follows the clock, not the frame count;
+ * 30fps halves the decoding work, which is what an iPhone runs short of.
  */
 
 import { spawn } from "node:child_process";
@@ -118,8 +123,18 @@ async function allClips(): Promise<string[]> {
   return entries.filter((entry) => entry.endsWith(".mp4") && !entry.startsWith("compressed/")).sort();
 }
 
-async function encode(input: string, output: string, crf: number, height: number | null) {
+interface EncodeOptions {
+  crf: number;
+  height: number | null;
+  fps: number | null;
+}
+
+async function encode(input: string, output: string, { crf, height, fps }: EncodeOptions) {
   await fs.mkdir(path.dirname(output), { recursive: true });
+  const filters = [
+    ...(fps ? [`fps=${fps}`] : []),
+    ...(height ? [`scale=-2:${height}:flags=lanczos`] : []),
+  ];
   await run(FFMPEG, [
     "-y", "-v", "error",
     "-i", input,
@@ -129,19 +144,28 @@ async function encode(input: string, output: string, crf: number, height: number
     "-preset", "slow",
     "-crf", String(crf),
     "-profile:v", "high",
+    "-level:v", "4.2",
+    "-refs", "4",
     "-pix_fmt", "yuv420p",
-    // Keep every source frame and its timing, so the Lottie overlay stays in step.
-    "-fps_mode", "passthrough",
-    ...(height ? ["-vf", `scale=-2:${height}:flags=lanczos`] : []),
+    // Without --fps, keep every source frame and its timing; with it, a constant new rate.
+    "-fps_mode", fps ? "cfr" : "passthrough",
+    ...(filters.length > 0 ? ["-vf", filters.join(",")] : []),
     "-movflags", "+faststart",
     output,
   ]);
 }
 
 /** SSIM against the original (1 = identical; above ~0.98 is usually indistinguishable). */
-async function ssim(original: string, variant: string, size: Probe): Promise<number | null> {
-  // A downscaled variant is scaled back up so the frames line up.
-  const filter = `[1:v]scale=${size.width}:${size.height}:flags=bicubic[v];[0:v][v]ssim`;
+async function ssim(
+  original: string,
+  variant: string,
+  size: Probe,
+  fps: number | null,
+): Promise<number | null> {
+  // A downscaled variant is scaled back up, and the original resampled to the variant's
+  // frame rate, so the frames line up.
+  const resample = fps ? `fps=${fps}` : "null";
+  const filter = `[0:v]${resample}[o];[1:v]scale=${size.width}:${size.height}:flags=bicubic[v];[o][v]ssim`;
   const { stderr } = await run(FFMPEG, ["-v", "info", "-i", original, "-i", variant, "-lavfi", filter, "-f", "null", "-"]);
   const match = stderr.match(/All:([\d.]+)/);
   return match ? Number(match[1]) : null;
@@ -155,6 +179,7 @@ async function main() {
       crf: { type: "string", default: "24,28" },
       only: { type: "string" },
       height: { type: "string" },
+      fps: { type: "string" },
       all: { type: "boolean", default: false },
       "no-ssim": { type: "boolean", default: false },
       out: { type: "string" },
@@ -168,6 +193,10 @@ async function main() {
   if (height !== null && (!Number.isInteger(height) || height % 2 !== 0)) {
     throw new Error("--height must be an even integer, e.g. 1280");
   }
+  const fps = values.fps ? Number(values.fps) : null;
+  if (fps !== null && !(Number.isInteger(fps) && fps > 0)) {
+    throw new Error("--fps must be a positive integer, e.g. 30");
+  }
   const OUT = values.out ? path.resolve(ROOT, values.out) : DEFAULT_OUT;
   const filters = values.only?.split(",").map((value) => value.trim()).filter(Boolean) ?? [];
 
@@ -175,8 +204,12 @@ async function main() {
   if (filters.length > 0) clips = clips.filter((clip) => filters.some((f) => clip.includes(f)));
   if (clips.length === 0) throw new Error("No clips match.");
 
-  const tag = (crf: number) => (height ? `crf-${crf}-h${height}` : `crf-${crf}`);
-  console.log(`${clips.length} clips x CRF ${crfs.join(", ")}${height ? ` at ${height}px tall` : ""} -> ${OUT}\n`);
+  const tag = (crf: number) =>
+    `crf-${crf}${height ? `-h${height}` : ""}${fps ? `-${fps}fps` : ""}`;
+  console.log(
+    `${clips.length} clips x CRF ${crfs.join(", ")}${height ? ` at ${height}px tall` : ""}` +
+      `${fps ? ` at ${fps}fps` : ""} -> ${OUT}\n`,
+  );
 
   const results: ClipResult[] = [];
   for (const rel of clips) {
@@ -192,16 +225,22 @@ async function main() {
     for (const crf of crfs) {
       const file = path.join(OUT, tag(crf), rel);
       const started = Date.now();
-      await encode(input, file, crf, height);
+      await encode(input, file, { crf, height, fps });
       const out = await probe(file);
       // Text sync depends on these matching; a mismatch means the clip can't ship.
-      if (out.frames !== source.frames || Math.abs(out.duration - source.duration) > 0.05) {
+      const expectedFrames = fps
+        ? Math.round(source.duration * fps)
+        : source.frames;
+      if (
+        Math.abs(out.frames - expectedFrames) > 1 ||
+        Math.abs(out.duration - source.duration) > 0.05
+      ) {
         console.warn(
-          `  ! CRF ${crf}: ${out.frames} frames / ${out.duration.toFixed(2)}s vs ` +
-            `${source.frames} / ${source.duration.toFixed(2)}s in the original`,
+          `  ! CRF ${crf}: ${out.frames} frames / ${out.duration.toFixed(2)}s, expected ` +
+            `${expectedFrames} / ${source.duration.toFixed(2)}s`,
         );
       }
-      const score = values["no-ssim"] ? null : await ssim(input, file, source);
+      const score = values["no-ssim"] ? null : await ssim(input, file, source, fps);
       const { size } = await fs.stat(file);
       variants.push({ crf, file, bytes: size, probe: out, ssim: score });
       console.log(

@@ -16,11 +16,11 @@ const ASSETS = "/assets/wrapped";
 /**
  * Where the clips live in Firebase Storage, under the bucket the build is configured for (dev or
  * prod). They're too heavy for git and Hosting, so they're compressed and uploaded separately:
- * `pnpm wrapped:compress --crf 24 --no-ssim --out public/assets/wrapped/compressed`, then copy
- * `compressed/crf-24/*` to this folder. Objects are cached as immutable, so a re-encode goes to a
- * new version folder (`v2`) rather than overwriting this one.
+ * `pnpm wrapped:compress --crf 24 --fps 30 --no-ssim --out public/assets/wrapped/compressed`,
+ * then copy `compressed/crf-24-30fps/*` to this folder. Objects are cached as immutable, so a
+ * re-encode goes to a new version folder (`v3`) rather than overwriting this one.
  */
-const CLIPS = "hackerWrapped/v1";
+const CLIPS = "hackerWrapped/v2";
 
 /** A clip's public URL. Public read on `hackerWrapped/` is granted in the Storage rules. */
 function clip(file: string): string {

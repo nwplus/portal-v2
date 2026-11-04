@@ -3,6 +3,19 @@ import type { CSSProperties } from "react";
 
 const ASSETS = "/assets/wrapped/intro";
 
+/** Every image the ship draws, for preloading before it's shown. */
+export const ROCKET_IMAGES = [
+  "rocket-base-small.svg",
+  "rocket-base-large.svg",
+  "rocket-fin-left.svg",
+  "rocket-fin-right.svg",
+  "rocket-nose.svg",
+  "rocket-body.svg",
+  "rocket-shine.svg",
+  "rocket-window.svg",
+  "rocket-stripe.svg",
+].map((file) => `${ASSETS}/${file}`);
+
 /** The ship's natural size in comp pixels, from the Intro frame's "rocket ship" group. */
 export const ROCKET_WIDTH = 510;
 export const ROCKET_HEIGHT = 696;
