@@ -63,18 +63,21 @@ const DARK_RECTANGLES = [
   { x: 541, y: 360, w: 247, h: 65 },
 ] as const;
 
-/** Small stars and dust inside the window, in comp coordinates. */
+/**
+ * Small stars and dust inside the window, in comp coordinates. The dust dots were overlay
+ * blends; they're baked with that blend applied, a pixel of margin around each.
+ */
 const WINDOW_SPARKS = [
-  { src: "star-a", x: 776, y: 1165, w: 26, h: 29 },
-  { src: "star-a", x: 230, y: 1062, w: 26, h: 29 },
-  { src: "star-b", x: 651, y: 705, w: 14, h: 16 },
-  { src: "star-c", x: 364, y: 758, w: 22, h: 25 },
-  { src: "star-d", x: 885, y: 823, w: 35, h: 40 },
-  { src: "dot-a", x: 650, y: 1169, w: 17, h: 17, overlay: true },
-  { src: "dot-b", x: 310, y: 679, w: 8, h: 8, overlay: true },
-  { src: "dot-c", x: 612, y: 881, w: 12, h: 12, overlay: true },
-  { src: "dot-d", x: 247, y: 1153, w: 17, h: 17, overlay: true },
-  { src: "dot-e", x: 910, y: 996, w: 22, h: 22, overlay: true },
+  { src: "star-a.svg", x: 776, y: 1165, w: 26, h: 29 },
+  { src: "star-a.svg", x: 230, y: 1062, w: 26, h: 29 },
+  { src: "star-b.svg", x: 651, y: 705, w: 14, h: 16 },
+  { src: "star-c.svg", x: 364, y: 758, w: 22, h: 25 },
+  { src: "star-d.svg", x: 885, y: 823, w: 35, h: 40 },
+  { src: "dot-a.webp", x: 649, y: 1168, w: 19, h: 19 },
+  { src: "dot-b.webp", x: 309, y: 678, w: 10, h: 10 },
+  { src: "dot-c.webp", x: 611, y: 880, w: 14, h: 14 },
+  { src: "dot-d.webp", x: 246, y: 1152, w: 19, h: 19 },
+  { src: "dot-e.webp", x: 909, y: 995, w: 24, h: 24 },
 ] as const;
 
 function enter(name: string, delay: number, duration = 800): CSSProperties {
@@ -174,7 +177,14 @@ export function ArchetypeSlide({ archetype, active }: { archetype: ArchetypeId; 
   );
 }
 
-/** Everything seen through the window, clipped to its hexagon. */
+/**
+ * Everything seen through the window, clipped to its hexagon.
+ *
+ * The asteroid belt's back and front layers, the condensation, and the dust were hard-light
+ * and overlay blends; they're baked into images with the blends applied (against the scene
+ * mid-bob and mid-twinkle), since live blends under these animations were repainted on the
+ * CPU every frame and could crash iOS Safari. The back layer still bobs.
+ */
 function SpaceView({ archetype }: { archetype: ArchetypeId }) {
   const at = (x: number, y: number) => ({ left: x - WINDOW.x, top: y - WINDOW.y });
 
@@ -196,9 +206,8 @@ function SpaceView({ archetype }: { archetype: ArchetypeId }) {
       />
       <img
         alt=""
-        src={`${ASSETS}/asteroid-belt.svg`}
-        className="wrapped-bob absolute h-[970px] w-[1192.5px] max-w-none mix-blend-hard-light"
-        style={at(43, 490)}
+        src={`${ASSETS}/asteroid-belt-back.webp`}
+        className="wrapped-bob absolute top-0 left-0 h-[667px] w-[913px] max-w-none"
       />
       <div
         className="absolute flex h-[201.064px] w-[195.381px] items-center justify-center"
@@ -218,20 +227,11 @@ function SpaceView({ archetype }: { archetype: ArchetypeId }) {
         className="wrapped-twinkle absolute h-[998px] w-[914px] max-w-none"
         style={at(18, 201)}
       />
-      <div className="absolute h-[726px] w-[963px]" style={at(59, 596)}>
-        <img
-          alt=""
-          src={`${ASSETS}/window-condensation.svg`}
-          className="absolute inset-[-10.18%_-7.67%] block size-full max-w-none"
-        />
-      </div>
-      <div className="absolute h-[970px] w-[1192.5px] mix-blend-hard-light" style={at(43, 490)}>
-        <img
-          alt=""
-          src={`${ASSETS}/asteroid-belt-front.svg`}
-          className="absolute inset-[-2.03%_-1.65%] block size-full max-w-none"
-        />
-      </div>
+      <img
+        alt=""
+        src={`${ASSETS}/asteroid-belt-front.webp`}
+        className="absolute top-0 left-0 h-[667px] w-[913px] max-w-none"
+      />
       <IconStage
         centre={archetype === "THE_PRIZEWINNER" ? PLANET_CENTRE : archetypeIconCentre(archetype)}
       >
@@ -241,8 +241,8 @@ function SpaceView({ archetype }: { archetype: ArchetypeId }) {
         <img
           key={`${spark.src}-${spark.x}-${spark.y}`}
           alt=""
-          src={`${ASSETS}/${spark.src}.svg`}
-          className={`wrapped-twinkle absolute max-w-none ${"overlay" in spark ? "mix-blend-overlay" : ""}`}
+          src={`${ASSETS}/${spark.src}`}
+          className="wrapped-twinkle absolute max-w-none"
           style={{ ...at(spark.x, spark.y), width: spark.w, height: spark.h }}
         />
       ))}

@@ -36,15 +36,9 @@ const titleGlow = "2.847px 2.847px 142.329px #c4b2f0";
 
 /** Every image the slide draws, the ship's included, for preloading before the entrances. */
 const INTRO_IMAGES = [
-  ...[
-    "glow-mask.svg",
-    "glow.svg",
-    "noise.png",
-    "stars.svg",
-    "moon.svg",
-    "steam-clouds.svg",
-    "steam-trail.svg",
-  ].map((file) => `${ASSETS}/${file}`),
+  ...["backdrop.webp", "stars.svg", "moon.svg", "steam-clouds.svg", "steam-trail.svg"].map(
+    (file) => `${ASSETS}/${file}`,
+  ),
   ...ROCKET_IMAGES,
 ];
 
@@ -155,79 +149,25 @@ export function IntroSlide({
   );
 }
 
+/**
+ * The sky behind everything: its gradient, the green glow and its noise, and the two light
+ * spots, baked into one image from the coded layers that drew them. Live, their masks and
+ * blend modes were repainted on the CPU on every frame of the pan and fades, enough to crash
+ * iOS Safari; as an image the backdrop is drawn once. The stars stay live to twinkle.
+ */
 function Background() {
   return (
     <>
-      <div
-        className="absolute top-0 left-[-3px] h-[3908px] w-[1083px]"
-        style={{ backgroundImage: "linear-gradient(180deg, #1a1138 37.734%, #58357b 80.365%)" }}
+      <img
+        alt=""
+        src={`${ASSETS}/backdrop.webp`}
+        className="absolute top-0 left-0 h-[3908px] w-[1080px] max-w-none"
       />
-
-      {/* Green glow */}
-      <div className="absolute top-[2492.72px] left-[-990.69px] flex h-[2295.211px] w-[3355.959px] items-center justify-center">
-        <div className="flex-none rotate-[-9.11deg]">
-          <div
-            className="relative h-[1826.337px] w-[3105.9px]"
-            style={{
-              maskImage: `url("${ASSETS}/glow-mask.svg")`,
-              maskSize: "3976.118px 2490px",
-              maskPosition: "-553.306px 35.278px",
-              maskRepeat: "no-repeat",
-            }}
-          >
-            <img
-              alt=""
-              src={`${ASSETS}/glow.svg`}
-              className="absolute inset-0 block size-full max-w-none"
-            />
-          </div>
-        </div>
-      </div>
-      <div className="absolute top-[2771.97px] left-[-997.51px] flex h-[1899.858px] w-[3492.447px] items-center justify-center mix-blend-overlay">
-        <div className="flex-none rotate-[-9.11deg]">
-          <div
-            className="relative h-[1392.596px] w-[3313.708px]"
-            style={{
-              maskImage: `url("${ASSETS}/glow-mask.svg")`,
-              maskSize: "3976.118px 2490px",
-              maskPosition: "-546.492px -243.971px",
-              maskRepeat: "no-repeat",
-            }}
-          >
-            <div
-              className="absolute inset-0 opacity-50"
-              style={{
-                backgroundImage: `url("${ASSETS}/noise.png")`,
-                backgroundSize: "390.911px 390.911px",
-              }}
-            />
-          </div>
-        </div>
-      </div>
-
       <img
         alt=""
         src={`${ASSETS}/stars.svg`}
         className="wrapped-twinkle absolute top-[158px] left-[102px] h-[2105.74px] w-[858px] max-w-none"
       />
-
-      <div
-        className="absolute top-[1818px] left-[573px] h-[689.483px] w-[701.463px] opacity-60 mix-blend-soft-light"
-        style={{
-          backgroundImage: "radial-gradient(closest-side, #fff 0%, rgba(255,255,255,0) 100%)",
-        }}
-      />
-      <div className="absolute top-[2599px] left-[-451.55px] flex h-[638.909px] w-[1245.09px] items-center justify-center mix-blend-hard-light">
-        <div className="flex-none rotate-[-11.4deg]">
-          <div
-            className="h-[412.433px] w-[1186.988px] opacity-22"
-            style={{
-              backgroundImage:
-                "radial-gradient(closest-side, rgba(111,0,252,1) 0%, rgba(147,46,244,0.75) 25%, rgba(183,93,235,0.5) 50%, rgba(255,186,219,0) 100%)",
-            }}
-          />
-        </div>
-      </div>
     </>
   );
 }
