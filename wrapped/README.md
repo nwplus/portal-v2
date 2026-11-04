@@ -1,11 +1,244 @@
-# Hacker Wrapped script
+# Hacker Wrapped
 
-> Anything marked **Q*n*** is an open question (listed at
-> the end) and is also marked `TODO(Qn)` in the code. Settled answers are under
+A Spotify Wrapped–style story every hacker gets after an nwPlus hackathon. It's a set of
+tap-through slides about their weekend: first event or returning, how early they
+submitted, their project in one line, lines of code, tech stack, workshops and stamps, how
+they compare with everyone else, and any prizes. It ends with an archetype (say, "The
+Night Owl") and an image they can share.
+
+Nothing is worked out live. After the event an organizer runs a script that gathers all
+the data, calculates each hacker's numbers, and saves one document per hacker. The Portal
+reads that document and plays the slides.
+
+## How it fits together
+
+```mermaid
+flowchart LR
+  subgraph during[During the event]
+    portal[Portal<br/>applications, check-in, opt-out]
+    qr[qr-check-in<br/>scans and stamps]
+    devpost[Devpost<br/>submissions, as a CSV]
+    gh[GitHub<br/>project repos]
+    judging[Judging portal<br/>prizes]
+  end
+  script[[Batch script<br/>wrapped/, run on an<br/>organizer's machine]]
+  fs[(Firestore<br/>Hackathons/event/Wrapped/uid)]
+  deck[Portal deck<br/>/hackathon/wrapped]
+  storage[(Firebase Storage<br/>hackerWrapped/v2 clips)]
+  admin[admin-v2 Settings<br/>release switch, check-in time,<br/>results email]
+
+  portal & qr & devpost & gh & judging --> script --> fs --> deck
+  storage --> deck
+  admin -->|wrapped.isReady| deck
+```
+
+| Part | Where | What it does |
+| ---- | ----- | ------------ |
+| **Batch script** | `wrapped/` | Reads Firestore, the Devpost CSV, GitHub and the judging portal once, calculates every number and archetype, and writes `Hackathons/{event}/Wrapped/{uid}`. |
+| **Deck** | `src/` (route `/{hackathon}/wrapped`) | Reads the hacker's one document and plays the slides. Most slides are a video clip with a text layer filled in with the hacker's numbers; four are built in React. |
+| **Clips** | Firebase Storage, `hackerWrapped/v2/` | The slides' background videos, compressed for phones. They're too heavy for git and Hosting. |
+| **Admin controls** | admin-v2, Settings | The release switch (`Hackathons/{event}.wrapped.isReady`), the optional check-in opening time, and the results email. |
+
+**Who gets a deck:** accepted hackers who checked in at the event and didn't opt out
+(the Wrapped switch on their Portal profile). They see it once it's released, through a
+sidebar link and a banner on the dashboard. Organizers (admins) can open any deck before
+release.
+
+## Event checklist
+
+**Before the event**
+
+- [ ] The clips are in the prod bucket under the folder `scenes.ts` points at (`CLIPS`),
+      and both projects' Storage rules allow public reads of `hackerWrapped/`. See
+      [Clips](#clips).
+- [ ] `InternalWebsites/Portal.hackingStart` and `.hackingEnd` are set for the event. The
+      end is the submission deadline.
+- [ ] Every `Stamps` doc for the event has a `category`. The stamps slide fits up to 20
+      stamps.
+- [ ] qr-check-in's `DB_HACKATHON` is the event's `Hackathons/` doc id (e.g.
+      `HackCamp2026`), so its stamps count.
+- [ ] admin-v2's Wrapped settings are deployed to prod. If they aren't, set
+      `Hackathons/{event}.wrapped.isReady` by hand.
+- [ ] Optional: set the check-in opening time in admin-v2, for The Early Bird. Without
+      it, the first check-in is used.
+
+**After hacking ends**
+
+1. Save the Devpost export to `wrapped/csv/` and fill in `CONFIG` at the top of
+   `wrapped/script.ts`: event id, name, `portalKey`, `env: "prod"`, CSV path.
+2. Dry run with `writeToFirestore: false`: `pnpm wrapped write`. Review the match report
+   when it pauses, then the Nugget one-liners, then `output/docs.json`.
+3. Set `writeToFirestore: true` and run `pnpm wrapped write` again. It picks up at the
+   write stage.
+4. Open `/{hackathon}/wrapped` as an admin to preview your own deck. Admins skip the
+   release switch.
+5. Release: turn on the Wrapped switch in admin-v2. The sidebar link and banner appear
+   for every hacker with a deck.
+6. Send the results email from admin-v2. Its links only work while
+   `InternalWebsites/Portal.portalLive[hackathon]` is on.
+7. After judging, run `pnpm wrapped prize`. It adds prizes and The Prizewinner to the
+   winners' decks.
+8. A while later, run `pnpm wrapped stats` for the open, completion and share rates.
+
+## Where things live
+
+| Thing | File |
+| ----- | ---- |
+| Which slides a hacker sees, in order | `src/lib/wrapped/slides.ts` |
+| Each slide's clip, text layer and the values that fill it | `src/lib/wrapped/scenes.ts` |
+| The deck (timing, preloading, navigation) | `src/components/features/wrapped/wrapped-deck.tsx` |
+| The React-built slides (intro, stamps, archetype, summary) | `src/components/features/wrapped/*-slide.tsx` |
+| Route, release gate, opt-out check | `src/routes/$activeHackathon/_auth/(account)/wrapped.tsx` |
+| Sidebar link and banner gate | `src/hooks/use-wrapped-ready.ts`, `src/lib/stores/wrapped-store.ts` |
+| The document's shape | `src/lib/firebase/types/wrapped.ts` |
+| Archetype thresholds (shared by the script and the deck) | `src/lib/wrapped/archetype-rules.ts` |
+| Script: config, sources, calculations, stages | `wrapped/script.ts`, `sources.ts`, `calc.ts`, `write.ts` |
+| Nugget, the AI one-liner | [`NUGGET.md`](NUGGET.md) |
+| Clip compression | `wrapped/compress-clips.ts` (`pnpm wrapped:compress`) |
+
+---
+
+Everything below is reference detail: first the deck, then the script.
+
+## The deck
+
+### Route and access
+
+The deck is `/{hackathon}/wrapped`, signed-in only. It also inherits the
+`$activeHackathon` guard, so it needs `InternalWebsites/Portal.portalLive[hackathon]` on.
+
+- **Before load:** the release switch, `Hackathons/{event}.wrapped.isReady`, must be
+  `true`. Admins skip this check, and so do dev builds with `?mock=`.
+- **Loader:** reads `Hackathons/{event}/Wrapped/{uid}`, the hacker's opt-in
+  (`Socials/{uid}.hackerWrappedOptIn`) and the event's `Stamps`, all in parallel. No
+  document, or opted out, gives a 404. A hacker who opts out after the script ran still
+  has a document, so the deck checks the opt-in itself.
+- **Sidebar link and banner:** both use `useWrappedAvailable()`. It's true when the
+  event is released, the hacker has a document, and they haven't opted out. The result is
+  cached for the session in `wrapped-store` and cleared when the profile is saved, so an
+  opt-in change shows straight away.
+  - The banner can also be dismissed. That's remembered per browser in localStorage,
+    per event, and opening the deck dismisses it too.
+
+### Slides
+
+`buildSlides()` in `slides.ts` decides the order, from the document alone:
+
+| Slide | Shown when |
+| ----- | ---------- |
+| `intro` | always |
+| `firstTimer` or `returning` | one or the other, by `isFirstTimer` |
+| `earlySubmission` | the project's last commit was more than an hour before the deadline |
+| `hackerOrigin` | always |
+| `nugget` | the project has a reviewed one-liner |
+| `github` | the project has a readable repo |
+| `techStack` | the project lists at least one tool |
+| `attendance` | always |
+| `stamps` | at least one stamp collected |
+| `comparison` | the script picked a featured stat. It goes right after that stat's own slide: `github`, `stamps` or `attendance` |
+| `prizes` | won a prize |
+| `archetype`, `summary` | always |
+
+Each slide's progress bar fills over 10 seconds, and then the slide holds; nothing
+advances on its own. Tapping the right half goes forward, and the left half restarts the
+slide (or goes back, if tapped early). The arrow keys work too.
+
+### Video slides and coded slides
+
+- **Video slides** (`video-slide.tsx`) are an mp4 plus an optional After Effects text
+  layer, exported as Lottie JSON in `public/assets/wrapped/`. `scenes.ts` maps the comp's
+  layer names to the hacker's values.
+  - The video is the clock. Each frame, the text layer is moved to the video's
+    `currentTime`, so the two stay in step through buffering.
+  - Clips play muted and inline. iOS won't buffer a paused clip, so hidden neighbours
+    are played for a moment and parked to start loading.
+- **Coded slides** (intro, stamps, archetype, summary) are React, laid out on a fixed
+  1080×1920 canvas (`CompCanvas`) and scaled to cover the screen the same way the videos
+  do.
+- **Loading:** the deck mounts the next slides hidden so they load ahead. A slide waits
+  for its clip, text layer, fonts and images before it starts, up to 5 seconds, then
+  starts anyway. A spinner shows if the wait passes 400 ms.
+
+### Clips
+
+The deck loads each clip from Firebase Storage, from the bucket the build is configured
+for (`VITE_FIREBASE_STORAGE_BUCKET`):
+
+| | Bucket | Path |
+| - | ------ | ---- |
+| dev | `nwplus-ubc-dev.appspot.com` | `hackerWrapped/v2/{same path as under public/assets/wrapped}` |
+| prod | `nwplus-ubc.appspot.com` | same |
+
+Both projects' Storage rules carry this block. Admins can still upload through the
+admin-only catch-all rule.
+
+```
+match /hackerWrapped/{path=**} {
+  allow read: if true;
+  allow write: if false;
+}
+```
+
+Objects are uploaded as `video/mp4` with `Cache-Control: public, max-age=31536000,
+immutable`. Browsers keep them for a year, so **never overwrite a clip**: put a new
+encode in a new folder and point `CLIPS` in `scenes.ts` at it.
+
+To re-encode and upload:
+
+```sh
+pnpm wrapped:compress --crf 24 --fps 30 --no-ssim --out public/assets/wrapped/compressed
+gcloud storage cp -r public/assets/wrapped/compressed/crf-24-30fps/* \
+  gs://<bucket>/hackerWrapped/v3/ \
+  --content-type=video/mp4 --cache-control="public, max-age=31536000, immutable"
+```
+
+Then set `CLIPS = "hackerWrapped/v3"`. Upload to both buckets, and check a clip's public
+URL returns `206` for a range request. `pnpm wrapped:compress` without `--out` writes a
+side-by-side `compare.html` for judging quality. CRF 24 at 30 fps is the setting in use:
+about 23 MB for all 11 clips, and 30 fps halves the decoding work on phones.
+
+The original mp4s under `public/assets/wrapped/` are only the source for compression.
+The deck never loads them.
+
+### Keeping it light on phones
+
+iPhones kill the tab ("A problem repeatedly occurred") when the page spends too long
+repainting on the CPU. Blend modes (`mix-blend-*`) and masks on layers that animate are
+the main cause, because WebKit repaints them every frame. So:
+
+- The intro's glow and noise, the archetype window's asteroid belts and sparks, and The
+  Regular's icon are pre-blended into flat WebP images. If the design changes, render the
+  layers again and flatten them; don't bring the blend modes back.
+- Keep animation to `transform` and `opacity`.
+- Two blended spots remain, untested on older iPhones: the stamps slide's soft-light spot
+  and the banner launch's gradient mask.
+
+### Telemetry and sharing
+
+- The deck merges `opened`, `completed` and `shareClicked` into
+  `Hackathons/{event}/WrappedStats/{uid}`. A missing document means "never opened".
+  `pnpm wrapped stats` rolls them up into `WrappedStats/Summary`. Mock decks write
+  nothing.
+- The summary's share sheet renders the share card to a 1080×1920 PNG in the browser,
+  with html-to-image. Nothing is uploaded.
+
+### Developing
+
+- `?mock=<name>` opens a fixture deck in dev builds, with no Firestore needed: `full`,
+  `no-project`, `first-timer`, `no-github`, `comparison-stamps`, `comparison-events`,
+  `no-comparison`, `minimal` (`src/lib/wrapped/fixture.ts`).
+- `VITE_FORCE_WRAPPED_BANNER=true` shows the banner regardless of release, deck or
+  dismissal, and launches into the `full` mock.
+- `pnpm test` runs the unit tests, including `tests/wrapped-*.test.cjs`.
+
+## The batch script
+
+The script builds one `Hackathons/{eventId}/Wrapped/{uid}` doc per attending, opted-in
+hacker, from Firestore, the Devpost CSV export and GitHub.
+
+> Anything marked **Q*n*** is an open question (listed in [Open questions](#open-questions))
+> and is also marked `TODO(Qn)` in the code. Settled answers are under
 > [Decisions](#decisions).
-
-Builds one `Hackathons/{eventId}/Wrapped/{uid}` doc per attending, opted-in hacker from
-Firestore, the Devpost CSV export and GitHub.
 
 ## Running
 
@@ -79,8 +312,9 @@ Resume points, and why each one is at a boundary worth stopping on:
    commit attribution, line counting (`LINE_COUNT_EXCLUSIONS`), the window or AI
    detection. Commit lists are cached per repo, commit stats per sha, and Nugget messages
    per project (`nuggets.json`, reused while their inputs match), so this redoes the work
-   without re-fetching. Commits are fetched from a week before `hackathonStart`, so
-   moving the window earlier than that needs `bypassCache` (or deleting `raw/github/`).
+   without re-fetching. Commits are fetched for the hacking period plus an hour after it
+   (`LATE_PUSH_GRACE_MS`), and the cache path includes that window, so a corrected
+   window fetches the lists again.
 3. **`assemble`**: every per-project value exists. Redo from here after changing a
    formula, the archetype rules, the comparison's threshold, cohorts or priority, or the
    output schema. Takes seconds.
@@ -100,9 +334,11 @@ on a plain resume, which would otherwise push old-shape docs.
 - **Attendance from stamps (schema 3):** rerun `--from fetch` with `bypassCache` on (or
   delete `raw/stamps.json`): a `stamps.json` cached before `category` was read gives every
   hacker 0 workshops and activities. fetch warns when no stamp has a category.
-- **Lines committed (schema 2):** rerun `--from enrich`. Commit lists come from
-  `raw/github/`; only the per-commit stats are new requests, one per in-window commit
-  (about 1,340 for cmd-f2026).
+- **Commit window (schema 5):** rerun `--from fetch`. Commit lists are fetched again into
+  `raw/github-window/` (one request per 100 commits); per-commit stats stay cached. Any
+  project whose late-push status changed gets a new Nugget message to review.
+- **Lines committed (schema 2):** rerun `--from enrich`. Only the per-commit stats are
+  new requests, one per in-window commit (about 1,340 for cmd-f2026).
 - **Before the stats loop**, enrich compares the uncached count with `GET /rate_limit`
   and, if it's short, asks to continue or abort.
 - **Interrupted enrich** (Ctrl-C, crash): loses at most the 6 requests in flight. Stats
@@ -145,7 +381,8 @@ cache/{env}/{eventId}/
   raw/
     event-portal.json  applicants.json  socials.json  attendance.json  stamps.json
     awards.json                      prize run: judging-portal award placements
-    github/{owner}__{repo}.json      one per repo; null if private or missing
+    github-window/{since}_{until}/{owner}__{repo}.json
+                                     one per repo and window; null if private or missing
     github-commits/{sha}.json        one per counted commit: parents and per-file additions;
                                      null if unreadable; kept with bypassCache (a sha never changes)
   stages/{fetch,match,enrich,assemble}.json
@@ -289,7 +526,7 @@ flowchart LR
     matchHackersToProjects
     extractRepoRefs
     filterToHackathonWindow
-    latestCommitAt
+    lastCommitTimes
     attributeCommits
     countCommitLines
     attributeLines
@@ -359,11 +596,11 @@ flowchart LR
   attributeLines --> computeCrossHackerComparison
   toWrappedStamps & countStampsByCategory & a_ci --> computeCrossHackerComparison
   computeCrossHackerComparison --> rankCohort --> pickFeatured --> o_cmp
-  filterToHackathonWindow --> latestCommitAt --> computeEarlySubmission
+  g_commits --> lastCommitTimes --> computeEarlySubmission
   filterToHackathonWindow --> detectAiTools --> buildTechStack
   d_built --> buildTechStack --> o_tech
 
-  latestCommitAt & parseCheckInTime & e_end --> buildArchetypeCohort
+  lastCommitTimes & parseCheckInTime & e_end --> buildArchetypeCohort
   e_open -.-> buildArchetypeCohort
   buildArchetypeCohort --> assignArchetype
   countLifetimeEvents & matchHackersToProjects & attributeCommits & claimedMidnightSnack & countMeals --> assignArchetype
@@ -384,7 +621,7 @@ flowchart LR
 | `summary.attendance`                 | `countLifetimeEvents` + 1                          | `Attendance`; excludes this event                                  | `1`                                     |
 | `checkIn`                            | none                                               | `dayOf.checkedIn === true`                                         | `false`                                 |
 | `survival`                           | `parseCheckInTime`, `computeSurvival`              | `Portal.hackingEnd` − `dayOf.checkedInTime`                        | null if not checked in                  |
-| `earlySubmission`                    | `latestCommitAt`, `computeEarlySubmission`         | `Portal.hackingEnd` − project's latest in-window commit            | null with no project or no commits      |
+| `earlySubmission`                    | `lastCommitTimes`, `computeEarlySubmission`        | `Portal.hackingEnd` − project's submission time (below)            | null with no project or no commits      |
 | `meals`                              | `countMeals`                                         | `dayOf.day1.*`, `dayOf.day2.*`                                     | `0` (**Q18**)                           |
 | `showedUp.dayOfWorkshopCount`        | `countStampsByCategory(…, "dayOfWorkshop")`        | unlocked stamps with `Stamps/{id}.category == "dayOfWorkshop"`     | `0`                                     |
 | `showedUp.dayOfActivityCount`        | `countStampsByCategory(…, "dayOfActivity")`        | unlocked stamps with `category == "dayOfActivity"`                 | `0`                                     |
@@ -407,8 +644,9 @@ Rules run in order and the first match wins, so the order is the hierarchy. Outp
 match `ArchetypeId` in `src/lib/firebase/types/wrapped.ts`. The numbers below are
 `ARCHETYPE_RULES` in `src/lib/wrapped/archetype-rules.ts`, the one place to change them:
 `assignArchetype` and the deck's archetype copy (`src/lib/wrapped/archetype-copy.ts`)
-both read it. "Submission time" means the
-project's latest in-window commit (`lastCommitAt`).
+both read it. "Submission time" means the project's `lastCommitAt`: its latest in-window
+commit, or a commit (not by a bot) up to an hour after the deadline if there is one. See
+[Decisions](#decisions).
 
 | #  | Id                 | Rule                                                                                             | Inputs                                  |
 | -- | ------------------ | ------------------------------------------------------------------------------------------------ | --------------------------------------- |
@@ -418,7 +656,7 @@ project's latest in-window commit (`lastCommitAt`).
 | 4  | `THE_LONE_WOLF`    | has a project and `teamSize` is 1                                                                | `Project.teamSize`                      |
 | 5  | `THE_SPEEDRUNNER`  | submission time earlier than ≥ 80% of hackers with a submission time                             | `ArchetypeCohort.submissionTimes`       |
 | 6  | `THE_EARLY_BIRD`   | checked in ≤ 20 min after check-in opened                                                        | check-in time, **Q20**                  |
-| 7  | `THE_FINISHER`     | submission time 0–3 min before `hackathonEnd`                                                    | `lastCommitAt`                          |
+| 7  | `THE_FINISHER`     | last in-window commit 0–3 min before `hackathonEnd`; a later fix doesn't cost it                 | `lastInWindowCommitAt`                  |
 | 8  | `THE_NIGHT_OWL`    | claimed the midnight snack (`dayOf.day1.snack`)                                                  | `claimedMidnightSnack`                  |
 | 9  | `THE_ORIGIN_STORY` | first-timer                                                                                      | `countLifetimeEvents` == 0              |
 | 10 | `THE_REGULAR`      | ≥ 1 day-of workshop, ≥ 1 meal and ≥ 1 day-of activity                                            | `countStampsByCategory`, `countMeals`   |
@@ -437,9 +675,19 @@ after the prize run never downgrades a winner.
 
 ## Decisions
 
-- `earlySubmission` = `hackathonEnd − lastCommitAt`, where `lastCommitAt` is the
-  project's latest commit inside the window (committer date). It's never negative.
-  `survival` = `hackathonEnd − checkedInAt`. Both are durations.
+- `earlySubmission` = `hackathonEnd − lastCommitAt`, never negative. Devpost's export has
+  no submission time, so the last commit (committer date) stands in for it. A team that
+  committed at 7:00 and then again 20 minutes after a 10:00 deadline wasn't early, so
+  `lastCommitAt` is the latest commit in the window, unless a commit not by a bot landed
+  within `LATE_PUSH_GRACE_MS` (an hour) after the deadline; then it's that one, and
+  `earlySubmission` is 0. Commits more than an hour late (a README tidy-up the next day)
+  are ignored. Late commits never count toward commits, lines or AI tools.
+  `lastInWindowCommitAt` keeps the in-window time for The Finisher. `survival` =
+  `hackathonEnd − checkedInAt`. Both are durations.
+- GitHub is asked only for commits from `hackathonStart` to `hackathonEnd` plus the
+  grace hour (`since` / `until`). A repo that kept going after the event can't push the
+  event's commits past the 3,000-commit page cap, and a linked third-party repo
+  contributes nothing from outside the event.
 - The deadline is `InternalWebsites/Portal.hackingEnd[portalKey]`. The commit window is
   `[hackingStart[portalKey], hackingEnd[portalKey]]`, held as `EventInfo.hackathonStart` /
   `.hackathonEnd`. These are the Portal countdown's times, not `Portal.hackathonStart` /
@@ -561,10 +809,11 @@ after the prize run never downgrades a winner.
 - **Q18.** `meals` = meal slots with at least one scan (max 7), as a single count.
   Repeat scans of one slot count once.
 - **Q19.** Durations are written in **hours**, rounded to one decimal
-  (`durationHours`), since that is what the frontend reads (`doc.survival.durationHours`).
-- **Q20.** No check-in opening field exists; Early Bird uses the earliest check-in in
-  the cohort as the reference, unless `Hackathons/{eventId}.wrapped.checkInOpensAt` is
-  set.
+  (`durationHours`). The deck shows `earlySubmission`. `survival` is written but no slide
+  reads it.
+- **Q20.** admin-v2 writes the check-in opening time to
+  `Hackathons/{eventId}.wrapped.checkInOpensAt` (a Timestamp). Without it, Early Bird
+  measures from the earliest check-in in the cohort.
 
 ## Devpost export (set during the event)
 
@@ -587,6 +836,12 @@ against a real export, once submissions open. Until then `parseDevpostCsv` and
    before anything is written.
 
 ## Implementation plan
+
+**Status (2026-11-04):** the commit window is the hacking period plus an hour, late
+commits make `earlySubmission` 0, and The Finisher reads `lastInWindowCommitAt`
+(schema 5). The clips moved to Firebase Storage (`hackerWrapped/v2`, dev and prod), and
+the deck's blended layers were flattened after iPhone crashes. The unused share page,
+coded comparison slide and their assets were deleted.
 
 **Status (2026-10-31):** attendance counts read stamp categories (step 11).
 
@@ -628,9 +883,13 @@ Node's `fetch` reaches GitHub.
 10. **Lines committed + comparison** (done): per-commit stats (`fetchCommitDetail`, cached
     per sha), `countCommitLines`, `attributeLines`, `rankCohort`, `pickFeatured`, stage
     `schemaVersion` guards, and the frontend's comparison slide. The coded slide was
-    later replaced by the cross-hacker video and Lottie comp; `comparison-slide.tsx` and
-    `public/assets/wrapped/comparison/` are unused until they're deleted.
+    later replaced by the cross-hacker video and Lottie comp, and the coded version was
+    deleted.
 11. **Attendance from stamps** (done, 2026-10-31): `DayOf`, `PreHackathonWorkshops`,
     `dayOf.events` and `preDayOf` are no longer read; the three counts come from
     `Stamps/{id}.category`, and the doc gains `showedUp.dayOfActivityCount` (schema 3).
     Checked on synthetic stamps; not yet run against stamps that carry a category.
+12. **Commit window and late commits** (done, 2026-11-04): `fetchRepoCommits` sends
+    `since`/`until`; `lastCommitTimes` gives `lastCommitAt` and `lastInWindowCommitAt`
+    (schema 5). Tested in `tests/wrapped-commit-times.test.cjs`; not yet run against a
+    real event.
