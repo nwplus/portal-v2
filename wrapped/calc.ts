@@ -357,14 +357,45 @@ export function filterToHackathonWindow(commits: RawCommit[], event: EventInfo):
   });
 }
 
-/** Latest committedAt among in-window commits, or null if there are none. */
-export function latestCommitAt(commits: RawCommit[]): string | null {
+/**
+ * Commits up to this long after hackathonEnd are fetched too. They count toward nothing (no
+ * commits, lines or AI tools); they only show a team was still pushing at the deadline, so an
+ * early last in-window commit isn't read as an early submission. Edits made later than this
+ * (a README tidy-up the next day) are left out.
+ */
+export const LATE_PUSH_GRACE_MS = 60 * 60 * 1000;
+
+/**
+ * A project's last commit times. Both are null with no in-window commits: a repo touched
+ * only after the deadline says nothing about the event.
+ *
+ * - `lastInWindowCommitAt`: its latest commit in [hackathonStart, hackathonEnd].
+ * - `lastCommitAt`: the stand-in submission time. The same, unless a later commit (bots
+ *   excluded) landed within LATE_PUSH_GRACE_MS after the deadline; then it's that one, so
+ *   earlySubmission is 0 and the slide is skipped. The team wasn't early, it was still
+ *   finishing.
+ */
+export function lastCommitTimes(
+  commits: RawCommit[],
+  event: EventInfo,
+): { lastCommitAt: string | null; lastInWindowCommitAt: string | null } {
+  const start = Date.parse(event.hackathonStart);
+  const end = Date.parse(event.hackathonEnd);
   let latest: number | null = null;
+  let latePush: number | null = null;
   for (const commit of commits) {
     const at = Date.parse(commit.committedAt);
-    if (latest === null || at > latest) latest = at;
+    if (at >= start && at <= end) {
+      if (latest === null || at > latest) latest = at;
+    } else if (at > end && at <= end + LATE_PUSH_GRACE_MS && commit.authorType !== "Bot") {
+      if (latePush === null || at > latePush) latePush = at;
+    }
   }
-  return latest === null ? null : new Date(latest).toISOString();
+  if (latest === null) return { lastCommitAt: null, lastInWindowCommitAt: null };
+  return {
+    lastCommitAt: new Date(latePush ?? latest).toISOString(),
+    lastInWindowCommitAt: new Date(latest).toISOString(),
+  };
 }
 
 /**
@@ -922,8 +953,10 @@ export function assignArchetype(
     if (sinceOpen <= EARLY_BIRD_WINDOW_MS) return "THE_EARLY_BIRD";
   }
 
-  if (submittedAt !== null) {
-    const beforeDeadline = Date.parse(cohort.deadline) - submittedAt;
+  // The last in-window commit, not the submission time: a team that committed at 9:58 for
+  // a 10:00 deadline and pushed a fix at 10:05 is still a finisher.
+  if (enrichment?.lastInWindowCommitAt) {
+    const beforeDeadline = Date.parse(cohort.deadline) - Date.parse(enrichment.lastInWindowCommitAt);
     if (beforeDeadline >= 0 && beforeDeadline <= FINISHER_WINDOW_MS) return "THE_FINISHER";
   }
 

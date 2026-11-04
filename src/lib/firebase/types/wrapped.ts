@@ -78,8 +78,9 @@ export interface WrappedDoc {
   name: string;
   isFirstTimer: boolean;
   /**
-   * Hours (one decimal) from the project's lastCommitAt to hackathonEnd. Never negative.
-   * Null with no project or no readable repo.
+   * Hours (one decimal) from the project's lastCommitAt to hackathonEnd. Never negative:
+   * 0 when the team was still pushing after the deadline. Null with no project or no
+   * readable repo.
    */
   earlySubmission: number | null;
   /** Hours (one decimal) from checkedInAt to hackathonEnd. Null if not checked in. */

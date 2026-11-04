@@ -39,8 +39,10 @@ export type StageStatus = "pending" | "running" | "done" | "skipped";
  * of writing old-shape docs. Carried by FetchOutput, EnrichOutput and AssembleOutput; absent
  * means 1. 3: attendance counts from stamp categories, `showedUp.dayOfActivityCount`.
  * 4: hackers not checked in (`dayOf.checkedIn !== true`) are dropped at fetch.
+ * 5: commits fetched for the hacking period only; `lastCommitAt` counts a commit up to an
+ * hour late, and `lastInWindowCommitAt` is new.
  */
-export const STAGE_SCHEMA_VERSION = 4;
+export const STAGE_SCHEMA_VERSION = 5;
 
 /** `cache/{env}/{eventId}/progress.json` */
 export interface Progress {
@@ -350,10 +352,13 @@ export interface ProjectEnrichment {
   /** Counted commits whose stats GitHub wouldn't return (422 etc.); they add 0 lines. */
   unreadableCommitStats: number;
   /**
-   * Latest in-window commit across the project's repos. Stands in for the submission
-   * time: earlySubmission, THE_SPEEDRUNNER, THE_FINISHER.
+   * Latest in-window commit across the project's repos, or a commit within an hour after
+   * the deadline (`lastCommitTimes`). Stands in for the submission time: earlySubmission,
+   * THE_SPEEDRUNNER.
    */
   lastCommitAt: string | null;
+  /** Latest commit in [hackathonStart, hackathonEnd], late ones ignored. THE_FINISHER. */
+  lastInWindowCommitAt: string | null;
   /** Appended to the project's techStack in the doc. */
   aiTools: string[];
   /** Nugget's reviewed one-liner (NUGGET.md). Null: empty About text, or blanked in review. */
@@ -409,8 +414,9 @@ export interface WrappedDoc {
   name: string;
   isFirstTimer: boolean;
   /**
-   * Hours (one decimal) from the project's lastCommitAt to hackathonEnd. Never negative
-   * (later commits are outside the window). Null with no project or no readable repo.
+   * Hours (one decimal) from the project's lastCommitAt to hackathonEnd. Never negative:
+   * 0 when the team was still pushing after the deadline. Null with no project or no
+   * readable repo.
    */
   earlySubmission: number | null;
   /** Hours (one decimal) from checkedInAt to hackathonEnd. Null if not checked in. */

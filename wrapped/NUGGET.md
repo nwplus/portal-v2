@@ -40,7 +40,7 @@ political, religious or health claims.
 | `NICHE_DETAIL` | always | one concrete detail, appreciated |
 | `HEARTFELT` | always | the people it helps |
 | `IMPRESSED` | ≥ 5 Built With, or team commits in the top quartile (≥ 4 projects with commits) | the scope of what was built |
-| `CLUTCH` | `lastCommitAt` within 1 h of `hackathonEnd` | the last-minute push |
+| `CLUTCH` | `lastCommitAt` within 1 h before `hackathonEnd`, or a late commit after it | the last-minute push |
 | `EARLY_CALM` | `lastCommitAt` ≥ 3 h before `hackathonEnd` | finishing early and calmly |
 | `SOLO` | `teamSize === 1` | one person built it all |
 | `AI_SIDEKICK` | an LLM API or AI tool in Built With (word match), or `detectAiTools` | building alongside AI; the team did the work |

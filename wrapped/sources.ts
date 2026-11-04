@@ -17,6 +17,7 @@ import {
   NUGGET_OUTPUT_SCHEMA,
   NUGGET_SYSTEM_PROMPT,
   buildNuggetRetryMessage,
+  LATE_PUSH_GRACE_MS,
 } from "./calc.ts";
 import type { RunContext } from "./infra.ts";
 import type {
@@ -62,7 +63,7 @@ function eventRef(ctx: RunContext) {
  * hackathonStart/End: `InternalWebsites/Portal.{hackingStart, hackingEnd}[portalKey]`
  * (ISO strings), the same values as the Portal's countdown.
  * name comes from CONFIG.eventName. checkInOpensAt: `Hackathons/{eventId}.wrapped.checkInOpensAt`
- * if set (Q20).
+ * if set (Q20), a Timestamp written by admin-v2 (toPlain turns it into an ISO string).
  */
 export async function fetchEventInfo(ctx: RunContext): Promise<EventInfo> {
   // Renamed from "event" when the times moved to the Portal doc, so an old cache isn't reused.
@@ -87,13 +88,22 @@ export async function fetchEventInfo(ctx: RunContext): Promise<EventInfo> {
     };
 
     const wrapped = toPlain<Record<string, string | undefined>>(eventSnap.get("wrapped") ?? {});
+    const checkInOpensAt = wrapped.checkInOpensAt ?? null;
+    if (
+      checkInOpensAt !== null &&
+      (typeof checkInOpensAt !== "string" || Number.isNaN(Date.parse(checkInOpensAt)))
+    ) {
+      throw new Error(
+        `Hackathons/${eventId}.wrapped.checkInOpensAt must be a Timestamp, got ${JSON.stringify(checkInOpensAt)}`,
+      );
+    }
 
     return {
       eventId,
       name: eventName,
       hackathonStart: portalTime("hackingStart"),
       hackathonEnd: portalTime("hackingEnd"),
-      checkInOpensAt: wrapped.checkInOpensAt ?? null,
+      checkInOpensAt,
     };
   });
 }
@@ -301,10 +311,7 @@ export async function parseDevpostCsv(ctx: RunContext): Promise<DevpostRow[]> {
 
 const GITHUB_API = "https://api.github.com";
 
-/** Commits from this long before hackathonStart are fetched too, so a small window change needs no re-fetch. */
-const COMMIT_LOOKBACK_MS = 7 * 24 * 60 * 60 * 1000;
-
-/** Guards against a linked mega-repo; 30 pages is 3000 commits since the lookback. */
+/** Guards against a linked mega-repo; 30 pages is 3000 commits inside the window. */
 const MAX_COMMIT_PAGES = 30;
 
 /** Private, deleted, empty (409) or blocked (451): cached as null, never retried. */
@@ -332,9 +339,12 @@ interface GithubCommit {
 }
 
 /**
- * raw/github/{owner}__{repo}.json
+ * raw/github-window/{since}_{until}/{owner}__{repo}.json
  * Paginated `GET /repos/{owner}/{repo}/commits` (100 per page) with GITHUB_PAT, from
- * hackathonStart minus a week. GitHub's `since` compares committer dates, like the window.
+ * hackathonStart to hackathonEnd plus LATE_PUSH_GRACE_MS. GitHub's `since` and `until`
+ * compare committer dates, like the window. Bounding both ends keeps a repo that carried on
+ * after the event (or a busy third-party repo) from pushing the event's commits past the
+ * page cap. Cached per repo and window, so a corrected hackingStart/End fetches afresh.
  * A 404/409 (private, deleted, empty) caches as null so it is not retried.
  *
  * Default branch only (Q9). Merge commits count as commits; countCommitLines gives them 0 lines.
@@ -342,15 +352,20 @@ interface GithubCommit {
 export async function fetchRepoCommits(
   ctx: RunContext,
   repo: RepoRef,
-  hackathonStart: string,
+  event: Pick<EventInfo, "hackathonStart" | "hackathonEnd">,
 ): Promise<RawCommit[] | null> {
+  const since = new Date(event.hackathonStart).toISOString();
+  const until = new Date(Date.parse(event.hackathonEnd) + LATE_PUSH_GRACE_MS).toISOString();
   // GitHub names are case-insensitive; one cache file per repo however it was linked.
-  const key = `github/${repo.owner}__${repo.repo}`.toLowerCase();
+  // `github-window/`, not the old `github/`: those lists ran from a week before the event
+  // with no end, so a capped one may be missing the event's commits. The window is in the
+  // path (as 20261101t170000z) so a list fetched for a different one is never reused.
+  const stamp = (iso: string) => iso.replace(/[-:]|\.\d+/g, "");
+  const key = `github-window/${stamp(since)}_${stamp(until)}/${repo.owner}__${repo.repo}`.toLowerCase();
   return ctx.cache.raw(key, async () => {
     const headers = githubHeaders();
-    const since = new Date(new Date(hackathonStart).getTime() - COMMIT_LOOKBACK_MS).toISOString();
     let url: string | undefined =
-      `${GITHUB_API}/repos/${repo.owner}/${repo.repo}/commits?per_page=100&since=${since}`;
+      `${GITHUB_API}/repos/${repo.owner}/${repo.repo}/commits?per_page=100&since=${since}&until=${until}`;
     const commits: RawCommit[] = [];
 
     for (let page = 0; url; page++) {

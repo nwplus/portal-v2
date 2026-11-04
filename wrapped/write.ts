@@ -33,7 +33,7 @@ import {
   isJunkAbout,
   isCheckedIn,
   isOptedOut,
-  latestCommitAt,
+  lastCommitTimes,
   matchHackersToProjects,
   NUGGET_LENGTH_RETRIES,
   NUGGET_MAX_CHARS,
@@ -261,7 +261,12 @@ async function stageEnrich(ctx: RunContext): Promise<void> {
   const hackerByUid = new Map(hackers.map((hacker) => [hacker.uid, hacker]));
 
   // 1. Per project: commit lists (cached per repo, so a halt loses at most one repo).
-  const listed: Array<{ project: Project; readable: boolean; inWindow: RawCommit[] }> = [];
+  const listed: Array<{
+    project: Project;
+    readable: boolean;
+    inWindow: RawCommit[];
+    times: ReturnType<typeof lastCommitTimes>;
+  }> = [];
   // The first repo each sha was listed in; a fork's copy has the same stats.
   const repoBySha = new Map<string, RepoRef>();
   const projectBar = ui.bar("Projects", projects.length);
@@ -270,7 +275,7 @@ async function stageEnrich(ctx: RunContext): Promise<void> {
   for (const project of projects) {
     const perRepo: RawCommit[][] = [];
     for (const repo of project.repos) {
-      const commits = await fetchRepoCommits(ctx, repo, event.hackathonStart);
+      const commits = await fetchRepoCommits(ctx, repo, event);
       if (commits === null) {
         unreadableRepos++;
         continue;
@@ -280,11 +285,12 @@ async function stageEnrich(ctx: RunContext): Promise<void> {
     }
 
     // One repo linked twice under different names, or a fork, must not double-count.
-    const unique = new Map(perRepo.flat().map((commit) => [commit.sha, commit]));
+    const unique = [...new Map(perRepo.flat().map((commit) => [commit.sha, commit])).values()];
     listed.push({
       project,
       readable: perRepo.length > 0,
-      inWindow: filterToHackathonWindow([...unique.values()], event),
+      inWindow: filterToHackathonWindow(unique, event),
+      times: lastCommitTimes(unique, event),
     });
     projectBar.tick();
   }
@@ -334,7 +340,7 @@ async function stageEnrich(ctx: RunContext): Promise<void> {
 
   // 4. Per project: attribution from the commits and stats above.
   const byProject: Record<string, ProjectEnrichment> = {};
-  for (const { project, readable, inWindow } of listed) {
+  for (const { project, readable, inWindow, times } of listed) {
     const members = project.memberUids.flatMap((uid) => hackerByUid.get(uid) ?? []);
     // No readable repo: every count is unknown, not zero, so no member enters the ranking.
     byProject[project.id] = {
@@ -349,7 +355,7 @@ async function stageEnrich(ctx: RunContext): Promise<void> {
             linesByUid: {},
           }),
       unreadableCommitStats: counted(inWindow).filter((commit) => details.get(commit.sha) === null).length,
-      lastCommitAt: latestCommitAt(inWindow),
+      ...times,
       aiTools: detectAiTools(inWindow),
       // Filled below, once every project's commits are in.
       nugget: null,

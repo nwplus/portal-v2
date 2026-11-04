@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useHackathon } from "@/hooks/use-hackathon";
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
-import { useWrappedReady } from "@/hooks/use-wrapped-ready";
+import { useWrappedAvailable } from "@/hooks/use-wrapped-ready";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useHackerStore } from "@/lib/stores/hacker-store";
 import { usePortalStore } from "@/lib/stores/portal-store";
@@ -114,7 +114,7 @@ export function AppSidebar() {
   const signInWithGoogle = useAuthStore((state) => state.signInWithGoogle);
   const user = useAuthStore((state) => state.user);
   const hacker = useHackerStore((state) => state.hacker);
-  const isWrappedAvailable = useWrappedReady();
+  const isWrappedAvailable = useWrappedAvailable();
   const isCtfOpen = usePortalStore((state) => state.ctfOpen?.[activeHackathon] ?? false);
   const { isMobile } = useSidebar();
   const LogoComponent = getSidebarHackathonIcon(activeHackathon);

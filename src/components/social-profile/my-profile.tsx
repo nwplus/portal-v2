@@ -12,6 +12,7 @@ import {
   deriveDefaultValues,
   socialProfileSchema,
 } from "@/lib/social-profile/schema";
+import { useWrappedStore } from "@/lib/stores/wrapped-store";
 import { createOrMergeSocial } from "@/services/socials";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "@tanstack/react-router";
@@ -102,6 +103,8 @@ export function MyProfile({ socialProfile, uid, email, displayName }: MyProfileP
       };
 
       await createOrMergeSocial(uid, email, socialData);
+      // The sidebar and banner cache whether this hacker's Wrapped is open to them.
+      useWrappedStore.getState().clearAccess();
       // re-fetch to hydrate state; slower than optimistic update but ensures consistency
       await router.invalidate();
 

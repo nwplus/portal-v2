@@ -1,12 +1,9 @@
 import { ROCKET_HEIGHT, ROCKET_WIDTH, RocketShip } from "@/components/features/wrapped/rocket-ship";
 import { useHackathon } from "@/hooks/use-hackathon";
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
-import { useWrappedReady } from "@/hooks/use-wrapped-ready";
-import { useAuthStore } from "@/lib/stores/auth-store";
+import { useWrappedAvailable } from "@/hooks/use-wrapped-ready";
 import { dismissWrappedBanner, isWrappedBannerDismissed } from "@/lib/wrapped/banner-dismissal";
 import { armLaunchHandoff } from "@/lib/wrapped/launch-handoff";
-import { fetchWrappedOptIn } from "@/services/socials";
-import { fetchWrappedDoc } from "@/services/wrapped";
 import { useNavigate } from "@tanstack/react-router";
 import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -54,14 +51,11 @@ const INTRO_SKY = "#1a1138";
 export function WrappedBanner() {
   const { activeHackathon } = useHackathon();
   const { dbCollectionName } = useHackathonInfo();
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const user = useAuthStore((state) => state.user);
-  const isReleased = useWrappedReady();
+  const hasDeck = useWrappedAvailable();
   const navigate = useNavigate();
 
   // Starts hidden so the banner cannot flash in before we know it was dismissed.
   const [isDismissed, setIsDismissed] = useState(true);
-  const [hasDeck, setHasDeck] = useState(false);
   const [isLaunching, setIsLaunching] = useState(false);
   const launchTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -71,28 +65,6 @@ export function WrappedBanner() {
   useEffect(() => {
     setIsDismissed(isWrappedBannerDismissed(dbCollectionName));
   }, [dbCollectionName]);
-
-  // Only reads when the banner could actually show — no wasted read for hackers whose
-  // event has not released, or who already dismissed it.
-  useEffect(() => {
-    if (!isAuthenticated || !user?.uid || !dbCollectionName || !isReleased || isDismissed) {
-      setHasDeck(false);
-      return;
-    }
-
-    let active = true;
-    // Opted-out hackers are never nudged, even if a deck predating their opt-out is
-    // still in Firestore — the deck route refuses them too, so a banner would 404.
-    Promise.all([fetchWrappedDoc(dbCollectionName, user.uid), fetchWrappedOptIn(user.uid)])
-      .then(([doc, isOptedIn]) => {
-        if (active) setHasDeck(doc !== null && isOptedIn);
-      })
-      .catch((error) => console.error("Failed to check for wrapped deck", error));
-
-    return () => {
-      active = false;
-    };
-  }, [isAuthenticated, user?.uid, dbCollectionName, isReleased, isDismissed]);
 
   if (!FORCE_BANNER && (!hasDeck || (isDismissed && !isLaunching))) return null;
 
