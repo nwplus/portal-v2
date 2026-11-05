@@ -1,14 +1,9 @@
 /** The modes other than write. */
 
-import { applyPrizes, matchPrizesToProjects } from "./calc.ts";
+import { applyPrizes, matchPrizesToProjects, summarizeWrappedStats } from "./calc.ts";
 import type { RunContext } from "./infra.ts";
 import { fetchAwardPlacements } from "./sources.ts";
-import type {
-  MatchOutput,
-  WrappedDoc,
-  WrappedStatsSession,
-  WrappedStatsSummary,
-} from "./types.ts";
+import type { MatchOutput, WrappedDoc, WrappedStatsSession } from "./types.ts";
 
 /** Doc id of the aggregate inside `WrappedStats`, alongside the per-uid session docs. */
 const STATS_SUMMARY_DOC_ID = "Summary";
@@ -92,7 +87,7 @@ export async function runPrize(ctx: RunContext): Promise<void> {
 
 /**
  * Organizer statistics: rolls the Portal's per-hacker `WrappedStats/{uid}` docs up into
- * `WrappedStats/Summary`, with rates over the number of decks generated.
+ * `WrappedStats/Summary`. See summarizeWrappedStats for who each rate is a share of.
  *
  * Always writes `cache/{env}/{eventId}/output/stats.json`; writes Firestore only with
  * writeToFirestore, like every other mode.
@@ -102,58 +97,46 @@ export async function runStats(ctx: RunContext): Promise<void> {
   ui.section(`Stats: ${config.eventId}`);
 
   const eventRef = db.collection("Hackathons").doc(config.eventId);
-  const [deckCount, sessions] = await Promise.all([
-    // count() bills one read per 1000 index entries, so the denominator is ~free.
-    eventRef.collection("Wrapped").count().get(),
+  const [decks, sessionDocs] = await Promise.all([
+    // Ids only. Sessions are matched against these, so count() would not be enough.
+    eventRef.collection("Wrapped").select().get(),
     eventRef.collection("WrappedStats").get(),
   ]);
 
-  const numberOfHackers = deckCount.data().count;
   // An all-zero summary would read as "nobody opened it" rather than "nothing to open".
-  if (numberOfHackers === 0) {
+  if (decks.empty) {
     throw new Error(`No docs in Hackathons/${config.eventId}/Wrapped. Run write before stats.`);
   }
 
-  let opens = 0;
-  let completions = 0;
-  let shares = 0;
-  for (const doc of sessions.docs) {
-    if (doc.id === STATS_SUMMARY_DOC_ID) continue;
-    const session = doc.data() as Partial<WrappedStatsSession>;
-    if (session.opened === true) opens++;
-    if (session.completed === true) completions++;
-    if (session.shareClicked === true) shares++;
-  }
+  const sessions = new Map(
+    sessionDocs.docs
+      .filter((doc) => doc.id !== STATS_SUMMARY_DOC_ID)
+      .map((doc) => [doc.id, doc.data() as Partial<WrappedStatsSession>] as const),
+  );
+  const { summary, orphanedSessions, skippedStepSessions } = summarizeWrappedStats(
+    config.eventId,
+    decks.docs.map((doc) => doc.id),
+    sessions,
+    new Date().toISOString(),
+  );
 
-  const rate = (n: number) => Math.round((n / numberOfHackers) * 1000) / 1000;
-  const summary: WrappedStatsSummary = {
-    eventId: config.eventId,
-    numberOfHackers,
-    opens,
-    completions,
-    shares,
-    openRate: rate(opens),
-    completionRate: rate(completions),
-    shareRate: rate(shares),
-    lastAggregatedAt: new Date().toISOString(),
-  };
-
-  ui.info(`${numberOfHackers} decks generated`);
-  for (const [label, count, ratio] of [
-    ["opened", opens, summary.openRate],
-    ["completed", completions, summary.completionRate],
-    ["shared", shares, summary.shareRate],
+  ui.info(`${summary.numberOfHackers} decks generated`);
+  for (const [label, count, ratio, population] of [
+    ["opened", summary.opens, summary.openRate, "of decks"],
+    ["completed", summary.completions, summary.completionRate, "of opens"],
+    ["shared", summary.shares, summary.shareRate, "of completions"],
   ] as const) {
-    ui.info(`${`${count}`.padStart(6)} ${label.padEnd(10)} ${(ratio * 100).toFixed(1)}%`);
+    ui.info(
+      `${`${count}`.padStart(6)} ${label.padEnd(10)} ${(ratio * 100).toFixed(1)}% ${population}`,
+    );
   }
 
-  // Opting out after opening keeps the session doc but drops the deck on the next run.
-  if (opens > numberOfHackers) {
-    ui.warn(`${opens} opens against ${numberOfHackers} decks: rates exceed 100%.`);
+  if (orphanedSessions > 0) {
+    ui.warn(`${orphanedSessions} sessions have no deck any more (opted out?); not counted.`);
   }
-  if (completions > opens) {
+  if (skippedStepSessions > 0) {
     ui.warn(
-      `${completions} completions against ${opens} opens: a session has completed without opened.`,
+      `${skippedStepSessions} sessions completed without opened or shared without completed; not counted.`,
     );
   }
 

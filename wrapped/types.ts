@@ -492,14 +492,18 @@ export interface WrappedStatsSession {
 /** `WrappedStats/Summary`, written by the stats run and read by organizers. */
 export interface WrappedStatsSummary {
   eventId: string;
-  /** `count()` of the `Wrapped` collection: the open-rate denominator. */
+  /** Docs in the `Wrapped` collection. A session counts only if its hacker is one of these. */
   numberOfHackers: number;
   opens: number;
+  /** Hackers who opened and completed. */
   completions: number;
+  /** Hackers who completed and clicked share. */
   shares: number;
-  /** `opens / numberOfHackers`, three decimals. */
+  /** `opens / numberOfHackers`, three decimals, like the other rates. */
   openRate: number;
+  /** `completions / opens`; 0 if nobody opened. */
   completionRate: number;
+  /** `shares / completions`; 0 if nobody completed. */
   shareRate: number;
   /** ISO string, like every other timestamp this script writes. */
   lastAggregatedAt: string;

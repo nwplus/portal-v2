@@ -114,9 +114,10 @@ The deck is `/{hackathon}/wrapped`, signed-in only. It also inherits the
   document, or opted out, gives a 404. A hacker who opts out after the script ran still
   has a document, so the deck checks the opt-in itself.
 - **Sidebar link and banner:** both use `useWrappedAvailable()`. It's true when the
-  event is released, the hacker has a document, and they haven't opted out. The result is
-  cached for the session in `wrapped-store` and cleared when the profile is saved, so an
-  opt-in change shows straight away.
+  event is released, the hacker has a document, and they haven't opted out. They share a
+  live listener on the release switch, so an open tab picks up a change without a reload.
+  The document and opt-in result is cached for the session in `wrapped-store` and cleared
+  when the profile is saved, so an opt-in change shows straight away.
   - The banner can also be dismissed. That's remembered per browser in localStorage,
     per event, and opening the deck dismisses it too.
 
@@ -219,6 +220,9 @@ the main cause, because WebKit repaints them every frame. So:
   `Hackathons/{event}/WrappedStats/{uid}`. A missing document means "never opened".
   `pnpm wrapped stats` rolls them up into `WrappedStats/Summary`. Mock decks write
   nothing.
+- Only hackers with a deck count, since a session outlives a deck removed by a later run.
+  The open rate is a share of decks generated, the completion rate a share of those who
+  opened, and the share rate a share of those who completed.
 - The summary's share sheet renders the share card to a 1080×1920 PNG in the browser,
   with html-to-image. Nothing is uploaded.
 

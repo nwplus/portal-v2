@@ -5,18 +5,20 @@ import { useEffect } from "react";
 
 /**
  * Whether the active hackathon's Wrapped is released — `Hackathons/{event}.wrapped.isReady`.
- * Honoured in every build, so what a developer sees matches what hackers will.
+ * Honoured in every build, so what a developer sees matches what hackers will. Stays live
+ * while mounted, so a tab left open before release picks up the switch turning on.
  *
  * @returns false until the flag has loaded, so nothing flashes in before release
  */
 function useWrappedReady(): boolean {
   const { dbCollectionName } = useHackathonInfo();
   const isReady = useWrappedStore((state) => state.ready[dbCollectionName]);
-  const getOrFetchReady = useWrappedStore((state) => state.getOrFetchReady);
+  const watchReady = useWrappedStore((state) => state.watchReady);
 
-  useEffect(() => {
-    if (dbCollectionName) void getOrFetchReady(dbCollectionName);
-  }, [dbCollectionName, getOrFetchReady]);
+  useEffect(
+    () => (dbCollectionName ? watchReady(dbCollectionName) : undefined),
+    [dbCollectionName, watchReady],
+  );
 
   return isReady === true;
 }

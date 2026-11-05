@@ -30,6 +30,8 @@ import type {
   StampCategory,
   WrappedDoc,
   WrappedStamp,
+  WrappedStatsSession,
+  WrappedStatsSummary,
 } from "./types.ts";
 import { parseGithubLogin } from "../src/lib/github-login.ts";
 import { ARCHETYPE_RULES } from "../src/lib/wrapped/archetype-rules.ts";
@@ -1205,4 +1207,75 @@ export function matchPrizesToProjects(
     for (const uid of winner.memberUids) prizesByUid[uid] = winner.prizes;
   }
   return { winners, prizesByUid, unmatched: [...unmatchedByKey.values()] };
+}
+
+// ---------------------------------------------------------------------------
+// Organizer statistics
+// ---------------------------------------------------------------------------
+
+export interface WrappedStatsRollup {
+  summary: WrappedStatsSummary;
+  /** Sessions left out because their deck is gone: an opt-out dropped by a later run. */
+  orphanedSessions: number;
+  /**
+   * Deck holders left out of a count for missing the step before it: completed without
+   * opened, or shared without completed. An earlier telemetry write must have failed.
+   */
+  skippedStepSessions: number;
+}
+
+/** A share to three decimals; 0 when there is nobody to take a share of. */
+function statsRate(count: number, population: number): number {
+  return population === 0 ? 0 : Math.round((count / population) * 1000) / 1000;
+}
+
+/**
+ * Rolls per-hacker sessions up over the decks that exist now. Sessions outlive their deck,
+ * so only deck holders count. Each rate is a share of the step before it: opens of decks
+ * generated, completions of opens, shares of completions. That keeps each at or below 100%.
+ */
+export function summarizeWrappedStats(
+  eventId: string,
+  deckUids: string[],
+  sessions: Map<string, Partial<WrappedStatsSession>>,
+  lastAggregatedAt: string,
+): WrappedStatsRollup {
+  const decks = new Set(deckUids);
+  let opens = 0;
+  let completions = 0;
+  let shares = 0;
+  let orphanedSessions = 0;
+  let skippedStepSessions = 0;
+
+  for (const [uid, session] of sessions) {
+    if (!decks.has(uid)) {
+      orphanedSessions++;
+      continue;
+    }
+    const opened = session.opened === true;
+    const completed = opened && session.completed === true;
+    const shared = completed && session.shareClicked === true;
+    if (opened) opens++;
+    if (completed) completions++;
+    if (shared) shares++;
+    if ((session.completed === true && !completed) || (session.shareClicked === true && !shared)) {
+      skippedStepSessions++;
+    }
+  }
+
+  return {
+    summary: {
+      eventId,
+      numberOfHackers: decks.size,
+      opens,
+      completions,
+      shares,
+      openRate: statsRate(opens, decks.size),
+      completionRate: statsRate(completions, opens),
+      shareRate: statsRate(shares, completions),
+      lastAggregatedAt,
+    },
+    orphanedSessions,
+    skippedStepSessions,
+  };
 }

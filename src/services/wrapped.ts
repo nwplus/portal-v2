@@ -4,10 +4,12 @@ import type { LiveStamp } from "@/lib/wrapped/stamp-slots";
 import {
   type DocumentData,
   type DocumentReference,
+  type Unsubscribe,
   collection,
   doc,
   getDoc,
   getDocs,
+  onSnapshot,
   query,
   setDoc,
   where,
@@ -52,6 +54,27 @@ function getWrappedStatsRef(
 export async function fetchWrappedReady(dbCollectionName: string): Promise<boolean> {
   const snap = await getDoc(doc(db, "Hackathons", dbCollectionName));
   return snap.get("wrapped.isReady") === true;
+}
+
+/**
+ * Listens to the organizer release flag, so a tab that is already open sees the switch
+ * change. Reads the same way as `fetchWrappedReady`.
+ *
+ * @param dbCollectionName - firestore collection name for the hackathon
+ * @param onChange - called with the current flag, then again on every change to the doc
+ * @param onError - called if the listener fails; Firestore delivers nothing more after that
+ * @returns function that stops the listener
+ */
+export function subscribeToWrappedReady(
+  dbCollectionName: string,
+  onChange: (isReady: boolean) => void,
+  onError: (error: Error) => void,
+): Unsubscribe {
+  return onSnapshot(
+    doc(db, "Hackathons", dbCollectionName),
+    (snap) => onChange(snap.get("wrapped.isReady") === true),
+    onError,
+  );
 }
 
 /**
