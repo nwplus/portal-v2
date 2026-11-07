@@ -280,6 +280,16 @@ function RouteComponent() {
             <Message applicant={hacker} />
           </>
         )}
+        <div className="flex flex-col items-center gap-3 md:hidden">
+          <button
+            type="button"
+            onClick={downloadTicket}
+            className="mx-auto h-[46px] w-[46px] cursor-pointer rounded-lg border border-border-subtle bg-bg-dropdown-selected px-3 py-2 md:hidden"
+          >
+            <Download size={22} />
+          </button>
+          {walletButtons}
+        </div>
         <div className="flex justify-center gap-10">
           <div ref={ticketRef}>
             <Ticket
@@ -309,16 +319,6 @@ function RouteComponent() {
             </button>
             <div className="mt-2 flex flex-col items-center gap-3">{walletButtons}</div>
           </div>
-        </div>
-        <div className="flex flex-col items-center gap-3 md:hidden">
-          <button
-            type="button"
-            onClick={downloadTicket}
-            className="mx-auto h-[46px] w-[46px] cursor-pointer rounded-lg border border-border-subtle bg-bg-dropdown-selected px-3 py-2 md:hidden"
-          >
-            <Download size={22} />
-          </button>
-          {walletButtons}
         </div>
         {!isCustomizing && <MyPerks perks={perks} claimingId={claimingId} onClaim={handleClaim} />}
         {isCustomizing && (
