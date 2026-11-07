@@ -1,6 +1,7 @@
 // aligns with https://github.com/nwplus/admin-v2/blob/dev/src/lib/firebase/types.ts
 
 import type { Timestamp } from "firebase/firestore";
+import type { Promotion } from "./types/promotions";
 
 export type ApplicantMajor =
   | "computerScience"
@@ -50,6 +51,8 @@ export interface Hackathon {
     registrationOpen?: boolean;
     test?: boolean;
   };
+  /** Sponsor perks shown under the ticket; see types/promotions.ts */
+  promotions?: Promotion[];
 }
 
 export type BackgroundGradientPosition = "bottomMiddle" | "bottomRight" | "topMiddle" | "topLeft";
