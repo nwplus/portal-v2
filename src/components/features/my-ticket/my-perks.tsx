@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { type Perk, sponsorName } from "@/lib/promotions";
-import { cn } from "@/lib/utils";
 import { Check, Copy, ExternalLink, Gift } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -51,12 +50,7 @@ function PerkCard({
   const { promotion, claim } = perk;
 
   return (
-    <div
-      className={cn(
-        "flex flex-col gap-3 rounded-xl border border-border-subtle p-5 [background:var(--background-translucent-card)]",
-        claim && "border-border-active",
-      )}
-    >
+    <div className="flex flex-col gap-3 rounded-xl border border-border-subtle bg-bg-main/60 p-5 backdrop-blur-md">
       <div className="flex flex-col gap-1">
         <p className="text-text-secondary text-xs">Sponsor perk</p>
         <h3 className="font-semibold text-lg text-text-primary">{sponsorName(promotion)}</h3>
