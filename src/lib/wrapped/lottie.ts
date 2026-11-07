@@ -34,7 +34,7 @@ type LottieFont = { fFamily: string; fWeight: string; fStyle: string };
  * hacker's own text would render with gaps; dropping them makes lottie-web fall back to
  * the font. lottie-web derives CSS weight from `fStyle` words and doesn't know
  * "ExtraBold" (it'd fall to 400), but an explicit `fWeight` wins — so set that and clear
- * the style.
+ * the style. A font that already names a weight keeps it: the GitHub comp's copy is 600.
  */
 export function withWebfont<
   T extends {
@@ -52,15 +52,15 @@ export function withWebfont<
   }
   for (const font of data.fonts?.list ?? []) {
     font.fFamily = LOTTIE_FONT_FAMILY;
-    font.fWeight = LOTTIE_FONT_WEIGHT;
+    font.fWeight = font.fWeight || LOTTIE_FONT_WEIGHT;
     font.fStyle = "";
   }
   return data;
 }
 
 /**
- * A layer's new text, and optionally a font size in comp pixels for text that would
- * outgrow the comp's own size.
+ * A layer's new text, and optionally a font size for text that would outgrow the comp's
+ * own. The size is in the layer's units, so it draws smaller on a layer that's scaled down.
  */
 export type LayerText = string | { text: string; size: number };
 

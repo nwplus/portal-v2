@@ -4,9 +4,12 @@ const { load } = require('./load-ts.cjs');
 
 const rules = load('src/lib/wrapped/archetype-rules.ts');
 const copy = load('src/lib/wrapped/archetype-copy.ts', { '@/lib/wrapped/archetype-rules': rules });
-const { buildShareCardData, ordinalSuffix, shareCardFileName, MISSING_STAT } = load(
+const { buildShareCardData, ordinalSuffix, projectNameFit, shareCardFileName, MISSING_STAT } = load(
   'src/lib/wrapped/share-card.ts',
-  { '@/lib/wrapped/archetype-copy': copy },
+  {
+    '@/lib/wrapped/archetype-copy': copy,
+    '@/lib/wrapped/text-width': load('src/lib/wrapped/text-width.ts'),
+  },
 );
 
 const stamp = (id) => ({ id, name: id, imgURL: null });
@@ -31,6 +34,30 @@ test("the hacker's own lines, project, archetype, event count and stamps", () =>
     stampCount: '3',
     stampsLabel: 'Stamps collected',
   });
+});
+
+test('a longer project name shrinks rather than being cut off', () => {
+  assert.equal(projectNameFit('Rubber Duck').size, 48);
+  assert.equal(projectNameFit('Smart Community Resource Finder').size, 48);
+  assert.equal(projectNameFit('International Accessibility Platform').size, 40);
+  const long = projectNameFit('Community Connections and Resource Coordination Platform');
+  assert.equal(long.size, 32);
+  assert.equal(long.lines, 3);
+});
+
+test('wide words count against the fit, not just the number of characters', () => {
+  assert.equal(projectNameFit('WWW MMM WWW MMM WWW MMM WWW MMM').size, 32);
+});
+
+test('a single word wider than the box still fits by shrinking', () => {
+  assert.equal(projectNameFit('x'.repeat(30)).size, 48);
+  assert.equal(projectNameFit('M'.repeat(30)).size, 32);
+});
+
+test('a name too long for every size stays at the smallest, for the clamp to cut', () => {
+  const fit = projectNameFit('Interdisciplinary Accessibility '.repeat(5).trim());
+  assert.equal(fit.size, 32);
+  assert.equal(fit.lines, 3);
 });
 
 test('summary.attendance already counts this event, so it is used as is', () => {

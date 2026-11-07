@@ -1,6 +1,7 @@
 import { ArchetypeIcon, archetypeIconCentre } from "@/components/features/wrapped/archetype-icons";
 import { CompCanvas } from "@/components/features/wrapped/comp-canvas";
-import type { ShareCardData } from "@/lib/wrapped/share-card";
+import { cn } from "@/lib/utils";
+import { PROJECT_NAME_WIDTH, type ShareCardData, projectNameFit } from "@/lib/wrapped/share-card";
 import type { CSSProperties } from "react";
 
 /**
@@ -199,6 +200,7 @@ function LinesGlow({ value }: { value: string }) {
 }
 
 function ProjectWindow({ name }: { name: string }) {
+  const fit = projectNameFit(name);
   return (
     <>
       <div
@@ -224,8 +226,14 @@ function ProjectWindow({ name }: { name: string }) {
         src={`${ASSETS}/ide-status-bars.svg`}
         className="absolute top-[499px] left-[595px] h-[12px] w-[52px] max-w-none"
       />
-      {/* Wider than the window so short names sit on one line; long ones wrap to two. */}
-      <p className="-translate-x-1/2 absolute top-[770px] left-[770px] line-clamp-2 w-[460px] break-words text-center font-semibold text-[48px] leading-[1.3]">
+      {/* Wider than the window so short names sit on one line; long ones wrap, then shrink. */}
+      <p
+        className={cn(
+          "-translate-x-1/2 absolute top-[770px] left-[770px] break-words text-center font-semibold leading-[1.3]",
+          fit.lines === 3 ? "line-clamp-3" : "line-clamp-2",
+        )}
+        style={{ fontSize: fit.size, width: PROJECT_NAME_WIDTH }}
+      >
         {name}
       </p>
     </>

@@ -1,6 +1,7 @@
 import type { ComparisonStat, WrappedDoc } from "@/lib/firebase/types/wrapped";
 import type { LayerText } from "@/lib/wrapped/lottie";
 import type { SlideId } from "@/lib/wrapped/slides";
+import { fitTechStack } from "@/lib/wrapped/tech-stack";
 
 /**
  * What each slide plays, and which of the hacker's numbers go into it.
@@ -118,23 +119,31 @@ export const SCENES: Record<SlideId, Scene> = {
   },
   github: {
     kind: "video",
-    video: clip("github-metrics/github-metrics-bg.mp4"),
-    lottie: `${ASSETS}/github-metrics/github-metrics.json`,
-    // Lines committed: team first, then this hacker's own — blank when there's no GitHub
-    // username to attribute lines to, never a team number standing in for a personal one.
-    texts: (doc) => ({
-      "10000": (doc.project?.githubTeamLineCount ?? 0).toLocaleString(),
-      "10001": doc.project?.githubLineCount?.toLocaleString() ?? "",
-    }),
+    video: clip("github/github-metrics-bg.mp4"),
+    lottie: `${ASSETS}/github/github-metrics.json`,
+    // Lines committed: team first, then this hacker's own. With no GitHub username to
+    // attribute lines to, the personal line goes entirely, never a team number standing in.
+    texts: (doc) => {
+      const own = doc.project?.githubLineCount;
+      return {
+        "10000": (doc.project?.githubTeamLineCount ?? 0).toLocaleString(),
+        ...(own == null
+          ? { "10001": "", ".youCommitted": "", ".youLines": "" }
+          : { "10001": own.toLocaleString() }),
+      };
+    },
   },
   techStack: {
     kind: "video",
     video: clip("tech-stack/tech-stack-base.mp4"),
     lottie: `${ASSETS}/tech-stack/tech-stack-text-new.json`,
     texts: (doc) => {
-      const stack = doc.project?.techStack ?? [];
+      const { names, layerSize } = fitTechStack(doc.project?.techStack ?? [], TECH_STACK_SLOTS);
       return Object.fromEntries(
-        Array.from({ length: TECH_STACK_SLOTS }, (_, i) => [`techStack${i + 1}`, stack[i] ?? ""]),
+        Array.from({ length: TECH_STACK_SLOTS }, (_, i): [string, LayerText] => [
+          `techStack${i + 1}`,
+          names[i] ? { text: names[i], size: layerSize } : "",
+        ]),
       );
     },
   },

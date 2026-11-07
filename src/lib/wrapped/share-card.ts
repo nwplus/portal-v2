@@ -1,5 +1,6 @@
 import type { ArchetypeId, WrappedDoc } from "@/lib/firebase/types/wrapped";
 import { ARCHETYPE_COPY, DEFAULT_ARCHETYPE } from "@/lib/wrapped/archetype-copy";
+import { textWidth } from "@/lib/wrapped/text-width";
 
 /**
  * What the shareable "Hacker Wrapped" image shows, read off the hacker's deck.
@@ -35,6 +36,53 @@ export function ordinalSuffix(n: number): string {
 }
 
 const formatCount = (n: number) => n.toLocaleString("en-US");
+
+/** The project name's box. */
+export const PROJECT_NAME_WIDTH = 460;
+const PROJECT_NAME_WEIGHT = 600;
+/**
+ * Sizes for the project name, largest first. The space under the code window holds two lines
+ * of 48px, which is also three of 32px.
+ */
+const PROJECT_NAME_FITS = [
+  { size: 48, lines: 2 },
+  { size: 40, lines: 2 },
+  { size: 32, lines: 3 },
+] as const;
+
+/** How many lines `name` wraps to at `size`: word by word, as the browser fills the box. */
+function wrappedLines(name: string, size: number): number {
+  const width = (text: string) => textWidth(text, size, PROJECT_NAME_WEIGHT);
+  let lines = 0;
+  let line = "";
+  for (const word of name.split(/\s+/)) {
+    const next = line ? `${line} ${word}` : word;
+    if (width(next) <= PROJECT_NAME_WIDTH) {
+      line = next;
+      continue;
+    }
+    if (line) lines++;
+    if (width(word) <= PROJECT_NAME_WIDTH) {
+      line = word;
+    } else {
+      // A word wider than the box breaks mid-word, taking a line per box width.
+      lines += Math.ceil(width(word) / PROJECT_NAME_WIDTH);
+      line = "";
+    }
+  }
+  return lines + (line ? 1 : 0);
+}
+
+/**
+ * The largest size that shows the whole project name on the card. A name too long even for
+ * the smallest stays there, for the clamp to cut.
+ */
+export function projectNameFit(name: string): { size: number; lines: number } {
+  return (
+    PROJECT_NAME_FITS.find((fit) => wrappedLines(name, fit.size) <= fit.lines) ??
+    PROJECT_NAME_FITS[PROJECT_NAME_FITS.length - 1]
+  );
+}
 
 /**
  * Builds the share card's text for one hacker.

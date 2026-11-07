@@ -198,6 +198,20 @@ URL returns `206` for a range request. `pnpm wrapped:compress` without `--out` w
 side-by-side `compare.html` for judging quality. CRF 24 at 30 fps is the setting in use:
 about 23 MB for all 11 clips, and 30 fps halves the decoding work on phones.
 
+Source renders stay in `public/assets/wrapped/` locally but are gitignored, so a fresh clone
+needs them copied in before it can re-encode.
+
+The GitHub clip has no text: all the copy is in its comp, so `scenes.ts` can blank the "You
+committed" lines for hackers with no `githubLineCount`. Compress and upload it on its own with
+`--only github`:
+
+```sh
+pnpm wrapped:compress --only github --crf 24 --fps 30 --no-ssim --out public/assets/wrapped/compressed
+gcloud storage cp public/assets/wrapped/compressed/crf-24-30fps/github/github-metrics-bg.mp4 \
+  gs://<bucket>/hackerWrapped/v2/github/github-metrics-bg.mp4 \
+  --content-type=video/mp4 --cache-control="public, max-age=31536000, immutable"
+```
+
 The original mp4s under `public/assets/wrapped/` are only the source for compression.
 The deck never loads them.
 
@@ -229,8 +243,8 @@ the main cause, because WebKit repaints them every frame. So:
 ### Developing
 
 - `?mock=<name>` opens a fixture deck in dev builds, with no Firestore needed: `full`,
-  `no-project`, `first-timer`, `no-github`, `comparison-stamps`, `comparison-events`,
-  `no-comparison`, `minimal` (`src/lib/wrapped/fixture.ts`).
+  `no-project`, `first-timer`, `no-github`, `long-names`, `comparison-stamps`,
+  `comparison-events`, `no-comparison`, `minimal` (`src/lib/wrapped/fixture.ts`).
 - `VITE_FORCE_WRAPPED_BANNER=true` shows the banner regardless of release, deck or
   dismissal, and launches into the `full` mock.
 - `pnpm test` runs the unit tests, including `tests/wrapped-*.test.cjs`.
@@ -700,7 +714,8 @@ after the prize run never downgrades a winner.
 - A commit belongs to a hacker when its `author.login` equals the username in
   `Applicants/{uid}.skills.github`. With no `skills.github`, the hacker has no GitHub
   section.
-- `project` is nullable. `project.techStack` = Devpost Built With + detected AI tools.
+- `project` is nullable. `project.techStack` = Devpost Built With + detected AI tools, stored
+  as exported; the slide tidies the names for display (`src/lib/wrapped/tech-stack.ts`).
 - `crossHackerComparison.*.count` and every `summary` field copy other fields on
   purpose.
 - The GitHub stat is **lines committed**: the sum of `additions` over a commit's files,

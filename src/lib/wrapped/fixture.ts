@@ -114,6 +114,25 @@ const noGithub: WrappedDoc = {
   crossHackerComparison: { ...full.crossHackerComparison, lines: null, featured: "stamps" },
 };
 
+/** The longest names the tech-stack slide and share card have to fit, slug and spelled out. */
+const longNames: WrappedDoc = {
+  ...full,
+  project: full.project && {
+    ...full.project,
+    title: "Community Connections and Resource Coordination Platform",
+    techStack: [
+      "Google Cloud Platform",
+      "Amazon Web Services",
+      "PostgreSQL",
+      "google-cloud-speech-to-text",
+    ],
+  },
+  summary: {
+    ...full.summary,
+    projectName: "Community Connections and Resource Coordination Platform",
+  },
+};
+
 /** Stamps beat lines, so the comparison follows the stamps slide. One stamp, for the singular copy. */
 const comparisonStamps: WrappedDoc = {
   ...full,
@@ -169,6 +188,7 @@ export const WRAPPED_FIXTURES = {
   "no-project": noProject,
   "first-timer": firstTimer,
   "no-github": noGithub,
+  "long-names": longNames,
   "comparison-stamps": comparisonStamps,
   "comparison-events": comparisonEvents,
   "no-comparison": noComparison,
