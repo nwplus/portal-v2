@@ -22,6 +22,7 @@ import { Route as ActiveHackathoninformationVenueMapRouteImport } from './routes
 import { Route as ActiveHackathonAuthApplicationRouteImport } from './routes/$activeHackathon/_auth/application'
 import { Route as ActiveHackathonAuthaccountCtfRouteImport } from './routes/$activeHackathon/_auth/(account)/ctf'
 import { Route as ActiveHackathonAuthaccountMyTicketRouteImport } from './routes/$activeHackathon/_auth/(account)/my-ticket'
+import { Route as ActiveHackathonAuthaccountWrappedRouteImport } from './routes/$activeHackathon/_auth/(account)/wrapped'
 import { Route as ActiveHackathonAuthinternalCharcuterieRouteImport } from './routes/$activeHackathon/_auth/(internal)/charcuterie'
 import { Route as ActiveHackathonAuthApplicationIndexRouteImport } from './routes/$activeHackathon/_auth/application/index'
 import { Route as ActiveHackathonAuthApplicationStepLayoutRouteImport } from './routes/$activeHackathon/_auth/application/_step-layout'
@@ -106,6 +107,12 @@ const ActiveHackathonAuthaccountMyTicketRoute =
   ActiveHackathonAuthaccountMyTicketRouteImport.update({
     id: '/(account)/my-ticket',
     path: '/my-ticket',
+    getParentRoute: () => ActiveHackathonAuthRoute,
+  } as any)
+const ActiveHackathonAuthaccountWrappedRoute =
+  ActiveHackathonAuthaccountWrappedRouteImport.update({
+    id: '/(account)/wrapped',
+    path: '/wrapped',
     getParentRoute: () => ActiveHackathonAuthRoute,
   } as any)
 const ActiveHackathonAuthinternalCharcuterieRoute =
@@ -199,6 +206,7 @@ export interface FileRoutesByFullPath {
   '/$activeHackathon/application': typeof ActiveHackathonAuthApplicationRouteWithChildren
   '/$activeHackathon/ctf': typeof ActiveHackathonAuthaccountCtfRoute
   '/$activeHackathon/my-ticket': typeof ActiveHackathonAuthaccountMyTicketRoute
+  '/$activeHackathon/wrapped': typeof ActiveHackathonAuthaccountWrappedRoute
   '/$activeHackathon/charcuterie': typeof ActiveHackathonAuthinternalCharcuterieRoute
   '/$activeHackathon/application/rsvp': typeof ActiveHackathonAuthApplicationRsvpRoute
   '/$activeHackathon/application/': typeof ActiveHackathonAuthApplicationIndexRoute
@@ -223,6 +231,7 @@ export interface FileRoutesByTo {
   '/$activeHackathon/venue-map': typeof ActiveHackathoninformationVenueMapRoute
   '/$activeHackathon/ctf': typeof ActiveHackathonAuthaccountCtfRoute
   '/$activeHackathon/my-ticket': typeof ActiveHackathonAuthaccountMyTicketRoute
+  '/$activeHackathon/wrapped': typeof ActiveHackathonAuthaccountWrappedRoute
   '/$activeHackathon/charcuterie': typeof ActiveHackathonAuthinternalCharcuterieRoute
   '/$activeHackathon/application': typeof ActiveHackathonAuthApplicationIndexRoute
   '/$activeHackathon/application/rsvp': typeof ActiveHackathonAuthApplicationRsvpRoute
@@ -251,6 +260,7 @@ export interface FileRoutesById {
   '/$activeHackathon/_auth/application': typeof ActiveHackathonAuthApplicationRouteWithChildren
   '/$activeHackathon/_auth/(account)/ctf': typeof ActiveHackathonAuthaccountCtfRoute
   '/$activeHackathon/_auth/(account)/my-ticket': typeof ActiveHackathonAuthaccountMyTicketRoute
+  '/$activeHackathon/_auth/(account)/wrapped': typeof ActiveHackathonAuthaccountWrappedRoute
   '/$activeHackathon/_auth/(internal)/charcuterie': typeof ActiveHackathonAuthinternalCharcuterieRoute
   '/$activeHackathon/_auth/application/_step-layout': typeof ActiveHackathonAuthApplicationStepLayoutRouteWithChildren
   '/$activeHackathon/_auth/application/rsvp': typeof ActiveHackathonAuthApplicationRsvpRoute
@@ -280,6 +290,7 @@ export interface FileRouteTypes {
     | '/$activeHackathon/application'
     | '/$activeHackathon/ctf'
     | '/$activeHackathon/my-ticket'
+    | '/$activeHackathon/wrapped'
     | '/$activeHackathon/charcuterie'
     | '/$activeHackathon/application/rsvp'
     | '/$activeHackathon/application/'
@@ -304,6 +315,7 @@ export interface FileRouteTypes {
     | '/$activeHackathon/venue-map'
     | '/$activeHackathon/ctf'
     | '/$activeHackathon/my-ticket'
+    | '/$activeHackathon/wrapped'
     | '/$activeHackathon/charcuterie'
     | '/$activeHackathon/application'
     | '/$activeHackathon/application/rsvp'
@@ -331,6 +343,7 @@ export interface FileRouteTypes {
     | '/$activeHackathon/_auth/application'
     | '/$activeHackathon/_auth/(account)/ctf'
     | '/$activeHackathon/_auth/(account)/my-ticket'
+    | '/$activeHackathon/_auth/(account)/wrapped'
     | '/$activeHackathon/_auth/(internal)/charcuterie'
     | '/$activeHackathon/_auth/application/_step-layout'
     | '/$activeHackathon/_auth/application/rsvp'
@@ -442,6 +455,13 @@ declare module '@tanstack/react-router' {
       path: '/my-ticket'
       fullPath: '/$activeHackathon/my-ticket'
       preLoaderRoute: typeof ActiveHackathonAuthaccountMyTicketRouteImport
+      parentRoute: typeof ActiveHackathonAuthRoute
+    }
+    '/$activeHackathon/_auth/(account)/wrapped': {
+      id: '/$activeHackathon/_auth/(account)/wrapped'
+      path: '/wrapped'
+      fullPath: '/$activeHackathon/wrapped'
+      preLoaderRoute: typeof ActiveHackathonAuthaccountWrappedRouteImport
       parentRoute: typeof ActiveHackathonAuthRoute
     }
     '/$activeHackathon/_auth/(internal)/charcuterie': {
@@ -587,6 +607,7 @@ interface ActiveHackathonAuthRouteChildren {
   ActiveHackathonAuthApplicationRoute: typeof ActiveHackathonAuthApplicationRouteWithChildren
   ActiveHackathonAuthaccountCtfRoute: typeof ActiveHackathonAuthaccountCtfRoute
   ActiveHackathonAuthaccountMyTicketRoute: typeof ActiveHackathonAuthaccountMyTicketRoute
+  ActiveHackathonAuthaccountWrappedRoute: typeof ActiveHackathonAuthaccountWrappedRoute
   ActiveHackathonAuthinternalCharcuterieRoute: typeof ActiveHackathonAuthinternalCharcuterieRoute
   ActiveHackathonAuthAttendanceIndexRoute: typeof ActiveHackathonAuthAttendanceIndexRoute
   ActiveHackathonAuthaccountSocialProfileUserIdRoute: typeof ActiveHackathonAuthaccountSocialProfileUserIdRoute
@@ -601,6 +622,8 @@ const ActiveHackathonAuthRouteChildren: ActiveHackathonAuthRouteChildren = {
   ActiveHackathonAuthaccountCtfRoute: ActiveHackathonAuthaccountCtfRoute,
   ActiveHackathonAuthaccountMyTicketRoute:
     ActiveHackathonAuthaccountMyTicketRoute,
+  ActiveHackathonAuthaccountWrappedRoute:
+    ActiveHackathonAuthaccountWrappedRoute,
   ActiveHackathonAuthinternalCharcuterieRoute:
     ActiveHackathonAuthinternalCharcuterieRoute,
   ActiveHackathonAuthAttendanceIndexRoute:

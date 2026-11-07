@@ -1,3 +1,5 @@
+import { parseGithubLogin } from "@/lib/github-login";
+
 export * from "./form-mapping";
 export * from "./object-path";
 export * from "./normalize-url";
@@ -90,18 +92,14 @@ export function isNotApplicableAnswer(value: string): boolean {
 }
 
 /**
- * Returns true when the provided value is an https URL pointing to a GitHub domain.
- * Accepts the main GitHub domain and common subdomains (e.g., "gist.github.com").
+ * Returns true when the provided value is an https GitHub URL that names an account:
+ * "github.com/{username}" (repo links included), "gist.github.com/{username}" or
+ * "{username}.github.io". Shares `parseGithubLogin` with the Wrapped script, so every
+ * accepted value is one it can attribute commits to.
  */
 export function isGithubUrl(value: string): boolean {
   try {
-    const url = new URL(value);
-    if (url.protocol !== "https:") {
-      return false;
-    }
-
-    const host = normalizeHost(url.hostname);
-    return host === "github.com" || host.endsWith(".github.com") || host.endsWith(".github.io");
+    return new URL(value).protocol === "https:" && parseGithubLogin(value) !== null;
   } catch {
     return false;
   }
