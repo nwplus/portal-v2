@@ -1,14 +1,23 @@
 import { Countdown } from "@/components/features/my-ticket/countdown";
 import { Customization } from "@/components/features/my-ticket/customization";
 import { Message } from "@/components/features/my-ticket/message";
+import { MyPerks } from "@/components/features/my-ticket/my-perks";
 import { type PlacedSticker, Ticket } from "@/components/features/my-ticket/ticket";
 import { GradientBackground } from "@/components/layout/gradient-background";
 import { useHackathon } from "@/hooks/use-hackathon";
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
 import { useWalletPlatform } from "@/hooks/use-platform";
 import { storage } from "@/lib/firebase/client";
+import {
+  type Perk,
+  describeClaimError,
+  describeClaimResult,
+  getPerks,
+  sponsorName,
+} from "@/lib/promotions";
 import { useHackerStore } from "@/lib/stores/hacker-store";
 import { usePortalStore } from "@/lib/stores/portal-store";
+import { claimPromotion, fetchPromotions } from "@/services/promotions";
 import { addHackerPassToAppleWallet, addHackerPassToGoogleWallet } from "@/services/wallet";
 import { createFileRoute } from "@tanstack/react-router";
 import { getDownloadURL, ref } from "firebase/storage";
@@ -18,11 +27,22 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/$activeHackathon/_auth/(account)/my-ticket")({
+  loader: async ({ context }) => {
+    try {
+      return { promotions: await fetchPromotions(context.dbCollectionName) };
+    } catch (error) {
+      // Perks are a bonus; never block the ticket on them
+      console.error("Failed to load promotions", error);
+      return { promotions: [] };
+    }
+  },
   component: RouteComponent,
 });
 
 function RouteComponent() {
+  const { promotions } = Route.useLoaderData();
   const hacker = useHackerStore((state) => state.hacker);
+  const patchHacker = useHackerStore((state) => state.patchHacker);
   const { activeHackathon } = useHackathon();
   const { dbCollectionName } = useHackathonInfo();
   const platform = useWalletPlatform();
@@ -31,6 +51,7 @@ function RouteComponent() {
   const [isCustomizing, setIsCustomizing] = useState(false);
   const [walletLoading, setWalletLoading] = useState(false);
   const [appleWalletLoading, setAppleWalletLoading] = useState(false);
+  const [claimingId, setClaimingId] = useState<string | null>(null);
 
   // Persisted sticker storage key
   const STORAGE_KEY = "ticketPlacedStickers";
@@ -63,6 +84,33 @@ function RouteComponent() {
   const [snapshotFontKey, setSnapshotFontKey] = useState<FontKey>("default");
 
   if (!hacker) return null;
+
+  const perks =
+    hacker.status?.applicationStatus === "acceptedAndAttending"
+      ? getPerks(promotions, hacker.claimedPromotions)
+      : [];
+
+  const handleClaim = async (perk: Perk) => {
+    if (claimingId) return;
+    setClaimingId(perk.promotionId);
+    try {
+      const result = await claimPromotion(dbCollectionName, perk.promotionId);
+      const feedback = describeClaimResult(result, sponsorName(perk.promotion));
+      if (result.status === "claimed" || result.status === "alreadyClaimed") {
+        patchHacker({
+          claimedPromotions: { ...hacker.claimedPromotions, [perk.promotionId]: result.claim },
+        });
+      }
+      if (feedback.tone === "success") toast.success(feedback.message);
+      else if (feedback.tone === "info") toast.info(feedback.message);
+      else toast.error(feedback.message);
+    } catch (error) {
+      console.error("Failed to claim promotion", error);
+      toast.error(describeClaimError((error as { code?: string }).code));
+    } finally {
+      setClaimingId(null);
+    }
+  };
 
   const handleCustomizationClick = () => {
     if (!isCustomizing) {
@@ -272,6 +320,7 @@ function RouteComponent() {
           </button>
           {walletButtons}
         </div>
+        {!isCustomizing && <MyPerks perks={perks} claimingId={claimingId} onClaim={handleClaim} />}
         {isCustomizing && (
           <Customization
             onStickerSelect={handleStickerSelect}

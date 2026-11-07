@@ -9,6 +9,7 @@ type HackerStore = {
   fetchedAt: number | null;
 
   setHacker: (hacker: Applicant | null, dbCollectionName: string, uid: string) => void;
+  patchHacker: (patch: Partial<Applicant>) => void;
   reset: () => void;
   getOrFetch: (dbCollectionName: string, uid: string) => Promise<Applicant | null>;
 };
@@ -31,6 +32,11 @@ export const useHackerStore = create<HackerStore>((set, get) => ({
       uid,
       fetchedAt: Date.now(),
     });
+  },
+
+  patchHacker: (patch) => {
+    const { hacker } = get();
+    if (hacker) set({ hacker: { ...hacker, ...patch } });
   },
 
   reset: () => {
