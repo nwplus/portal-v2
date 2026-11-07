@@ -20,12 +20,12 @@ export function MyPerks({ perks, claimingId, onClaim }: MyPerksProps) {
   if (perks.length === 0) return null;
 
   return (
-    <section className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-6">
+    <section className="mx-auto mt-6 flex w-full max-w-md flex-col items-center gap-4 px-6 md:mt-10">
       <div className="flex items-center gap-2">
         <Gift size={20} aria-hidden="true" />
         <h2 className="font-semibold text-text-primary text-xl">My perks</h2>
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="flex w-full flex-col gap-4">
         {perks.map((perk) => (
           <PerkCard
             key={perk.promotionId}
