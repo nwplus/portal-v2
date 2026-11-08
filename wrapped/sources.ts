@@ -66,6 +66,25 @@ function eventRef(ctx: RunContext) {
  * if set (Q20), a Timestamp written by admin-v2 (toPlain turns it into an ISO string).
  */
 export async function fetchEventInfo(ctx: RunContext): Promise<EventInfo> {
+  const event = await fetchPortalEventInfo(ctx);
+  const override = ctx.config.hackingWindow;
+  if (!override) return event;
+
+  // Applied after the cache, so the raw file keeps what the Portal says.
+  for (const value of [override.start, override.end]) {
+    if (Number.isNaN(Date.parse(value))) throw new Error(`CONFIG.hackingWindow: ${value} is not an ISO date`);
+  }
+  if (Date.parse(override.start) >= Date.parse(override.end)) {
+    throw new Error("CONFIG.hackingWindow.start must be before .end");
+  }
+  ctx.ui.warn(
+    `Hacking window from CONFIG.hackingWindow, not the Portal: ${override.start} to ${override.end} ` +
+      `(Portal: ${event.hackathonStart} to ${event.hackathonEnd})`,
+  );
+  return { ...event, hackathonStart: override.start, hackathonEnd: override.end };
+}
+
+async function fetchPortalEventInfo(ctx: RunContext): Promise<EventInfo> {
   // Renamed from "event" when the times moved to the Portal doc, so an old cache isn't reused.
   return ctx.cache.raw("event-portal", async () => {
     const { eventId, eventName, portalKey } = ctx.config;
@@ -218,6 +237,14 @@ type Column = keyof typeof COLUMN_ALIASES;
  */
 const EMAIL_HEADER = /\bemails?\b/;
 
+/**
+ * The custom question every team answers with all of its members' application emails,
+ * e.g. "List All Team Member(S) Emails (Please Use The Same Ones ...)", and Devpost's own
+ * count of members besides the submitter. Optional: they only size the team.
+ */
+const ROSTER_ALIASES = ["list all team member s emails", "list all team member emails", "team member emails"];
+const ADDITIONAL_MEMBERS_ALIASES = ["additional team member count"];
+
 /** A cell can hold several emails ("a@x.com, b@y.com"); anything else in it is ignored. */
 const EMAIL = /[^\s,;<>()"']+@[^\s,;<>()"']+\.[a-z]{2,}/gi;
 
@@ -235,6 +262,16 @@ function resolveColumn(headers: string[], aliases: readonly string[]): string | 
     if (exact) return exact[1];
   }
   return normalized.find(([norm]) => aliases.some((alias) => norm.includes(alias)))?.[1];
+}
+
+/**
+ * The unheaded cells past the header: Devpost's Team Member 2+ name and email triples,
+ * which Papa collects in `__parsed_extra`. These are Devpost account emails, which often
+ * match an application where the team's typed list has a typo.
+ */
+function extraCells(row: Record<string, unknown>): string[] {
+  const extra = row.__parsed_extra;
+  return Array.isArray(extra) ? extra.filter((value): value is string => typeof value === "string") : [];
 }
 
 function splitList(value: string | undefined): string[] {
@@ -261,6 +298,9 @@ export async function parseDevpostCsv(ctx: RunContext): Promise<DevpostRow[]> {
     Object.entries(COLUMN_ALIASES).map(([field, aliases]) => [field, resolveColumn(headers, aliases)]),
   ) as Record<Column, string | undefined>;
   const emailColumns = headers.filter((header) => EMAIL_HEADER.test(normalizeHeader(header)));
+  const rosterColumn = resolveColumn(headers, ROSTER_ALIASES);
+  const additionalColumn = resolveColumn(headers, ADDITIONAL_MEMBERS_ALIASES);
+  if (!rosterColumn) ctx.ui.warn("No \"List all team member emails\" column; team sizes count every email");
 
   const missing = [
     ...Object.entries(columns).filter(([, header]) => !header).map(([field]) => field),
@@ -273,12 +313,26 @@ export async function parseDevpostCsv(ctx: RunContext): Promise<DevpostRow[]> {
         "Update COLUMN_ALIASES / EMAIL_HEADER in sources.ts.",
     );
   }
-  if (parsed.errors.length > 0) {
-    const first = parsed.errors[0];
-    ctx.ui.warn(`${parsed.errors.length} CSV parse errors, first: ${first.message} (row ${first.row})`);
+  // Devpost heads only Team Member 1 (then a literal "..." column) and appends the other
+  // members' name and email unheaded, so nearly every row is longer or shorter than the
+  // header. That's expected; a broken quote still warns.
+  const errors = parsed.errors.filter((error) => error.code !== "TooManyFields" && error.code !== "TooFewFields");
+  if (errors.length > 0) {
+    const first = errors[0];
+    ctx.ui.warn(`${errors.length} CSV parse errors, first: ${first.message} (row ${first.row})`);
   }
 
   const cell = (row: Record<string, string>, column: Column) => row[columns[column]!]?.trim() ?? "";
+  const emailsIn = (value: string | undefined) => (value ?? "").toLowerCase().match(EMAIL) ?? [];
+
+  /** Team size from the roster answer and Devpost's member count; undefined with neither. */
+  const rosterSize = (row: Record<string, string>): number | undefined => {
+    const listed = rosterColumn ? new Set(emailsIn(row[rosterColumn])).size : 0;
+    const additional = additionalColumn ? Number.parseInt(row[additionalColumn] ?? "", 10) : Number.NaN;
+    const onDevpost = Number.isNaN(additional) ? 0 : 1 + additional;
+    const size = Math.max(listed, onDevpost);
+    return size > 0 ? size : undefined;
+  };
   const rows: DevpostRow[] = [];
 
   for (const row of parsed.data) {
@@ -292,9 +346,12 @@ export async function parseDevpostCsv(ctx: RunContext): Promise<DevpostRow[]> {
       techStack: splitList(cell(row, "techStack")),
       about: cell(row, "about"),
       tryItOutLinks: splitList(cell(row, "tryItOut")),
+      // For matching only; team size comes from rosterSize, so a member listed under two
+      // emails isn't counted twice.
       memberEmails: [
-        ...new Set(emailColumns.flatMap((column) => (row[column] ?? "").toLowerCase().match(EMAIL) ?? [])),
+        ...new Set([...emailColumns.map((column) => row[column]), ...extraCells(row)].flatMap(emailsIn)),
       ],
+      rosterSize: rosterSize(row),
     });
   }
 

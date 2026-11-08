@@ -111,23 +111,19 @@ export const SCENES: Record<SlideId, Scene> = {
     }),
   },
   hackerOrigin: { kind: "video", video: clip("hacker-origin/hacker-origin.mp4") },
-  nugget: {
-    kind: "video",
-    video: clip("nugget/project-descriptoins-bg.mp4"),
-    lottie: `${ASSETS}/nugget/data.json`,
-    texts: (doc) => ({ "this project is so cool": doc.project?.nugget ?? "" }),
-  },
   github: {
     kind: "video",
     video: clip("github/github-metrics-bg.mp4"),
     lottie: `${ASSETS}/github/github-metrics.json`,
     // Lines committed: team first, then this hacker's own. With no GitHub username to
-    // attribute lines to, the personal line goes entirely, never a team number standing in.
+    // attribute lines to, or none of the team's lines under it (only merges, or commits from
+    // an email not linked to their account), the personal line goes entirely, never a team
+    // number or a 0 standing in.
     texts: (doc) => {
       const own = doc.project?.githubLineCount;
       return {
         "10000": (doc.project?.githubTeamLineCount ?? 0).toLocaleString(),
-        ...(own == null
+        ...(own == null || own === 0
           ? { "10001": "", ".youCommitted": "", ".youLines": "" }
           : { "10001": own.toLocaleString() }),
       };

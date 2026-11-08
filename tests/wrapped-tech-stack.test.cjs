@@ -3,8 +3,10 @@ const { test } = require('node:test');
 const { load } = require('./load-ts.cjs');
 
 const widths = load('src/lib/wrapped/text-width.ts');
+const names = load('src/lib/wrapped/tech-names.ts');
 const { fitTechStack, techDisplayName } = load('src/lib/wrapped/tech-stack.ts', {
   '@/lib/wrapped/text-width': widths,
+  '@/lib/wrapped/tech-names': names,
 });
 
 const SLOTS = 4;
@@ -102,4 +104,27 @@ test('slugs that tidy to one name take one slot, and only the first few are show
 
 test('an empty stack fills no slots', () => {
   assert.deepEqual(fitTechStack([], SLOTS), { names: [], layerSize: 100 });
+});
+
+test('the script stores at most four display names, with a detected AI tool in the last slot', () => {
+  const { buildTechStack } = load('wrapped/calc.ts', {
+    'node:crypto': require('node:crypto'),
+    './types.ts': { NUGGET_PATHS: [] },
+    '../src/lib/github-login.ts': {},
+    '../src/lib/wrapped/archetype-rules.ts': { ARCHETYPE_RULES: {} },
+    '../src/lib/wrapped/tech-names.ts': names,
+  });
+  const project = (techStack) => ({ techStack });
+  assert.deepEqual(buildTechStack(project(['nextjs', 'typescript', 'python', 'fastapi', 'pwa']), { aiTools: ['Claude Code', 'GitHub Copilot'] }),
+    ['Next.js', 'TypeScript', 'Python', 'Claude Code']);
+  assert.deepEqual(buildTechStack(project(['nextjs', 'typescript', 'python', 'fastapi', 'pwa']), { aiTools: [] }),
+    ['Next.js', 'TypeScript', 'Python', 'FastAPI']);
+  // Already among the first four: no slot spent twice.
+  assert.deepEqual(buildTechStack(project(['lovable', 'react', 'supabase', 'vite', 'css3']), { aiTools: ['Lovable'] }),
+    ['Lovable', 'React', 'Supabase', 'Vite']);
+  // Listed further down Built With: moved up, not repeated.
+  assert.deepEqual(buildTechStack(project(['react', 'vite', 'supabase', 'css3', 'lovable']), { aiTools: ['Lovable'] }),
+    ['React', 'Vite', 'Supabase', 'Lovable']);
+  assert.deepEqual(buildTechStack(project(['react', 'react.js']), undefined), ['React']);
+  assert.deepEqual(buildTechStack(project([]), { aiTools: ['Cursor'] }), ['Cursor']);
 });

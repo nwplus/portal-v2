@@ -1,135 +1,16 @@
+import { displayNames } from "@/lib/wrapped/tech-names";
 import { textWidth } from "@/lib/wrapped/text-width";
+
+export { techDisplayName } from "@/lib/wrapped/tech-names";
 
 /**
  * What the tech-stack slide shows: a project's tools, tidied for display and fitted to the
  * comp's slots.
  *
- * Devpost's Built With exports as slugs ("react-native", "tailwindcss"), which the script
- * stores as is. They're tidied here rather than there so a naming fix needs no regeneration.
- * Kept pure, away from `scenes.ts`, so it's testable.
+ * The script now stores display names, at most four, with a detected AI tool among them
+ * (`buildTechStack`). Names are still tidied here (`tech-names.ts`) so docs written before
+ * that read the same. Kept pure, away from `scenes.ts`, so it's testable.
  */
-
-/** Tools whose names can't be derived from the slug, keyed with separators removed. */
-const TOOL_NAMES: Record<string, string> = {
-  "1password": "1Password",
-  bcryptjs: "bcrypt.js",
-  canvasapi: "Canvas API",
-  chatgpt: "ChatGPT",
-  computervision: "Computer Vision",
-  elevenlabs: "ElevenLabs",
-  embeddedc: "Embedded C",
-  expoio: "Expo",
-  expressjs: "Express.js",
-  fastapi: "FastAPI",
-  finbert: "FinBERT",
-  fullcalendar: "FullCalendar",
-  geminiapi: "Gemini API",
-  gemin: "Gemini",
-  gesturecontrol: "Gesture Control",
-  github: "GitHub",
-  gitlab: "GitLab",
-  gmailapi: "Gmail API",
-  googlecloud: "Google Cloud",
-  googlecloudspeechtotext: "Google Cloud Speech-to-Text",
-  graphql: "GraphQL",
-  huggingface: "Hugging Face",
-  indexeddb: "IndexedDB",
-  ionos: "IONOS",
-  javascript: "JavaScript",
-  langchain: "LangChain",
-  langgraph: "LangGraph",
-  loveable: "Lovable",
-  mediapipe: "MediaPipe",
-  mongodb: "MongoDB",
-  mysql: "MySQL",
-  nestjs: "NestJS",
-  newsapi: "News API",
-  nextjs: "Next.js",
-  nodejs: "Node.js",
-  npm: "npm",
-  numpy: "NumPy",
-  openai: "OpenAI",
-  opencv: "OpenCV",
-  opensmile: "openSMILE",
-  phaserjs: "Phaser.js",
-  postgresql: "PostgreSQL",
-  pypdf2: "PyPDF2",
-  pytest: "pytest",
-  pytorch: "PyTorch",
-  reactjs: "React",
-  restapi: "REST API",
-  scikitlearn: "scikit-learn",
-  shadcnui: "shadcn/ui",
-  socketio: "Socket.IO",
-  springai: "Spring AI",
-  springboot: "Spring Boot",
-  sqlite: "SQLite",
-  tailwind: "Tailwind CSS",
-  tailwindcss: "Tailwind CSS",
-  tanstack: "TanStack",
-  tensorflow: "TensorFlow",
-  texttospeech: "Text-to-Speech",
-  typescript: "TypeScript",
-  vscode: "VS Code",
-  vuejs: "Vue.js",
-  weatherapi: "Weather API",
-  webassembly: "WebAssembly",
-};
-
-/** Words inside a multi-word slug that aren't simply capitalized: "lcd-display" → "LCD Display". */
-const TOOL_WORDS: Record<string, string> = {
-  "3d": "3D",
-  aes: "AES",
-  ai: "AI",
-  api: "API",
-  aws: "AWS",
-  css: "CSS",
-  dom: "DOM",
-  gcp: "GCP",
-  html: "HTML",
-  json: "JSON",
-  jwt: "JWT",
-  lcd: "LCD",
-  ml: "ML",
-  rest: "REST",
-  restful: "RESTful",
-  ros: "ROS",
-  sql: "SQL",
-  tts: "TTS",
-  ui: "UI",
-};
-
-const known = (table: Record<string, string>, key: string) =>
-  Object.hasOwn(table, key) ? table[key] : undefined;
-
-/**
- * A tool's display name. Anything with a capital is someone's deliberate spelling, or one of
- * our detected AI tools, so only all-lowercase names are touched.
- */
-export function techDisplayName(raw: string): string {
-  const name = raw.trim();
-  if (name !== name.toLowerCase()) return name;
-  return (
-    known(TOOL_NAMES, name.replace(/[\s./-]/g, "")) ??
-    name
-      .replace(/-/g, " ")
-      .replace(
-        /[^\s/]+/g,
-        (word) => known(TOOL_WORDS, word) ?? word.charAt(0).toUpperCase() + word.slice(1),
-      )
-  );
-}
-
-/** Tidied names, deduped again since two slugs can land on one name ("react", "react.js"). */
-function displayNames(stack: string[]): string[] {
-  const byKey = new Map<string, string>();
-  for (const raw of stack) {
-    const name = techDisplayName(raw);
-    const key = name.toLowerCase();
-    if (key && !byKey.has(key)) byKey.set(key, name);
-  }
-  return [...byKey.values()];
-}
 
 /**
  * Width a name may take, in comp pixels. Names start at x≈720, and a tall phone stretches the

@@ -56,7 +56,6 @@ const full: WrappedDoc = {
   survival: 30.8,
   project: {
     title: "Moodloop",
-    nugget: "A journal that turns your week into a playlist",
     githubTeamLineCount: 18452,
     githubLineCount: 7309,
     techStack: ["TypeScript", "React", "Firebase", "Claude"],
@@ -86,7 +85,7 @@ const full: WrappedDoc = {
   },
 };
 
-/** No submission: drops `earlySubmission`, `nugget`, `github` and `techStack`. */
+/** No submission: drops `earlySubmission`, `github` and `techStack`. */
 const noProject: WrappedDoc = {
   ...full,
   earlySubmission: null,
@@ -166,7 +165,7 @@ const noComparison: WrappedDoc = {
   },
 };
 
-/** The floor: intro, returning, origin, attendance, archetype, summary. No stamps, no stamps slide. */
+/** The floor: intro, returning, origin, archetype, summary. No workshops or stamps, so no attendance or stamps slide. */
 const minimal: WrappedDoc = {
   ...noProject,
   survival: null,
