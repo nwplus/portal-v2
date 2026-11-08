@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=IBM+Plex+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&family=Space+Grotesk:wght@300..700&family=Playwrite+US+Trad:wght@100..400&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=Hanken+Grotesk:wght@400..900&family=IBM+Plex+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&family=Space+Grotesk:wght@300..700&family=Playwrite+US+Trad:wght@100..400&display=swap");
 
 @import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&family=Geist:wght@100..900&family=Freehand&display=swap");
 
@@ -210,4 +210,251 @@ select:-webkit-autofill:active {
   -webkit-text-fill-color: var(--text-primary) !important;
   transition: background-color 5000s ease-in-out 0s;
   caret-color: var(--text-primary);
+}
+
+/* Wrapped summary slide — entrances are applied inline with per-element delays; the
+   looping classes below are the idle motion once everything has landed. */
+@keyframes wrapped-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* To fully opaque, for elements that sit at opacity 0 until shown (the deck's spinner). */
+@keyframes wrapped-fade-in {
+  to {
+    opacity: 1;
+  }
+}
+
+/* The current slide's story bar filling. */
+@keyframes wrapped-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes wrapped-sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes wrapped-rise {
+  from {
+    opacity: 0;
+    transform: translateY(48px);
+  }
+}
+
+@keyframes wrapped-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  65% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes wrapped-stamp {
+  0% {
+    opacity: 0;
+    transform: scale(1.8) rotate(-12deg);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(0.92);
+  }
+}
+
+@keyframes wrapped-rocket-in {
+  from {
+    transform: translate(-420px, 560px);
+  }
+}
+
+@keyframes wrapped-bob {
+  50% {
+    translate: 0 -14px;
+  }
+}
+
+@keyframes wrapped-twinkle {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@keyframes wrapped-flicker {
+  50% {
+    opacity: 0.7;
+    scale: 0.94 1;
+  }
+}
+
+@keyframes wrapped-pan {
+  from {
+    transform: translateY(var(--wrapped-pan-from));
+  }
+}
+
+@keyframes wrapped-rise-far {
+  from {
+    opacity: 0;
+    transform: translateY(400px);
+  }
+}
+
+@keyframes wrapped-slide-left {
+  from {
+    opacity: 0;
+    transform: translateX(-160px) rotate(-6deg);
+  }
+}
+
+@keyframes wrapped-slide-right {
+  from {
+    opacity: 0;
+    transform: translateX(160px) rotate(6deg);
+  }
+}
+
+@keyframes wrapped-banner-reveal {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* The banner runs hot while the rocket pulls it open, settling to its true colors
+   exactly as the reveal completes — otherwise its near-black leading edge is
+   invisible against the page and the banner appears to pop in mid-flight. */
+@keyframes wrapped-banner-light {
+  from {
+    filter: brightness(2.75);
+  }
+}
+
+/* The ship's nose tracks the reveal edge exactly: it starts a rocket-width off the
+   left edge and ends a rocket-width short of the right one. */
+@keyframes wrapped-banner-fly {
+  from {
+    left: calc(-1 * var(--rocket-w));
+  }
+  to {
+    left: calc(100% - var(--rocket-w));
+  }
+}
+
+@keyframes wrapped-banner-glow {
+  from {
+    background-position: 0% 0;
+  }
+  to {
+    background-position: 100% 0;
+  }
+}
+
+/* The launch carries the banner off to the right, the way its rocket flew in. The
+   animation runs on a wrapper inside the sticky container, whose overflow-hidden
+   clips the flight — nothing escapes to grow the page's scroll area. */
+@keyframes wrapped-banner-exit {
+  to {
+    transform: translateX(110%);
+  }
+}
+
+/* The launch fly-up, on the deck. The stage is the 1080x1920 design canvas, so the
+   rocket (natural 510x696, full stage width) rides entirely in stage-relative pixels:
+   it starts nose-down 150 design-px below the stage's bottom edge and climbs until its
+   tail clears the top by 80. Distances arrive as measured px on
+   --launch-from/--launch-to; the wake's feather band rides the same keyframes. */
+@keyframes wrapped-launch {
+  from {
+    transform: translateY(var(--launch-from));
+  }
+  to {
+    transform: translateY(var(--launch-to));
+  }
+}
+
+/* The wake reveal rides the same ease and duration as the rocket by animating a
+   registered custom property: the reveal edge (a length off the stage's top) sweeps
+   from below the stage to just past it, and the content's mask feathers over
+   --launch-feather behind that edge. Registered so the var interpolates smoothly
+   instead of flipping at the keyframe midpoint. */
+@property --reveal-edge {
+  syntax: "<length-percentage>";
+  inherits: false;
+  initial-value: 100%;
+}
+
+@keyframes wrapped-launch-reveal {
+  from {
+    --reveal-edge: calc(100% + var(--launch-overhang));
+  }
+  to {
+    --reveal-edge: var(--launch-clearance);
+  }
+}
+
+/* The deck fades in from the launch's sky, so the hand-off between the two pages
+   has no hard cut. Default transparent, so a disabled animation can't strand it. */
+@keyframes wrapped-deck-reveal {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* An archetype icon resting in the ship's window: a slow sway and float. Run alternate. */
+@keyframes wrapped-rock {
+  from {
+    rotate: -4deg;
+    translate: 0 6px;
+  }
+  to {
+    rotate: 4deg;
+    translate: 0 -6px;
+  }
+}
+
+.wrapped-bob {
+  animation: wrapped-bob 4s ease-in-out infinite;
+}
+
+.wrapped-twinkle {
+  animation: wrapped-twinkle 3s ease-in-out infinite;
+}
+
+.wrapped-flicker {
+  animation: wrapped-flicker 180ms ease-in-out infinite;
+}
+
+/* The share sheet's loading preview: a band of light sweeping across. */
+@keyframes wrapped-shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wrapped-share-loading * {
+    animation: none !important;
+  }
+  .wrapped-summary * {
+    animation: none !important;
+  }
 }

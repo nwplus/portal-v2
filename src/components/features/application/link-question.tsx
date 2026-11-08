@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useQuestionFieldConfig } from "@/hooks/use-question-field-config";
-import { normalizeUrl } from "@/lib/application/utils";
+import { normalizeGithubUrl, normalizeUrl } from "@/lib/application/utils";
 
 const PLACEHOLDER_BY_TYPE: Record<string, string> = {
   Github: "https://github.com/your-username",
@@ -23,6 +23,7 @@ export function LinkQuestion({ section, question }: QuestionFieldProps) {
   if (!mainPath) return null;
 
   const placeholder = PLACEHOLDER_BY_TYPE[question.type] ?? "https://example.com";
+  const normalize = question.type === "Github" ? normalizeGithubUrl : normalizeUrl;
 
   return (
     <Field data-invalid={isMainInvalid}>
@@ -35,7 +36,7 @@ export function LinkQuestion({ section, question }: QuestionFieldProps) {
           id={mainId}
           placeholder={placeholder}
           aria-invalid={isMainInvalid}
-          {...register(mainPath, { setValueAs: normalizeUrl })}
+          {...register(mainPath, { setValueAs: normalize })}
         />
         <FieldError errors={mainError ? [mainError] : undefined} />
       </FieldContent>

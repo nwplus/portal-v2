@@ -10,3 +10,7 @@ export const HACKER_APPLICATION_TEMPLATE: ApplicantDraft = {
   status: { applicationStatus: "inProgress" },
   submission: { submitted: false },
 };
+
+// local-only escape hatch to view gated pages without a live portal, accepted application, or open applications
+export const DEV_BYPASS_APPLICATION =
+  import.meta.env.DEV && import.meta.env.VITE_DEV_BYPASS_APPLICATION === "true";

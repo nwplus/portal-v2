@@ -12,7 +12,7 @@ import { buildFieldPath } from "@/lib/application/form-mapping";
 import { getValueAtPath } from "@/lib/application/object-path";
 import { RESUME_FILE_ACCEPT } from "@/lib/application/resume-upload";
 import type { ApplicationFormValues } from "@/lib/application/types";
-import { normalizeUrl } from "@/lib/application/utils";
+import { normalizeGithubUrl, normalizeUrl } from "@/lib/application/utils";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { uploadResumeToStorage } from "@/services/applicants";
 import type * as React from "react";
@@ -190,7 +190,7 @@ export function PortfolioQuestion({ question }: QuestionFieldProps) {
                 placeholder="https://github.com/your-username"
                 aria-invalid={Boolean(githubError)}
                 {...register(githubPath as FieldPath<ApplicationFormValues>, {
-                  setValueAs: (value) => normalizeUrl(value),
+                  setValueAs: (value) => normalizeGithubUrl(value),
                 })}
               />
               <FieldError errors={githubError ? [githubError] : undefined} />

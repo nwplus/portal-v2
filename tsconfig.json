@@ -1,5 +1,9 @@
 {
   "include": ["**/*.ts", "**/*.tsx"],
+  /* The Wrapped batch script is Node-targeted and has its own config
+     (wrapped/tsconfig.json); type-checking it against this DOM/bundler config would
+     fail `pnpm build`. */
+  "exclude": ["wrapped"],
   "compilerOptions": {
     "target": "ES2022",
     "jsx": "react-jsx",

@@ -1,0 +1,14 @@
+{
+  /* Node-targeted; the root config is DOM/bundler and excludes wrapped/. */
+  "extends": "../tsconfig.json",
+  "include": ["**/*.ts"],
+  "exclude": ["cache"],
+  "compilerOptions": {
+    "lib": ["ES2023"],
+    "types": ["node"],
+    "noEmit": true,
+    /* Skeleton stubs leave parameters unused. Turn back on once bodies are in. */
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
+  }
+}

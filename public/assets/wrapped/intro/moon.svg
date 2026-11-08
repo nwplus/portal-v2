@@ -1,0 +1,37 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="1114.76" height="1208.66" viewBox="0 0 1114.76 1208.66" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="cresent moon" filter="url(#filter0_dn_0_4)">
+<path d="M601.482 139.482C664.448 139.482 724.472 152.079 779.171 174.89C754.023 170.029 728.05 167.482 701.482 167.482C476.703 167.482 294.482 349.703 294.482 574.482C294.482 799.262 476.703 981.482 701.482 981.482C804.17 981.482 897.975 943.452 969.583 880.709C885.206 991.77 751.72 1063.48 601.482 1063.48C346.327 1063.48 139.482 856.638 139.482 601.482C139.482 346.327 346.327 139.482 601.482 139.482Z" fill="url(#paint0_radial_0_4)"/>
+</g>
+<defs>
+<filter id="filter0_dn_0_4" x="7.39098e-06" y="7.39098e-06" width="1114.76" height="1208.66" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dx="2.84658" dy="2.84658"/>
+<feGaussianBlur stdDeviation="71.1645"/>
+<feComposite in2="hardAlpha" operator="out"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0.770481 0 0 0 0 0.698403 0 0 0 0 0.941667 0 0 0 1 0"/>
+<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_4"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feTurbulence type="fractalNoise" baseFrequency="3.5129868984222412 3.5129868984222412" stitchTiles="stitch" numOctaves="3" result="noise" seed="3962" />
+<feComponentTransfer in="noise" result="coloredNoise1">
+<feFuncR type="linear" slope="2" intercept="-0.5" />
+<feFuncG type="linear" slope="2" intercept="-0.5" />
+<feFuncB type="linear" slope="2" intercept="-0.5" />
+<feFuncA type="discrete" tableValues="1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "/>
+</feComponentTransfer>
+<feComposite operator="in" in2="shape" in="coloredNoise1" result="noise1Clipped" />
+<feComponentTransfer in="noise1Clipped" result="color1">
+<feFuncA type="table" tableValues="0 0.15" />
+</feComponentTransfer>
+<feMerge result="effect2_noise_0_4">
+<feMergeNode in="shape" />
+<feMergeNode in="color1" />
+</feMerge>
+<feBlend mode="normal" in="effect2_noise_0_4" in2="effect1_dropShadow_0_4" result="effect2_noise_0_4"/>
+</filter>
+<radialGradient id="paint0_radial_0_4" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(-19.0721 -27.6118) rotate(45.3801) scale(1532.9 1532.9)">
+<stop stop-color="#C4B2F0"/>
+<stop offset="1" stop-color="#F0EEF2"/>
+</radialGradient>
+</defs>
+</svg>
