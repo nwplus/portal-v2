@@ -165,6 +165,14 @@ export interface DevpostRow {
   tryItOutLinks: string[];
   /** Submitter plus team member emails, lowercased. */
   memberEmails: string[];
+  /**
+   * How many people are on the team: the larger of the emails listed in the "List all
+   * team member emails" answer and Devpost's 1 + "Additional Team Member Count". Absent
+   * when neither column exists (or in a fetch stage cached before it), and then
+   * `memberEmails.length` stands in. `memberEmails` overcounts: a member whose Devpost
+   * account email differs from the one they listed appears twice.
+   */
+  rosterSize?: number;
 }
 
 export interface RepoRef {
@@ -359,10 +367,8 @@ export interface ProjectEnrichment {
   lastCommitAt: string | null;
   /** Latest commit in [hackathonStart, hackathonEnd], late ones ignored. THE_FINISHER. */
   lastInWindowCommitAt: string | null;
-  /** Appended to the project's techStack in the doc. */
+  /** Detected AI tools; the first takes a techStack slot in the doc when Built With shows none. */
   aiTools: string[];
-  /** Nugget's reviewed one-liner (NUGGET.md). Null: empty About text, or blanked in review. */
-  nugget: string | null;
 }
 
 export interface EnrichOutput {
@@ -424,8 +430,6 @@ export interface WrappedDoc {
   /** Null with no project. */
   project: {
     title: string;
-    /** Nugget's one-liner on the project, ≤ 80 chars. Null hides the slide. */
-    nugget: string | null;
     /**
      * Was githubTeamCommitCount. In-window additions across the team's repos; bots, merges
      * and excluded files dropped. Team stat: shown even when this hacker has no
@@ -434,7 +438,7 @@ export interface WrappedDoc {
     githubTeamLineCount: number | null;
     /** Was githubCommitCount. This hacker's lines. Null without skills.github (Q21). */
     githubLineCount: number | null;
-    /** Devpost "Built With" plus detected AI tools. */
+    /** Up to 4 display names from Devpost "Built With", one a detected AI tool if any (buildTechStack). */
     techStack: string[];
   } | null;
   showedUp: {

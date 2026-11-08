@@ -8,6 +8,7 @@ const calc = load('wrapped/calc.ts', {
   './types.ts': types,
   '../src/lib/github-login.ts': load('src/lib/github-login.ts'),
   '../src/lib/wrapped/archetype-rules.ts': load('src/lib/wrapped/archetype-rules.ts'),
+  '../src/lib/wrapped/tech-names.ts': load('src/lib/wrapped/tech-names.ts'),
 });
 
 const event = {

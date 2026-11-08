@@ -35,6 +35,7 @@ import type {
 } from "./types.ts";
 import { parseGithubLogin } from "../src/lib/github-login.ts";
 import { ARCHETYPE_RULES } from "../src/lib/wrapped/archetype-rules.ts";
+import { displayNames } from "../src/lib/wrapped/tech-names.ts";
 import { NUGGET_PATHS } from "./types.ts";
 
 // ---------------------------------------------------------------------------
@@ -252,7 +253,7 @@ export function matchHackersToProjects(
         about: row.about,
         repos: extractRepoRefs(row.tryItOutLinks),
         memberUids,
-        teamSize: Math.max(memberUids.length, row.memberEmails.length),
+        teamSize: Math.max(memberUids.length, row.rosterSize ?? row.memberEmails.length),
         unmatchedEmails: unmatchedById.get(row.submissionUrl) ?? [],
       },
     ];
@@ -449,9 +450,13 @@ export const LINE_COUNT_EXCLUSIONS = {
     "composer.lock",
     "go.sum",
   ],
-  directories: ["node_modules", "vendor", "dist", "build", ".next", "venv", ".venv", "__pycache__"],
-  /** `*.min.*` and `*.map`, on the file name. */
-  names: [/\.min\./, /\.map$/],
+  /** `.agents`: skill packs installed by AI tools, not written at the event. */
+  directories: ["node_modules", "vendor", "dist", "build", ".next", "venv", ".venv", "__pycache__", ".agents"],
+  /**
+   * `*.min.*` and `*.map`, on the file name, and data files: HackCamp2026's ShelfMatch
+   * committed 8.3M lines of CSV datasets.
+   */
+  names: [/\.min\./, /\.map$/, /\.csv$/, /\.tsv$/],
 } as const;
 
 const EXCLUDED_LOCKFILES = new Set<string>(LINE_COUNT_EXCLUSIONS.lockfiles);
@@ -878,14 +883,23 @@ export function computeEarlySubmission(
   return enrichment?.lastCommitAt ? durationHours(enrichment.lastCommitAt, event.hackathonEnd) : null;
 }
 
-/** Devpost "Built With" plus detected AI tools, deduped case-insensitively. */
+/** The tech-stack slide's slots. */
+export const TECH_STACK_MAX = 4;
+
+/**
+ * Up to TECH_STACK_MAX display names: Devpost "Built With" in its order, tidied and deduped
+ * (`tech-names.ts`). When the commits show an AI tool (`detectAiTools`) and none of those
+ * names is one, the first detected tool takes the last slot.
+ */
 export function buildTechStack(project: Project, enrichment: ProjectEnrichment | undefined): string[] {
-  const byKey = new Map<string, string>();
-  for (const tool of [...project.techStack, ...(enrichment?.aiTools ?? [])]) {
-    const key = tool.trim().toLowerCase();
-    if (key && !byKey.has(key)) byKey.set(key, tool.trim());
-  }
-  return [...byKey.values()];
+  const builtWith = displayNames(project.techStack);
+  const aiTools = displayNames(enrichment?.aiTools ?? []);
+  const top = builtWith.slice(0, TECH_STACK_MAX);
+  const shown = new Set(top.map((name) => name.toLowerCase()));
+  const aiTool = aiTools[0];
+  if (!aiTool || aiTools.some((tool) => shown.has(tool.toLowerCase()))) return top;
+  const rest = builtWith.filter((name) => name.toLowerCase() !== aiTool.toLowerCase());
+  return [...rest.slice(0, TECH_STACK_MAX - 1), aiTool];
 }
 
 /** Cohort-wide values the archetype rules compare against. */
@@ -1105,7 +1119,6 @@ export function buildWrappedDoc(inputs: DocInputs): WrappedDoc {
     project: project
       ? {
           title: project.title,
-          nugget: enrichment?.nugget ?? null,
           githubTeamLineCount: enrichment?.teamLineCount ?? null,
           githubLineCount: enrichment?.linesByUid[hacker.uid] ?? null,
           techStack: buildTechStack(project, enrichment),

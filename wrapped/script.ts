@@ -7,7 +7,7 @@
  *   pnpm wrapped prize | stats | delete
  *
  * Env: FIREBASE_SERVICE_ACCOUNT, DEV_FIREBASE_SERVICE_ACCOUNT, GITHUB_PAT,
- *      ANTHROPIC_API_KEY (Nugget), VITE_PUBLIC_SUPABASE_URL + SUPABASE_SECRET_KEY (prize)
+ *      VITE_PUBLIC_SUPABASE_URL + SUPABASE_SECRET_KEY (prize)
  */
 
 import "dotenv/config";
@@ -41,8 +41,11 @@ const CONFIG: RunConfig = {
   /** On: re-fetch every source instead of reading cache/.../raw/. */
   bypassCache: false,
   devpostCsvPath: "wrapped/csv/hackcamp2026.csv",
-  /** Try the prompt on a few projects first. Null on the real run. */
-  nuggetLimit: null,
+  /**
+   * Portal's hackcamp times (20:00Z, 13:00 Vancouver) are an hour late: they were entered
+   * as PST, but BC stays on UTC-7. Hacking ran 12:00 to 12:00 Vancouver time.
+   */
+  hackingWindow: { start: "2026-11-07T19:00:00.000Z", end: "2026-11-08T19:00:00.000Z" },
 };
 
 // ---------------------------------------------------------------------------

@@ -11,7 +11,7 @@ import type { CSSProperties } from "react";
  * section, laid out in comp pixels. Each book holds two rows of five (the design's four,
  * narrowed), filled in order from `buildStampSlots` (`lib/wrapped/stamp-slots.ts`); slots
  * past the event's stamps stay blank but keep their space so the rows hold their layout.
- * Stamps past the 20th are not shown. Art is read from `Stamps` when the deck loads, not
+ * `buildStampSlots` fits the book to 20 slots, dropping stamps not collected first. Art is read from `Stamps` when the deck loads, not
  * from the deck doc.
  *
  * Ordered by category, then name (`buildStampSlots`). Every slot's locked art and name are

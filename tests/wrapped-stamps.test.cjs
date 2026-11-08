@@ -76,3 +76,29 @@ test('the stamps slide, and a stamps comparison, need a collected stamp', () => 
   assert.ok(!buildSlides(deck(0)).includes('stamps'));
   assert.ok(!buildSlides(deck(0, 'stamps')).includes('comparison'));
 });
+
+test('past 20 slots, stamps not collected are dropped from the end first', () => {
+  const many = Array.from({ length: 21 }, (_, i) => ({
+    id: `s${String(i).padStart(2, '0')}`, name: `Stamp ${String(i).padStart(2, '0')}`, imgURL: `${i}.png`, category: 'other',
+  }));
+  const winner = buildStampSlots([{ id: 's20', name: 'Stamp 20', imgURL: '20.png' }], many);
+  assert.equal(winner.length, 20);
+  assert.deepEqual(winner.map((slot) => slot.id), [...many.slice(0, 19).map((s) => s.id), 's20']);
+  // An uncollected stamp is dropped from the end even when an earlier one is collected.
+  const early = buildStampSlots([{ id: 's00', name: 'Stamp 00', imgURL: '0.png' }], many);
+  assert.deepEqual(early.map((slot) => slot.id), many.slice(0, 20).map((s) => s.id));
+  assert.equal(buildStampSlots([], many.slice(0, 20)).length, 20);
+});
+
+test('the attendance slide needs a workshop; an events comparison still shows without it', () => {
+  const withCounts = (pre, dayOf, featured = null) => ({
+    ...deck(0, featured),
+    showedUp: { stamps: [], preHackathonWorkshopCount: pre, dayOfWorkshopCount: dayOf, dayOfActivityCount: 0 },
+  });
+  assert.ok(!buildSlides(withCounts(0, 0)).includes('attendance'));
+  assert.ok(buildSlides(withCounts(1, 0)).includes('attendance'));
+  assert.ok(buildSlides(withCounts(0, 2)).includes('attendance'));
+  assert.deepEqual(buildSlides(withCounts(2, 0, 'events')).slice(-4), ['attendance', 'comparison', 'archetype', 'summary']);
+  // Events counts activities too, so it can be featured with no workshop to show.
+  assert.deepEqual(buildSlides(withCounts(0, 0, 'events')).slice(-3), ['comparison', 'archetype', 'summary']);
+});

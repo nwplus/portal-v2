@@ -31,6 +31,9 @@ export interface LiveStamp {
   isHidden?: boolean;
 }
 
+/** The slide's two books hold two rows of five each. */
+export const STAMP_SLOT_LIMIT = 20;
+
 /** What the stampbook shows for a stamp that has no locked art of its own. */
 export const LOCKED_STAMP_FALLBACK = "/assets/stampbook/stamp-locked.svg";
 
@@ -51,6 +54,8 @@ function categoryRank(category: string | undefined): number {
  * workshops, then CTF and anything else), alphabetical within each.
  *
  * A collected stamp missing from `live` (deleted since the run) keeps the doc's copy.
+ * Past `STAMP_SLOT_LIMIT`, stamps not collected are dropped from the end of the book
+ * first, so every collected stamp keeps a slot while there's room for it.
  *
  * @param collected - the doc's `showedUp.stamps`
  * @param live - the event's `Stamps`; null when they could not be read, which shows only
@@ -83,11 +88,26 @@ export function buildStampSlots(collected: WrappedStamp[], live: LiveStamp[] | n
     });
   }
 
-  return slots
+  const sorted = slots
     .sort(
       (a, b) =>
         a.rank - b.rank ||
         a.name.trim().localeCompare(b.name.trim(), "en", { sensitivity: "base" }),
     )
     .map(({ rank: _, ...slot }) => slot);
+  return fitToLimit(sorted);
+}
+
+/** Drops uncollected slots from the end until the book fits, then cuts what's left over. */
+function fitToLimit(slots: StampSlot[]): StampSlot[] {
+  let excess = slots.length - STAMP_SLOT_LIMIT;
+  if (excess <= 0) return slots;
+  const kept = [...slots];
+  for (let i = kept.length - 1; i >= 0 && excess > 0; i--) {
+    if (!kept[i].collected) {
+      kept.splice(i, 1);
+      excess--;
+    }
+  }
+  return kept.slice(0, STAMP_SLOT_LIMIT);
 }

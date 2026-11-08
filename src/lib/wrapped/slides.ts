@@ -13,7 +13,6 @@ export type SlideId =
   | "returning"
   | "earlySubmission"
   | "hackerOrigin"
-  | "nugget"
   | "github"
   | "comparison"
   | "techStack"
@@ -35,10 +34,10 @@ const EARLY_SUBMISSION_MIN_HOURS = 1;
  *    `returning`        exactly one of the two, branched on `isFirstTimer`
  *  - `earlySubmission`  beat the deadline by more than an hour
  *  - `hackerOrigin`     always — a static video with no per-hacker data
- *  - `nugget`           the project has a reviewed one-liner
  *  - `github`           the project has a readable repo (team line count)
  *  - `techStack`        the project lists at least one tool
- *  - `attendance`       always — zero workshops is still a number the comp can show
+ *  - `attendance`       at least one workshop, pre-hackathon or day-of; the comp shows
+ *                       only those two counts, and 0 and 0 reads as an empty slide
  *  - `stamps`           collected at least one stamp
  *  - `comparison`       a featured stat (`crossHackerComparison.featured`, picked by the
  *                       script); right after that stat's own slide: `github` for lines,
@@ -63,10 +62,6 @@ export function buildSlides(doc: WrappedDoc): SlideId[] {
 
   slides.push("hackerOrigin");
 
-  if (doc.project?.nugget) {
-    slides.push("nugget");
-  }
-
   if (doc.project?.githubTeamLineCount != null) {
     slides.push("github");
     if (featured === "lines") slides.push("comparison");
@@ -76,7 +71,9 @@ export function buildSlides(doc: WrappedDoc): SlideId[] {
     slides.push("techStack");
   }
 
-  slides.push("attendance");
+  const { preHackathonWorkshopCount, dayOfWorkshopCount } = doc.showedUp;
+  if (preHackathonWorkshopCount > 0 || dayOfWorkshopCount > 0) slides.push("attendance");
+  // Events also count activities, so this can qualify with the attendance slide hidden.
   if (featured === "events") slides.push("comparison");
 
   if (doc.showedUp.stamps.length > 0) {

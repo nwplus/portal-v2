@@ -88,8 +88,6 @@ export interface WrappedDoc {
   /** Null with no project. */
   project: {
     title: string;
-    /** Nugget's one-liner on the project, <= 80 chars. Null hides the slide. */
-    nugget: string | null;
     /**
      * Was githubTeamCommitCount. In-window additions across the team's repos; bots, merges
      * and excluded files dropped. Team stat. Null with no readable repo.
@@ -97,7 +95,7 @@ export interface WrappedDoc {
     githubTeamLineCount: number | null;
     /** Was githubCommitCount. This hacker's lines. Null without `skills.github`. */
     githubLineCount: number | null;
-    /** Devpost "Built With" plus detected AI tools. */
+    /** Up to 4 display names from Devpost "Built With", one a detected AI tool if any (buildTechStack). */
     techStack: string[];
   } | null;
   showedUp: {

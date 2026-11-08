@@ -1,3 +1,5 @@
+> **Retired (2026-11-08).** The Nugget slide was removed after HackCamp 2026; nothing generates or reads these messages now. Kept as the design record.
+
 # Nugget's take on your project (Q13)
 
 One line about each project, shown on the `nugget` slide (the Lottie text layer that

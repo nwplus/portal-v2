@@ -53,8 +53,8 @@ release.
       [Clips](#clips).
 - [ ] `InternalWebsites/Portal.hackingStart` and `.hackingEnd` are set for the event. The
       end is the submission deadline.
-- [ ] Every `Stamps` doc for the event has a `category`. The stamps slide fits up to 20
-      stamps.
+- [ ] Every `Stamps` doc for the event has a `category`. The stamps slide fits 20
+      stamps; past that it drops uncollected ones from the end of the book.
 - [ ] qr-check-in's `DB_HACKATHON` is the event's `Hackathons/` doc id (e.g.
       `HackCamp2026`), so its stamps count.
 - [ ] admin-v2's Wrapped settings are deployed to prod. If they aren't, set
@@ -67,7 +67,7 @@ release.
 1. Save the Devpost export to `wrapped/csv/` and fill in `CONFIG` at the top of
    `wrapped/script.ts`: event id, name, `portalKey`, `env: "prod"`, CSV path.
 2. Dry run with `writeToFirestore: false`: `pnpm wrapped write`. Review the match report
-   when it pauses, then the Nugget one-liners, then `output/docs.json`.
+   when it pauses, then `output/docs.json`.
 3. Set `writeToFirestore: true` and run `pnpm wrapped write` again. It picks up at the
    write stage.
 4. Open `/{hackathon}/wrapped` as an admin to preview your own deck. Admins skip the
@@ -93,7 +93,6 @@ release.
 | The document's shape | `src/lib/firebase/types/wrapped.ts` |
 | Archetype thresholds (shared by the script and the deck) | `src/lib/wrapped/archetype-rules.ts` |
 | Script: config, sources, calculations, stages | `wrapped/script.ts`, `sources.ts`, `calc.ts`, `write.ts` |
-| Nugget, the AI one-liner | [`NUGGET.md`](NUGGET.md) |
 | Clip compression | `wrapped/compress-clips.ts` (`pnpm wrapped:compress`) |
 
 ---
@@ -131,10 +130,9 @@ The deck is `/{hackathon}/wrapped`, signed-in only. It also inherits the
 | `firstTimer` or `returning` | one or the other, by `isFirstTimer` |
 | `earlySubmission` | the project's last commit was more than an hour before the deadline |
 | `hackerOrigin` | always |
-| `nugget` | the project has a reviewed one-liner |
-| `github` | the project has a readable repo |
+| `github` | the project has a readable repo. The hacker's own line count is left off when it's null or 0 |
 | `techStack` | the project lists at least one tool |
-| `attendance` | always |
+| `attendance` | at least one pre-hackathon or day-of workshop |
 | `stamps` | at least one stamp collected |
 | `comparison` | the script picked a featured stat. It goes right after that stat's own slide: `github`, `stamps` or `attendance` |
 | `prizes` | won a prize |
@@ -277,11 +275,10 @@ Set these at the top of `script.ts` before each run:
 | `writeToFirestore` | Off: the run stops after writing `output/docs.json` locally     |
 | `bypassCache`      | On: re-fetch every source instead of reading `raw/`             |
 | `devpostCsvPath`   | Path to the Devpost export                                      |
-| `nuggetLimit`      | Cap on Nugget messages in total, to try the prompt first; `null` on the real run |
+| `hackingWindow`    | Overrides the Portal's hacking start and end (ISO); `null` uses the Portal |
 
 `.env`: `FIREBASE_SERVICE_ACCOUNT`, `DEV_FIREBASE_SERVICE_ACCOUNT` (JSON inline or a file
-path), `GITHUB_PAT`, `ANTHROPIC_API_KEY` (only when a Nugget message needs generating); for
-`prize`, `VITE_PUBLIC_SUPABASE_URL` and `SUPABASE_SECRET_KEY`.
+path), `GITHUB_PAT`; for `prize`, `VITE_PUBLIC_SUPABASE_URL` and `SUPABASE_SECRET_KEY`.
 
 ## Modes
 
@@ -304,7 +301,7 @@ fetch ──> match ──> enrich ──> assemble ──> write
 | - | ---------- | ---------------------------- | ----------------------------------------- | ------------------------------------ |
 | 1 | `fetch`    | Firestore, Devpost CSV       | `Hacker[]` (opted-out dropped), rows, event | bar per source; "x hackers recorded" |
 | 2 | `match`    | stage 1, `overrides.json`    | `Project[]`, uid → project                | report, then **pauses** for review   |
-| 3 | `enrich`   | stages 1–2, GitHub, Anthropic | per-project commit and line counts, AI tools, Nugget | bar per project, rate-limit check, bar per commit, then **pauses** for Nugget review |
+| 3 | `enrich`   | stages 1–2, GitHub           | per-project commit and line counts, AI tools | bar per project, rate-limit check, bar per commit |
 | 4 | `assemble` | stages 1–3                   | `WrappedDoc` per hacker                   | null count per field, featured split |
 | 5 | `write`    | stage 4                      | Firestore docs                            | bar per batch; confirm on prod       |
 
@@ -317,7 +314,7 @@ inside a loop.
 | ---------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
 | `fetch`    | `buildHacker` per applicant                                                                | the Attendance scan (one query, then lookups); the opt-out filter      |
 | `match`    | none                                                                                       | `matchHackersToProjects` over every row and hacker                     |
-| `enrich`   | per project: fetch commits, window filter. Per commit: fetch stats, `countCommitLines`. Per project: `attributeCommits`, `attributeLines`, `detectAiTools` | between the loops: one rate-limit check. After them: commit quartile, one Nugget batch, then the review pause |
+| `enrich`   | per project: fetch commits, window filter. Per commit: fetch stats, `countCommitLines`. Per project: `attributeCommits`, `attributeLines`, `detectAiTools` | between the loops: one rate-limit check |
 | `assemble` | per hacker: `assignArchetype`, `buildWrappedDoc`                                           | before the loop: `buildArchetypeCohort`, then `computeCrossHackerComparison` (`rankCohort` over three cohorts) |
 
 ### Checkpoints
@@ -328,9 +325,8 @@ Resume points, and why each one is at a boundary worth stopping on:
    editing `overrides.json` or changing matching rules. No network.
 2. **`enrich`**: matching has been reviewed and accepted. Redo from here after changing
    commit attribution, line counting (`LINE_COUNT_EXCLUSIONS`), the window or AI
-   detection. Commit lists are cached per repo, commit stats per sha, and Nugget messages
-   per project (`nuggets.json`, reused while their inputs match), so this redoes the work
-   without re-fetching. Commits are fetched for the hacking period plus an hour after it
+   detection. Commit lists are cached per repo and commit stats per sha, so this redoes
+   the work without re-fetching. Commits are fetched for the hacking period plus an hour after it
    (`LATE_PUSH_GRACE_MS`), and the cache path includes that window, so a corrected
    window fetches the lists again.
 3. **`assemble`**: every per-project value exists. Redo from here after changing a
@@ -353,8 +349,7 @@ on a plain resume, which would otherwise push old-shape docs.
   delete `raw/stamps.json`): a `stamps.json` cached before `category` was read gives every
   hacker 0 workshops and activities. fetch warns when no stamp has a category.
 - **Commit window (schema 5):** rerun `--from fetch`. Commit lists are fetched again into
-  `raw/github-window/` (one request per 100 commits); per-commit stats stay cached. Any
-  project whose late-push status changed gets a new Nugget message to review.
+  `raw/github-window/` (one request per 100 commits); per-commit stats stay cached.
 - **Lines committed (schema 2):** rerun `--from enrich`. Only the per-commit stats are
   new requests, one per in-window commit (about 1,340 for cmd-f2026).
 - **Before the stats loop**, enrich compares the uncached count with `GET /rate_limit`
@@ -405,10 +400,8 @@ cache/{env}/{eventId}/
                                      null if unreadable; kept with bypassCache (a sha never changes)
   stages/{fetch,match,enrich,assemble}.json
   overrides.json                     hand-written match fixes; never overwritten
-  nuggets.json                       Nugget messages + review state; ignores bypassCache
-  nugget-batch.json                  only while a Message Batch is in flight
   match-report.json
-  output/docs.json  output/nugget-review.json  output/prizes.json  output/stats.json
+  output/docs.json  output/prizes.json  output/stats.json
   progress.json
 ```
 
@@ -450,13 +443,11 @@ naming an unknown uid, email or submission URL are printed as warnings.
 }
 ```
 
-### Nugget review pause
+### Nugget (removed)
 
-After the GitHub loop, enrich generates the missing Nugget messages in one Message Batch
-and, if any message is unreviewed, writes `output/nugget-review.json` and waits:
-**c** accepts the file's edits (checked against the message rules) and marks every message
-reviewed, **s** (dev only) continues without review, **a** aborts. A blank message hides the
-slide. Details in [NUGGET.md](NUGGET.md).
+The AI one-liner slide was dropped after HackCamp 2026's messages weren't good enough to
+ship: enrich no longer generates them and the doc has no `project.nugget`. Its design is in
+[NUGGET.md](NUGGET.md); the prompt and validation code is still in `calc.ts` / `sources.ts`.
 
 ### Writing
 
@@ -550,7 +541,6 @@ flowchart LR
     attributeLines
     detectAiTools
     buildTechStack
-    generateNuggets
     computeSurvival
     computeEarlySubmission
     buildArchetypeCohort
@@ -576,7 +566,6 @@ flowchart LR
     o_act[showedUp.dayOfActivityCount]
     o_pre[showedUp.preHackathonWorkshopCount]
     o_pname[summary.projectName]
-    o_desc[project.nugget]
     o_team[project.githubTeamLineCount]
     o_mine[project.githubLineCount]
     o_tech[project.techStack]
@@ -602,7 +591,6 @@ flowchart LR
   matchHackersToProjects & d_title --> o_pname
   e_end --> computeEarlySubmission --> o_early
 
-  d_about -.-> generateNuggets --> o_desc
   d_links --> extractRepoRefs --> g_commits --> filterToHackathonWindow
   e_start & e_end --> filterToHackathonWindow --> attributeCommits
   a_gh --> extractGithubLogin --> attributeCommits
@@ -647,8 +635,7 @@ flowchart LR
 | `showedUp.stamps`, `summary.stamps`  | `resolveUnlockedStamps`, `toWrappedStamps`         | `Socials.unlockedStamps[eventId]` (stamp ids) → `Stamps`, any category | `[]`                                |
 | `project`                            | `matchHackersToProjects`                           | Devpost emails ↔ applicant / Socials emails                        | null with no project                    |
 | `summary.projectName`                | `matchHackersToProjects`                           | Devpost Project Title                                              | null with no project                    |
-| `project.nugget`                     | `generateNuggets` + organizer review                | Devpost About The Project → Nugget ([NUGGET.md](NUGGET.md))        | null                                    |
-| `project.techStack`                  | `buildTechStack`, `detectAiTools`                  | Devpost Built With + AI tools from co-author trailers / bot authors | `[]`                                    |
+| `project.techStack`                  | `buildTechStack`, `detectAiTools`                  | Devpost Built With as display names (`tech-names.ts`), at most 4; the first AI tool from co-author trailers / bot authors takes the last slot if none is shown | `[]` |
 | `project.githubTeamLineCount`        | `filterToHackathonWindow`, `countCommitLines`, `attributeLines` | Try it out links → additions of commits in [`hackathonStart`, `hackathonEnd`]; bots, merges, excluded files dropped | null with no readable repo |
 | `project.githubLineCount`            | `attributeLines`                                   | commit `author.login` = username from `skills.github`              | null if no `skills.github`              |
 | `crossHackerComparison.lines` / `.stamps` / `.events` | `computeCrossHackerComparison`, `rankCohort` | every `githubLineCount`; checked-in hackers' stamp count; their day-of workshops + pre-hackathon workshops + day-of activities (**Q10**) | null outside that stat's cohort |
@@ -682,7 +669,7 @@ commit, or a commit (not by a bot) up to an hour after the deadline if there is 
 
 A tie for most commits means no one on that team is `ANCHOR`. Only hackers with
 `skills.github` can be `ANCHOR`, since their commits are the only ones attributed.
-`ANCHOR`, the Nugget commit quartile and the enrich summary use commit counts, which stay
+`ANCHOR` and the enrich summary use commit counts, which stay
 inside the script (`ProjectEnrichment.teamCommitCount` / `commitsByUid`); the doc carries
 lines only.
 
@@ -724,7 +711,8 @@ after the prize run never downgrades a winner.
   lockfiles (`package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`, `bun.lock`, `bun.lockb`,
   `Cargo.lock`, `poetry.lock`, `Gemfile.lock`, `composer.lock`, `go.sum`); any path
   segment `node_modules/`, `vendor/`, `dist/`, `build/`, `.next/`, `venv/`, `.venv/`,
-  `__pycache__/`; `*.min.*` and `*.map`. Binary files report 0 additions. Starter-template
+  `__pycache__/`, `.agents/` (installed AI skill packs); `*.min.*`, `*.map`, and data files
+  `*.csv` / `*.tsv`. Binary files report 0 additions. Starter-template
   boilerplate counts, and there's no per-commit cap. A commit whose stats GitHub won't
   return (404/409/422/451) adds 0.
 - The cross-hacker comparison ranks three stats. **Lines**: hackers with a non-null
@@ -781,7 +769,8 @@ after the prize run never downgrades a winner.
 
 - **Q13.** Nugget's project message: implemented as designed in [NUGGET.md](NUGGET.md)
   (Haiku 4.5 via the Batches API, ≤ 80 chars, organizer review pause in enrich, hidden
-  when the About text is junk). Run against the real API on 2 dev test projects.
+  when the About text is junk). Run against the real API on 2 dev test projects. Removed
+  after HackCamp 2026; see [Nugget (removed)](#nugget-removed).
 
 - **Q6.** `acceptedAndAttending` applicants who checked in (`dayOf.checkedIn === true`)
   only. Reversed from "checked in or not": on cmd-f2026, 42 of 185 attending applicants
@@ -855,6 +844,12 @@ against a real export, once submissions open. Until then `parseDevpostCsv` and
    before anything is written.
 
 ## Implementation plan
+
+**Status (2026-11-08):** run on prod for HackCamp 2026 (244 decks). Nugget removed; team
+size from the roster answer and Devpost's member count; Devpost's unheaded Team Member 2+
+emails read for matching; `*.csv`, `*.tsv` and `.agents/` left out of lines; `techStack`
+stored as at most 4 display names with a detected AI tool; `CONFIG.hackingWindow` added
+because the Portal's hackcamp times were an hour late.
 
 **Status (2026-11-04):** the commit window is the hacking period plus an hour, late
 commits make `earlySubmission` 0, and The Finisher reads `lastInWindowCommitAt`

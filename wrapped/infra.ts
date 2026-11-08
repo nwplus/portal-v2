@@ -32,8 +32,12 @@ export interface RunConfig {
   writeToFirestore: boolean;
   bypassCache: boolean;
   devpostCsvPath: string;
-  /** At most this many Nugget messages in total, stored ones included; the rest stay null. Null: no limit. */
-  nuggetLimit: number | null;
+  /**
+   * Overrides `InternalWebsites/Portal.hackingStart` / `.hackingEnd` when those are wrong,
+   * as ISO strings. Copied into stages/fetch.json, so changing it needs `--from fetch`.
+   * Null: use the Portal's times.
+   */
+  hackingWindow: { start: string; end: string } | null;
 }
 
 /** Passed to every stage so none of them reach for globals. */
