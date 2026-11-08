@@ -41,7 +41,7 @@ export function StampbookPage({
       )}
       style={{ width, height }}
     >
-      <div className="relative flex flex-1 flex-col items-center justify-center">
+      <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center">
         {layout === "title" && title && (
           <div
             className={cn(
@@ -51,7 +51,7 @@ export function StampbookPage({
           >
             <div
               className={cn(
-                "font-bold font-mono text-[#8A8A8A] tracking-wide",
+                "break-words text-center font-bold font-mono text-[#8A8A8A] tracking-wide",
                 isMobile ? "text-base" : "text-xl",
               )}
             >
@@ -59,20 +59,13 @@ export function StampbookPage({
             </div>
 
             {stamps[titleIndex] && (
-              <div className={cn("flex flex-col items-center", isMobile ? "gap-2" : "gap-4")}>
-                <StampDisplay
-                  stamp={stamps[titleIndex]}
-                  showDetails={false}
-                  size={isMobile ? "sm" : "md"}
-                />
-                <span
-                  className={cn(
-                    "text-center font-mono text-[#4A4A4A]",
-                    isMobile ? "max-w-36 text-xs" : "max-w-48 text-sm",
-                  )}
-                >
-                  {stamps[titleIndex].description}
-                </span>
+              <div
+                className={cn(
+                  "flex w-full max-w-48 flex-col items-center",
+                  isMobile ? "gap-2" : "gap-4",
+                )}
+              >
+                <StampDisplay stamp={stamps[titleIndex]} size={isMobile ? "sm" : "md"} />
               </div>
             )}
           </div>
@@ -87,8 +80,8 @@ export function StampbookPage({
         {layout === "grid" && (
           <div
             className={cn(
-              "grid grid-cols-2 place-items-center",
-              isMobile ? "gap-x-10 gap-y-2" : "gap-x-12 gap-y-6",
+              "grid h-full w-full grid-cols-2 grid-rows-2 items-start",
+              isMobile ? "gap-x-4 gap-y-3" : "gap-x-6 gap-y-6",
             )}
           >
             {stamps.slice(0, 4).map((stamp) => (

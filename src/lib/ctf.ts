@@ -20,16 +20,18 @@ export function getChallengeCardState(
   return "open";
 }
 
+/**
+ * The card's status line. An open card has none: the claimed count and ranks stay off the page
+ */
 export function describeCardStatus(
   state: ChallengeCardState,
-  challenge: Pick<CtfChallenge, "claimedCount" | "totalFlags">,
-  solve?: Pick<CtfSolve, "rank" | "points">,
-): string {
+  solve?: Pick<CtfSolve, "points">,
+): string | null {
   switch (state) {
     case "solved":
-      return solve ? `Rank #${solve.rank} · +${pointsLabel(solve.points)}` : "Solved";
+      return solve ? `Solved · +${pointsLabel(solve.points)}` : "Solved";
     case "open":
-      return `${challenge.claimedCount}/${challenge.totalFlags} claimed`;
+      return null;
     case "soldOut":
       return "All flags claimed";
     case "closed":
@@ -47,12 +49,12 @@ export function describeSubmitResult(
     case "solved":
       return {
         tone: "success",
-        message: `Rank #${result.rank} on ${titles[result.challengeId] ?? "this challenge"} — +${pointsLabel(result.points)}. Stamp unlocked!`,
+        message: `Solved ${titles[result.challengeId] ?? "this challenge"} — +${pointsLabel(result.points)}. Stamp unlocked!`,
       };
     case "alreadySolved":
       return {
         tone: "info",
-        message: `You've already solved ${titles[result.challengeId] ?? "this challenge"} (rank #${result.rank}).`,
+        message: `You've already solved ${titles[result.challengeId] ?? "this challenge"}.`,
       };
     case "invalid":
       return { tone: "error", message: "That's not a valid flag." };
@@ -73,6 +75,8 @@ export function describeSubmitError(code: string | undefined): string {
   switch (code?.replace(/^functions\//, "")) {
     case "resource-exhausted":
       return "Too many wrong attempts. Try again in a few minutes.";
+    case "unavailable":
+      return "We couldn't finish checking your flag. Keep it and submit it again; your claim is safe.";
     case "failed-precondition":
       return "The CTF is open to hackers who've RSVP'd.";
     default:

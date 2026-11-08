@@ -1,5 +1,6 @@
 import type { DeepPartial } from "@/lib/types";
 import type { Timestamp } from "firebase/firestore";
+import type { ClaimedPromotion } from "./promotions";
 
 /**
  *  Sub-collection: /Hackathons/[Hackathon]/Applicants
@@ -90,6 +91,8 @@ export interface Applicant {
     attending?: boolean;
     responded?: boolean;
   };
+  /** Sponsor codes this hacker holds, keyed by promotion id; written only by claimPromotion */
+  claimedPromotions?: Record<string, ClaimedPromotion>;
   submission?: {
     lastUpdated?: Timestamp;
     submittedAt?: Timestamp; // new

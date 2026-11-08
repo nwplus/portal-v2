@@ -6,6 +6,7 @@ import type { Timestamp } from "firebase/firestore";
  */
 export interface CtfChallenge {
   _id: string;
+  flagPool?: "radio" | "git" | "api_teddy" | "html_css";
   order: number;
   isOpen: boolean;
   title?: string;

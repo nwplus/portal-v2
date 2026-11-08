@@ -11,6 +11,29 @@ export const Route = createFileRoute("/$activeHackathon/(information)/venue-map"
   component: RouteComponent,
 });
 
+interface VenueMapTab {
+  id: string;
+  getTriggerLabel: (isMobile: boolean) => string;
+  image: {
+    file: string;
+    mobileHeight?: string;
+    desktopHeight?: string;
+  };
+}
+
+const MAP_TABS: VenueMapTab[] = [
+  {
+    id: "main",
+    getTriggerLabel: () => "Day 1",
+    image: { file: "day1.jpg", mobileHeight: "80vh" },
+  },
+  {
+    id: "ceremonies",
+    getTriggerLabel: () => "Day 2",
+    image: { file: "day2.jpg", mobileHeight: "80vh" },
+  },
+];
+
 function RouteComponent() {
   const { activeHackathon } = useHackathon();
   const isMobile = useIsMobile();
@@ -18,25 +41,23 @@ function RouteComponent() {
   return (
     <GradientBackground gradientPosition="bottomMiddle">
       <Container>
-        <Tabs defaultValue="main">
+        <Tabs defaultValue={MAP_TABS[0].id}>
           <TabsList className="relative">
-            <TabsTrigger value="main">Main {!isMobile && "venue"}</TabsTrigger>
-            <TabsTrigger value="ceremonies">Ceremonies {!isMobile && "venue"}</TabsTrigger>
+            {MAP_TABS.map((tab) => (
+              <TabsTrigger key={tab.id} value={tab.id}>
+                {tab.getTriggerLabel(isMobile)}
+              </TabsTrigger>
+            ))}
           </TabsList>
-          <TabsContent value="main">
-            <ImageViewer
-              className="-mt-11"
-              height={isMobile ? "80vh" : undefined}
-              src={`/assets/${activeHackathon}/maps/venue.png`}
-            />
-          </TabsContent>
-          <TabsContent value="ceremonies">
-            <ImageViewer
-              className="-mt-11"
-              height="90vh"
-              src={`/assets/${activeHackathon}/maps/ceremonies.png`}
-            />
-          </TabsContent>
+          {MAP_TABS.map((tab) => (
+            <TabsContent key={tab.id} value={tab.id}>
+              <ImageViewer
+                className="-mt-11"
+                height={isMobile ? tab.image.mobileHeight : tab.image.desktopHeight}
+                src={`/assets/${activeHackathon}/maps/${tab.image.file}`}
+              />
+            </TabsContent>
+          ))}
         </Tabs>
       </Container>
     </GradientBackground>
