@@ -8,4 +8,13 @@ dist-ssr
 
 .env
 .idea/
+
+wrapped/service-account*.json
+wrapped/cache/
+wrapped/csv/
+# Compressed Wrapped clips: uploaded to Firebase Storage, never committed.
+public/assets/wrapped/compressed/
+# Wrapped's source renders: only their compressed copies, in Storage, are ever played.
+public/assets/wrapped/**/*.mp4
+
 .pnpm-store/

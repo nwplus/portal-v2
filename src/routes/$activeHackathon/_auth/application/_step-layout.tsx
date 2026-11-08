@@ -5,6 +5,7 @@ import { useApplicantAutosave } from "@/hooks/use-applicant-autosave";
 import { useHackathon } from "@/hooks/use-hackathon";
 import { useHackathonInfo } from "@/hooks/use-hackathon-info";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { DEV_BYPASS_APPLICATION } from "@/lib/constants";
 import { useApplicantStore } from "@/lib/stores/applicant-store";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { usePortalStore } from "@/lib/stores/portal-store";
@@ -16,7 +17,7 @@ export const Route = createFileRoute("/$activeHackathon/_auth/application/_step-
     const activeHackathon = params.activeHackathon;
     const isAdmin = useAuthStore.getState().isAdmin;
     const applicationsOpen = usePortalStore.getState().applicationsOpen;
-    if (applicationsOpen?.[activeHackathon] === false && !isAdmin) {
+    if (applicationsOpen?.[activeHackathon] === false && !isAdmin && !DEV_BYPASS_APPLICATION) {
       throw redirect({
         to: "/$activeHackathon/application",
         params: { activeHackathon },

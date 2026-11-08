@@ -51,6 +51,16 @@ export interface Hackathon {
     registrationOpen?: boolean;
     test?: boolean;
   };
+  /**
+   * Hacker Wrapped settings, written by admin-v2. The submission deadline isn't one of
+   * them: it's `InternalWebsites/Portal.hackingEnd[hackathon]`.
+   */
+  wrapped?: {
+    /** The release switch: the deck, sidebar link and banner stay hidden until it's true. */
+    isReady?: boolean;
+    /** When check-in opened, for The Early Bird (batch script only). Without it the earliest check-in is used. */
+    checkInOpensAt?: Timestamp;
+  };
   /** Sponsor perks shown under the ticket; see types/promotions.ts */
   promotions?: Promotion[];
 }

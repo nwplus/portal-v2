@@ -1,6 +1,6 @@
 import { AppSidebarLayout } from "@/components/layout/app-sidebar";
 import { HackathonStylesheet } from "@/components/layout/hackathon-stylesheet";
-import { VALID_HACKATHONS } from "@/lib/constants";
+import { DEV_BYPASS_APPLICATION, VALID_HACKATHONS } from "@/lib/constants";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useHackerStore } from "@/lib/stores/hacker-store";
 import { usePortalStore } from "@/lib/stores/portal-store";
@@ -92,7 +92,13 @@ export const Route = createFileRoute("/$activeHackathon")({
       await useHackerStore.getState().getOrFetch(hackathonInfo.dbCollectionName, user.uid);
     }
 
-    if (!isOnApplicationPage && !isOnLoginPage && !isOnAttendancePage && !isAdmin) {
+    if (
+      !isOnApplicationPage &&
+      !isOnLoginPage &&
+      !isOnAttendancePage &&
+      !isAdmin &&
+      !DEV_BYPASS_APPLICATION
+    ) {
       if (!isPortalLive && !isOnCtfPage) {
         throw redirect({
           to: "/$activeHackathon/application",

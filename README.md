@@ -24,6 +24,14 @@ pnpm install
 pnpm dev
 ```
 
+## Hacker Wrapped
+
+Hackers' post-event recap, played at `/{hackathon}/wrapped`. A batch script in `wrapped/`
+writes one Firestore document per hacker after the event, and the deck in `src/` plays it,
+with its video clips served from Firebase Storage. Start with
+[`wrapped/README.md`](wrapped/README.md): an overview, the event checklist, then the
+details.
+
 ## Styling, formatting, and linting
 
 ### Design System 📸 (important)
@@ -114,4 +122,6 @@ src/
 ├── services/                 # External integrations (e.g., subscribing to Firebase collections)
 ├── main.tsx
 └── styles.css
+wrapped/                      # Hacker Wrapped batch script and its docs (see wrapped/README.md)
+tests/                        # Unit tests (`pnpm test`)
 ```

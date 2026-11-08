@@ -1,0 +1,459 @@
+import { CodedSlideContent } from "@/components/features/wrapped/coded-slide-content";
+import { ROCKET_HEIGHT, ROCKET_WIDTH, RocketShip } from "@/components/features/wrapped/rocket-ship";
+import { ShareSheet, useShareImage } from "@/components/features/wrapped/share-sheet";
+import { VideoSlide } from "@/components/features/wrapped/video-slide";
+import { Spinner } from "@/components/ui/spinner";
+import type { WrappedDoc } from "@/lib/firebase/types/wrapped";
+import { cn } from "@/lib/utils";
+import { dismissWrappedBanner } from "@/lib/wrapped/banner-dismissal";
+import { SCENES, sceneVideo } from "@/lib/wrapped/scenes";
+import { type SlideId, buildSlides } from "@/lib/wrapped/slides";
+import type { StampSlot } from "@/lib/wrapped/stamp-slots";
+import { recordWrappedSession } from "@/services/wrapped";
+import { Share, X } from "lucide-react";
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import type { RefObject } from "react";
+
+interface WrappedDeckProps {
+  doc: WrappedDoc;
+  /** The stamps slide's stampbook, built when the deck was loaded. */
+  stampSlots: StampSlot[];
+  /** Firestore collection name for the hackathon; null suppresses telemetry (dev fixtures). */
+  dbCollectionName: string | null;
+  /** Viewing hacker's uid; null suppresses telemetry. */
+  uid: string | null;
+  /** Play the launch fly-up: the banner navigated here mid-animation. */
+  launchedFromBanner?: boolean;
+  /** Leaves the deck; the close button is hidden without it. */
+  onClose?: () => void;
+}
+
+/**
+ * Every slide's progress bar fills over this long. Clips run longer than their content —
+ * the tail is idle — so the bar tracks this, not the clip.
+ */
+const STORY_MS = 10000;
+/** Tapping "back" within this long of a slide's start goes to the previous slide. */
+const RESTART_THRESHOLD_MS = 1500;
+/**
+ * The longest a slide waits for its assets before starting anyway: on a slow connection
+ * a clip that streams in as it plays beats a deck that never moves.
+ */
+const READY_TIMEOUT_MS = 5000;
+
+/**
+ * The launch fly-up, staged on the deck's 1080x1920 design canvas: a full-stage-width
+ * rocket (natural 510x696) climbs from below — nose starting 150 design-px under the
+ * stage's bottom edge — until its tail clears the top by 80, revealing the intro behind
+ * it in its wake. The reveal edge is swept in step with the tail over the same ease, and
+ * feathered so the seam between the sky and the freshly revealed content stays soft.
+ */
+const FLIGHT_MS = 2200;
+const LAUNCH_EASE = "cubic-bezier(0.65, 0, 0.35, 1)";
+const DESIGN_WIDTH = 1080;
+const LAUNCH_NOSE_MARGIN = 150;
+const LAUNCH_TAIL_MARGIN = 80;
+const LAUNCH_FEATHER = 140;
+
+/** Everything the fly-up needs, measured off the real stage box (its aspect can be
+    stretched on tall-narrow phones, so the design canvas alone doesn't cut it). */
+interface LaunchGeometry {
+  rocketFrom: string;
+  rocketTo: string;
+  overhang: string;
+  clearance: string;
+  feather: string;
+  rocketScale: number;
+}
+
+function useLaunchGeometry(
+  stageRef: RefObject<HTMLDivElement | null>,
+  enabled: boolean,
+): LaunchGeometry | null {
+  const [geometry, setGeometry] = useState<LaunchGeometry | null>(null);
+
+  useLayoutEffect(() => {
+    if (!enabled) return;
+    const stage = stageRef.current;
+    if (!stage) return;
+    const box = stage.getBoundingClientRect();
+    const designScale = box.width / DESIGN_WIDTH;
+    const rocketHeight = box.width * (ROCKET_HEIGHT / ROCKET_WIDTH);
+    // The tail starts a nose-margin plus a full rocket below the stage, and finishes
+    // a tail-margin above its top; the reveal edge rides the tail the whole way.
+    const overhang = LAUNCH_NOSE_MARGIN * designScale + rocketHeight;
+    const clearance = LAUNCH_TAIL_MARGIN * designScale;
+    setGeometry({
+      // The rocket hangs off `bottom: 0`, so its translate runs from the overhang to
+      // clear of the top; the reveal edge sweeps the same ease, so it stays with the tail.
+      rocketFrom: `${overhang.toFixed(0)}px`,
+      rocketTo: `${(-clearance - box.height).toFixed(0)}px`,
+      overhang: `${overhang.toFixed(0)}px`,
+      clearance: `${(-clearance).toFixed(0)}px`,
+      feather: `${(LAUNCH_FEATHER * designScale).toFixed(0)}px`,
+      rocketScale: box.width / ROCKET_WIDTH,
+    });
+  }, [enabled, stageRef]);
+
+  return geometry;
+}
+
+/**
+ * The deck: a 9:16 stage that plays each slide in turn, Stories-style.
+ *
+ * Which slides exist is `buildSlides(doc)`'s decision and what each plays is `SCENES`'s,
+ * so this component never inspects the doc's fields to decide either.
+ *
+ * A slide starts (shows, plays, and starts its bar) once its assets are in, or after
+ * `READY_TIMEOUT_MS`; a spinner covers a wait that runs long. Each slide's bar fills over
+ * `STORY_MS`, then the slide holds: nothing advances on its own. Tap the right half to skip ahead; the left half restarts the slide, and again
+ * quickly to go back. Arrow keys do the same.
+ *
+ * Telemetry: `opened` on mount, `completed` on reaching the summary, `shareClicked` on
+ * saving the image from the share sheet. Each is written at most once per visit.
+ */
+export function WrappedDeck({
+  doc,
+  stampSlots,
+  dbCollectionName,
+  uid,
+  launchedFromBanner = false,
+  onClose,
+}: WrappedDeckProps) {
+  const slides = useMemo(() => buildSlides(doc), [doc]);
+  const [index, setIndex] = useState(0);
+  // Bumped to replay the current slide from the top (remounting it).
+  const [replay, setReplay] = useState(0);
+  // Slides whose assets are in, reported by each slide as it's mounted ahead of time.
+  const [ready, setReady] = useState<ReadonlySet<SlideId>>(() => new Set());
+  // The current slide's wait that ran out, as `${index}-${replay}`.
+  const [timedOut, setTimedOut] = useState<string | null>(null);
+  // When the current slide started; +Infinity until it has, so "back" leaves it.
+  const startedAtRef = useRef(Number.POSITIVE_INFINITY);
+  const [isSharing, setIsSharing] = useState(false);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const launch = useLaunchGeometry(stageRef, launchedFromBanner);
+
+  // Clamped rather than read raw: the route can hand down a different doc without
+  // remounting (changing `?mock=` re-runs the loader), and a held index can outrun it.
+  const safeIndex = Math.min(index, slides.length - 1);
+  const current = slides[safeIndex];
+  const playKey = `${safeIndex}-${replay}`;
+  const started = ready.has(current) || timedOut === playKey;
+  // Rendered in the background from the summary on, so it's ready when Share is tapped.
+  const shareImage = useShareImage(doc, current === "summary" || isSharing);
+
+  const reportedOpen = useRef(false);
+  const reportedComplete = useRef(false);
+  const reportedShare = useRef(false);
+
+  const report = useCallback(
+    (patch: Parameters<typeof recordWrappedSession>[2]) => {
+      if (!dbCollectionName || !uid) return;
+      void recordWrappedSession(dbCollectionName, uid, patch);
+    },
+    [dbCollectionName, uid],
+  );
+
+  // Opening the deck is itself a reason to retire the banner, alongside its X button.
+  useEffect(() => {
+    if (reportedOpen.current) return;
+    reportedOpen.current = true;
+    report({ opened: true });
+    if (dbCollectionName) dismissWrappedBanner(dbCollectionName);
+  }, [report, dbCollectionName]);
+
+  // "Completed" means the summary was reached. Fired on arrival rather than on unmount,
+  // where a closing tab would lose it.
+  useEffect(() => {
+    if (reportedComplete.current || current !== "summary") return;
+    reportedComplete.current = true;
+    report({ completed: true });
+  }, [current, report]);
+
+  const markReady = useCallback((slideId: SlideId) => {
+    setReady((prev) => (prev.has(slideId) ? prev : new Set(prev).add(slideId)));
+  }, []);
+
+  // A slide that's slow to load starts anyway once its wait runs out.
+  useEffect(() => {
+    if (started) return;
+    const timer = setTimeout(() => setTimedOut(playKey), READY_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [started, playKey]);
+
+  // The story clock runs from the moment the slide starts; the bar itself is a CSS
+  // animation, so the deck doesn't re-render on every frame.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a new `playKey` is a new start
+  useEffect(() => {
+    startedAtRef.current = started ? performance.now() : Number.POSITIVE_INFINITY;
+  }, [started, playKey]);
+
+  const goTo = useCallback(
+    (target: number) => {
+      setIndex(Math.min(Math.max(target, 0), slides.length - 1));
+    },
+    [slides.length],
+  );
+
+  const next = useCallback(() => {
+    if (safeIndex < slides.length - 1) goTo(safeIndex + 1);
+  }, [safeIndex, slides.length, goTo]);
+
+  const back = useCallback(() => {
+    if (performance.now() - startedAtRef.current > RESTART_THRESHOLD_MS) {
+      // The replay remounts the slide, which reports ready again once rebuilt.
+      setReady((prev) => {
+        const next = new Set(prev);
+        next.delete(current);
+        return next;
+      });
+      setReplay((count) => count + 1);
+    } else {
+      goTo(safeIndex - 1);
+    }
+  }, [safeIndex, current, goTo]);
+
+  const openShare = useCallback(() => setIsSharing(true), []);
+
+  useEffect(() => {
+    const handleKey = (event: KeyboardEvent) => {
+      // The share sheet is modal: Escape closes it, and nothing moves the deck behind it.
+      if (isSharing) {
+        if (event.key === "Escape") setIsSharing(false);
+        return;
+      }
+      if (event.key === "ArrowRight") next();
+      else if (event.key === "ArrowLeft") back();
+      else if (event.key === "Escape") onClose?.();
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [next, back, onClose, isSharing]);
+
+  const handleStageClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    if (event.clientX - rect.left < rect.width / 2) back();
+    else next();
+  };
+
+  return (
+    <div className="relative flex h-dvh items-center justify-center bg-[#000] md:p-4">
+      {/* Fades the page in from the launch's sky so arriving from the banner has no
+          hard cut; transparent by default so a disabled animation can't strand it. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-50 bg-[#1a1138] opacity-0"
+        style={{ animation: "wrapped-deck-reveal 500ms ease-out both" }}
+      />
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: arrow keys are handled on window */}
+      <div
+        ref={stageRef}
+        className={cn(
+          "relative aspect-[1080/1920] h-full max-h-dvh max-w-full cursor-pointer select-none overflow-hidden md:max-h-[calc(100dvh-2rem)] md:rounded-xl",
+          launchedFromBanner ? "bg-[#1a1138]" : "bg-[#000]",
+        )}
+        onClick={handleStageClick}
+      >
+        {/* On a banner launch the content sits behind the wake reveal: hidden until the
+            climbing rocket's tail sweeps the edge up the stage, feathered so the seam
+            stays soft. The stage's sky shows through until then. */}
+        <div
+          className="absolute inset-0"
+          style={
+            launchedFromBanner
+              ? {
+                  ["--reveal-edge" as string]: "0%",
+                  ["--launch-overhang" as string]: launch?.overhang,
+                  ["--launch-clearance" as string]: launch?.clearance,
+                  ["--launch-feather" as string]: launch?.feather,
+                  maskImage:
+                    "linear-gradient(180deg, transparent calc(var(--reveal-edge) - var(--launch-feather, 0px)), #000 var(--reveal-edge))",
+                  WebkitMaskImage:
+                    "linear-gradient(180deg, transparent calc(var(--reveal-edge) - var(--launch-feather, 0px)), #000 var(--reveal-edge))",
+                  ...(launch
+                    ? { animation: `wrapped-launch-reveal ${FLIGHT_MS}ms ${LAUNCH_EASE} both` }
+                    : {}),
+                }
+              : undefined
+          }
+        >
+          {/* The current slide and its neighbours stay mounted, so moving either way shows
+              an already-buffered slide instead of a blank one. */}
+          {slides.map((slideId, i) =>
+            Math.abs(i - safeIndex) > 1 ? null : (
+              <Slide
+                // A replay remounts only the current slide, restarting its clip and entrances.
+                key={i === safeIndex ? `${slideId}-${replay}` : slideId}
+                slideId={slideId}
+                doc={doc}
+                stampSlots={stampSlots}
+                active={i === safeIndex && started}
+                skipRocketEntrance={launchedFromBanner}
+                onShare={openShare}
+                onReady={markReady}
+              />
+            ),
+          )}
+
+          {/* Only once the wait is noticeable, so a quick load doesn't flash a spinner. */}
+          {!started && (
+            <div
+              className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0"
+              style={{ animation: "wrapped-fade-in 300ms ease-out 400ms forwards" }}
+            >
+              <Spinner className="size-8 text-[#fff]/80" />
+            </div>
+          )}
+
+          {/* Stories-style progress: one segment per slide, the current one filling as it
+              plays, over a scrim so the bars read on bright frames too. */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-24 bg-gradient-to-b from-[#000]/45 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-2 top-2 z-10 flex gap-[3px]">
+            {slides.map((slideId, i) => (
+              <div
+                key={slideId}
+                className="h-[3px] flex-1 overflow-hidden rounded-full bg-[#fff]/35"
+              >
+                <div
+                  // A new key on each start restarts the fill from empty.
+                  key={i === safeIndex ? playKey : "idle"}
+                  className="h-full origin-left rounded-full bg-[#fff]"
+                  style={
+                    i === safeIndex && started
+                      ? { animation: `wrapped-progress ${STORY_MS}ms linear both` }
+                      : { transform: `scaleX(${i < safeIndex ? 1 : 0})` }
+                  }
+                />
+              </div>
+            ))}
+          </div>
+
+          {onClose && (
+            <button
+              type="button"
+              aria-label="Close Hacker Wrapped"
+              onClick={(event) => {
+                event.stopPropagation();
+                onClose();
+              }}
+              className="absolute top-4 right-2 z-10 rounded-full p-1.5 text-[#fff]/90 drop-shadow hover:text-[#fff]"
+            >
+              <X className="size-5" />
+            </button>
+          )}
+        </div>
+
+        {/* The launch rocket, riding above the reveal edge it drags behind itself. */}
+        {launchedFromBanner && launch && (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-20"
+            style={{
+              aspectRatio: "510 / 696",
+              transform: "translateY(110%)",
+              animation: `wrapped-launch ${FLIGHT_MS}ms ${LAUNCH_EASE} both`,
+              ["--launch-from" as string]: launch.rocketFrom,
+              ["--launch-to" as string]: launch.rocketTo,
+            }}
+          >
+            <div
+              className="origin-top-left"
+              style={{
+                width: ROCKET_WIDTH,
+                height: ROCKET_HEIGHT,
+                transform: `scale(${launch.rocketScale})`,
+              }}
+            >
+              <RocketShip />
+            </div>
+          </div>
+        )}
+
+        {isSharing && (
+          <ShareSheet
+            image={shareImage.image}
+            onRetry={shareImage.retry}
+            onClose={() => setIsSharing(false)}
+            onSave={() => {
+              if (reportedShare.current) return;
+              reportedShare.current = true;
+              report({ shareClicked: true });
+            }}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+interface SlideProps {
+  slideId: SlideId;
+  doc: WrappedDoc;
+  stampSlots: StampSlot[];
+  active: boolean;
+  /** The launch fly-up already played the rocket's climb, so the intro's own skips it. */
+  skipRocketEntrance?: boolean;
+  /** Opens the share sheet, from the summary's share button. */
+  onShare: () => void;
+  /** The slide's assets are in and it can start. */
+  onReady: (slideId: SlideId) => void;
+}
+
+/**
+ * Memoized, with stable callbacks from the deck, so a slide re-renders only when its own
+ * props change: when it starts or stops, not when a neighbour does.
+ */
+const Slide = memo(function Slide({
+  slideId,
+  doc,
+  stampSlots,
+  active,
+  skipRocketEntrance,
+  onShare,
+  onReady,
+}: SlideProps) {
+  const handleReady = useCallback(() => onReady(slideId), [onReady, slideId]);
+  const scene = SCENES[slideId];
+  if (scene.kind === "video") {
+    return (
+      <VideoSlide
+        video={sceneVideo(scene, doc)}
+        lottie={scene.lottie}
+        texts={scene.texts?.(doc)}
+        active={active}
+        onReady={handleReady}
+      />
+    );
+  }
+  return (
+    <div className={cn("absolute inset-0", active ? "visible" : "invisible")}>
+      <CodedSlideContent
+        slideId={slideId}
+        doc={doc}
+        stampSlots={stampSlots}
+        active={active}
+        skipRocketEntrance={skipRocketEntrance}
+        summaryAction={<ShareButton onClick={onShare} />}
+        onReady={handleReady}
+      />
+    </div>
+  );
+});
+
+/** Laid out in comp pixels: it sits inside the summary comp, under the sign-off. */
+function ShareButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={(event) => {
+        event.stopPropagation();
+        onClick();
+      }}
+      className="flex items-center gap-[20px] rounded-full bg-[#fff] px-[56px] py-[24px] font-bold text-[#2c2543] text-[40px] transition-transform hover:scale-[1.03]"
+    >
+      Share your Wrapped
+      <Share className="size-[40px]" strokeWidth={2.5} />
+    </button>
+  );
+}
