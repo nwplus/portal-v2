@@ -114,10 +114,10 @@ export function PortalEntrance({
           <SubHeader className="font-semibold text-[4vh] sm:text-4xl md:text-3xl">
             {hackathon}
           </SubHeader>
-          {/* a legacy hackathon has no upcoming date; a blank line keeps the cards aligned */}
-          <div className="text-center font-medium text-[2.5vh] sm:text-lg">
-            {isLegacy ? "\u00A0" : dates}
-          </div>
+          {/* a legacy hackathon has no upcoming date to show */}
+          {!isLegacy && (
+            <div className="text-center font-medium text-[2.5vh] sm:text-lg">{dates}</div>
+          )}
         </div>
 
         <div className="flex w-full select-none flex-col items-center">
